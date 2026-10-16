@@ -16,10 +16,12 @@ import (
 // Terminal sessions report plan limits through the status line, but the Claude desktop
 // app doesn't run the status line. To cover that gap, a tiny headless `claude -p` call
 // emits a rate_limit_event with both windows. It only runs when it won't start a window
-// on its own (a session was active recently) and the numbers have gone stale.
+// on its own (a session was active recently), at most once per poll interval.
 
 const (
-	pollEvery        = 10 * time.Minute // minimum gap between headless calls, and staleness threshold
+	defaultPollMinutes = 10 // gap between headless calls, see pollMinutes in the config
+	minPollMinutes     = 5
+	busyPercent        = 85 // above this, poll twice as often: that's when limits drive decisions
 	pollActiveWithin = 30 * time.Minute // only poll if a session log changed this recently
 	pollTimeout      = 90 * time.Second
 )
@@ -73,7 +75,7 @@ func (m *Monitor) anySessionActive(within time.Duration) bool {
 	return false
 }
 
-// MaybePollLimits runs the headless call if the numbers are stale and a session is active.
+// MaybePollLimits runs the headless call if a session is active and the last attempt is old enough.
 func (m *Monitor) MaybePollLimits() {
 	// Opt-in: each probe is a real (tiny) request that counts against the user's plan
 	if cfg := loadConfig(); cfg.PollLimits == nil || !*cfg.PollLimits {
@@ -81,20 +83,57 @@ func (m *Monitor) MaybePollLimits() {
 	}
 
 	polled.mu.Lock()
-	recentAttempt := time.Since(polled.lastAttempt) < pollEvery
+	recentAttempt := time.Since(polled.lastAttempt) < m.pollInterval()
 	polled.mu.Unlock()
 	if recentAttempt {
 		return
 	}
 
-	// Fresh data from a terminal session's status line means no call is needed
-	if files := m.statusFileLimits(); files.AsOf > 0 && time.Since(time.Unix(files.AsOf, 0)) < pollEvery {
-		return
-	}
 	if !m.anySessionActive(pollActiveWithin) {
 		return
 	}
 
+	m.pollNow()
+}
+
+// RefreshLimitsNow is the manual refresh button: one probe now, still opt-in, and rate
+// limited to one per 15 seconds so a stuck button can't spam requests.
+func (m *Monitor) RefreshLimitsNow() {
+	if cfg := loadConfig(); cfg.PollLimits == nil || !*cfg.PollLimits {
+		return
+	}
+	polled.mu.Lock()
+	tooSoon := time.Since(polled.lastAttempt) < 15*time.Second
+	polled.mu.Unlock()
+	if tooSoon {
+		return
+	}
+	m.pollNow()
+}
+
+// pollInterval is the configured gap (default 10 min, floor 5), halved when any limit is
+// nearly used up, since that is when a fresher number changes what you do.
+func (m *Monitor) pollInterval() time.Duration {
+	mins := loadConfig().PollMinutes
+	if mins <= 0 {
+		mins = defaultPollMinutes
+	}
+	if mins < minPollMinutes {
+		mins = minPollMinutes
+	}
+	d := time.Duration(mins) * time.Minute
+	for _, w := range m.GetLimits().Windows {
+		if w.Percentage >= busyPercent {
+			if d /= 2; d < minPollMinutes*time.Minute {
+				d = minPollMinutes * time.Minute
+			}
+			break
+		}
+	}
+	return d
+}
+
+func (m *Monitor) pollNow() {
 	polled.mu.Lock()
 	polled.lastAttempt = time.Now()
 	polled.mu.Unlock()

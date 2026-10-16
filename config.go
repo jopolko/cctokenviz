@@ -19,6 +19,7 @@ import (
 //
 // pollLimits: opt in (true) to a background headless `claude -p` call that refreshes plan limits.
 // Off by default. See the README for what it does and what it costs.
+// pollMinutes: gap between automatic polls (default 10, minimum 5; halved above 85% usage).
 // credits: balances shown in the panel. "console" is a snapshot (balance in USD, asOf as YYYY-MM-DD);
 // with ANTHROPIC_ADMIN_KEY set, spend since asOf is subtracted. "claudeAi" is shown as typed.
 type Config struct {
@@ -26,6 +27,7 @@ type Config struct {
 	ActiveMinutes int      `json:"activeMinutes"`
 	ContextTokens int      `json:"contextTokens"`
 	PollLimits    *bool    `json:"pollLimits"`
+	PollMinutes   int      `json:"pollMinutes"`
 	Credits       struct {
 		Console *struct {
 			Balance float64 `json:"balance"`

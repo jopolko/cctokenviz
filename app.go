@@ -79,6 +79,12 @@ func (a *App) GetLimits() Limits {
 	return a.monitor.GetLimits()
 }
 
+// RefreshLimits polls plan limits now (if polling is enabled) and returns the merged result
+func (a *App) RefreshLimits() Limits {
+	a.monitor.RefreshLimitsNow()
+	return a.monitor.GetLimits()
+}
+
 // GetCredits returns the credit balances to show under the limits
 func (a *App) GetCredits() Credits {
 	return GetCredits()

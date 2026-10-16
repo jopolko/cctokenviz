@@ -96,6 +96,18 @@ async function updateCredits() {
     }
 }
 
+// Manual refresh: poll now, then redraw (the call takes a few seconds)
+async function refreshLimits() {
+    const btn = document.getElementById('refreshLimits');
+    if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
+    try {
+        await window.go.main.App.RefreshLimits();
+    } catch (error) {
+        console.error('Error refreshing limits:', error);
+    }
+    updateLimits();
+}
+
 // Window lengths in seconds, used for the "time elapsed" tick on each limit bar
 const WINDOW_SECONDS = { '5-hour': 5 * 3600, 'Weekly': 7 * 86400 };
 
@@ -148,7 +160,10 @@ async function updateLimits() {
         panel.innerHTML = `
             <div class="limits-title">Plan limits <span class="limits-hint">| = time passed</span></div>
             ${limits.windows.map(renderLimit).join('')}
-            <div class="limits-asof">Last reported ${formatDuration(Math.floor(Date.now() / 1000) - limits.asOf)} ago</div>`;
+            <div class="limits-asof">
+                <span>Last reported ${formatDuration(Math.floor(Date.now() / 1000) - limits.asOf)} ago</span>
+                <button id="refreshLimits" class="refresh" title="Check now (uses one tiny request; needs pollLimits)" onclick="refreshLimits()">↻ Refresh</button>
+            </div>`;
     } catch (error) {
         console.error('Error fetching limits:', error);
     }

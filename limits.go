@@ -74,20 +74,48 @@ func contextSizeFor(sessionID string) int {
 	return s.ContextWindow.Size
 }
 
-// GetLimits returns the freshest limits from either the status line files or the headless poll.
+// GetLimits merges every source: each session's status file plus the headless poll.
+//
+// A status file's modification time says when the status line last ran, not how old its
+// rate-limit numbers are (they only change after an API response), so a recently written
+// file can hold stale numbers. Instead, per window: the later reset time wins (a newer
+// window), and within the same window the higher percentage wins (usage only goes up).
 func (m *Monitor) GetLimits() Limits {
-	fromFiles := m.statusFileLimits()
-	fromPoll := m.polledLimits()
-	if fromPoll.AsOf > fromFiles.AsOf && len(fromPoll.Windows) > 0 {
-		return fromPoll
+	sources := m.statusFileSources()
+	if p := m.polledLimits(); len(p.Windows) > 0 {
+		sources = append(sources, p)
 	}
-	return fromFiles
+
+	var out Limits
+	for _, label := range []string{"5-hour", "Weekly"} {
+		var best *LimitInfo
+		var bestAsOf int64
+		for _, src := range sources {
+			for i := range src.Windows {
+				w := &src.Windows[i]
+				if w.Label != label {
+					continue
+				}
+				if best == nil || w.ResetsAt > best.ResetsAt ||
+					(w.ResetsAt == best.ResetsAt && w.Percentage > best.Percentage) {
+					best, bestAsOf = w, src.AsOf
+				}
+			}
+		}
+		if best != nil {
+			out.Windows = append(out.Windows, *best)
+			if bestAsOf > out.AsOf {
+				out.AsOf = bestAsOf
+			}
+		}
+	}
+	return out
 }
 
-// statusFileLimits reads the most recently written status file that carries rate limits.
-// Limits are per account, so any session's copy will do; the newest is the freshest.
-func (m *Monitor) statusFileLimits() Limits {
-	var out Limits
+// statusFileSources returns one Limits per status file that carries rate limits,
+// with AsOf set to the file's modification time.
+func (m *Monitor) statusFileSources() []Limits {
+	var out []Limits
 	dir := statusDir()
 	if dir == "" {
 		return out
@@ -97,35 +125,32 @@ func (m *Monitor) statusFileLimits() Limits {
 		return out
 	}
 
-	var newest *statusFile
-	var newestTime time.Time
+	now := time.Now().Unix()
 	for _, f := range files {
 		if strings.HasSuffix(f, ".tmp") {
 			continue
 		}
 		info, err := os.Stat(f)
-		if err != nil || !info.ModTime().After(newestTime) {
+		if err != nil {
 			continue
 		}
 		s := readStatus(f)
-		if s == nil || (s.RateLimits.FiveHour == nil && s.RateLimits.SevenDay == nil) {
+		if s == nil {
 			continue
 		}
-		newest, newestTime = s, info.ModTime()
-	}
-	if newest == nil {
-		return out
-	}
 
-	out.AsOf = newestTime.Unix()
-	now := time.Now().Unix()
-	add := func(label string, w *rateWindow) {
-		// Claude Code drops a window once it resets; do the same for stale files
-		if w != nil && w.ResetsAt > now {
-			out.Windows = append(out.Windows, LimitInfo{Label: label, Percentage: w.UsedPercentage, ResetsAt: w.ResetsAt})
+		src := Limits{AsOf: info.ModTime().Unix()}
+		add := func(label string, w *rateWindow) {
+			// Claude Code drops a window once it resets; do the same for stale files
+			if w != nil && w.ResetsAt > now {
+				src.Windows = append(src.Windows, LimitInfo{Label: label, Percentage: w.UsedPercentage, ResetsAt: w.ResetsAt})
+			}
+		}
+		add("5-hour", s.RateLimits.FiveHour)
+		add("Weekly", s.RateLimits.SevenDay)
+		if len(src.Windows) > 0 {
+			out = append(out, src)
 		}
 	}
-	add("5-hour", newest.RateLimits.FiveHour)
-	add("Weekly", newest.RateLimits.SevenDay)
 	return out
 }

@@ -10,4 +10,6 @@ export function GetLimits():Promise<main.Limits>;
 
 export function GetSessions():Promise<Array<main.SessionInfo>>;
 
+export function RefreshLimits():Promise<main.Limits>;
+
 export function ResetAlerts():Promise<void>;

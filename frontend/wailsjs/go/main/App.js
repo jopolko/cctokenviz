@@ -18,6 +18,10 @@ export function GetSessions() {
   return window['go']['main']['App']['GetSessions']();
 }
 
+export function RefreshLimits() {
+  return window['go']['main']['App']['RefreshLimits']();
+}
+
 export function ResetAlerts() {
   return window['go']['main']['App']['ResetAlerts']();
 }
