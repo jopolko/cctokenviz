@@ -38,8 +38,8 @@ function renderSession(session) {
                 <div class="progress-bar" style="width: ${session.percentage}%"></div>
             </div>
             <div class="session-footer">
-                <span>Used: ${formatTokens(session.usedTokens)}</span>
-                <span>Free: ${formatTokens(session.freeTokens)}</span>
+                <span>${LABELS.used}: ${formatTokens(session.usedTokens)}</span>
+                <span>${LABELS.free}: ${formatTokens(session.freeTokens)}</span>
             </div>
         </div>
     `;
@@ -93,7 +93,7 @@ function renderLimit(limit) {
             <div class="progress-container limit-bar">
                 <div class="progress-bar" style="width: ${pct}%"></div>
             </div>
-            <div class="limit-reset">Resets in ${formatDuration(remaining)}</div>
+            <div class="limit-reset">${LABELS.resets} ${formatDuration(remaining)}</div>
         </div>
     `;
 }
@@ -105,12 +105,12 @@ async function updateLimits() {
         const limits = await window.go.main.App.GetLimits();
         if (!limits || !limits.windows || limits.windows.length === 0) {
             panel.innerHTML = `
-                <h2 class="section-title">Limits</h2>
-                <div class="limits-empty">Shown after your next message in a Claude Code session. Turn on automatic checks in settings (⚙) to keep them current.</div>`;
+                <h2 class="section-title">${LABELS.limits}</h2>
+                <div class="limits-empty">Shown after your next message in a Claude Code session. Turn on automatic checks in Settings to keep them current.</div>`;
             return;
         }
         panel.innerHTML = `
-            <h2 class="section-title">Limits</h2>
+            <h2 class="section-title">${LABELS.limits}</h2>
             ${limits.windows.map(renderLimit).join('')}
             <div class="limits-asof">
                 <span>${limits.paused ? 'Limit reached, not checking' : 'Last reported ' + formatDuration(Math.floor(Date.now() / 1000) - limits.asOf) + ' ago'}</span>
@@ -167,7 +167,7 @@ function setupDragging() {
 
     container.addEventListener('pointerdown', (e) => {
         const grip = e.target.closest('.grip');
-        if (!grip) return;
+        if (!grip || e.button !== 0) return;
         const row = grip.closest('.session');
         if (!row) return;
 
@@ -175,7 +175,6 @@ function setupDragging() {
         draggingRow = row;
         row.classList.add('dragging');
         document.body.classList.add('is-dragging');
-        grip.setPointerCapture(e.pointerId);
 
         const move = (ev) => {
             const siblings = [...container.querySelectorAll('.session')].filter(r => r !== row);
@@ -193,9 +192,9 @@ function setupDragging() {
         };
 
         const finish = async () => {
-            grip.removeEventListener('pointermove', move);
-            grip.removeEventListener('pointerup', finish);
-            grip.removeEventListener('pointercancel', finish);
+            document.removeEventListener('pointermove', move);
+            document.removeEventListener('pointerup', finish);
+            document.removeEventListener('pointercancel', finish);
             row.classList.remove('dragging');
             document.body.classList.remove('is-dragging');
             const ids = [...container.querySelectorAll('.session')].map(r => r.dataset.id);
@@ -209,9 +208,9 @@ function setupDragging() {
             updateSessions();
         };
 
-        grip.addEventListener('pointermove', move);
-        grip.addEventListener('pointerup', finish);
-        grip.addEventListener('pointercancel', finish);
+        document.addEventListener('pointermove', move);
+        document.addEventListener('pointerup', finish);
+        document.addEventListener('pointercancel', finish);
     });
 }
 

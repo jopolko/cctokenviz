@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -42,7 +43,8 @@ func loadConfig() Config {
 	cfg := Config{ActiveMinutes: ActiveMinutes}
 	if p := configPath(); p != "" {
 		if data, err := os.ReadFile(p); err == nil {
-			json.Unmarshal(data, &cfg)
+			// Notepad and PowerShell can add a UTF-8 byte order mark, which JSON parsing rejects
+			json.Unmarshal(bytes.TrimPrefix(data, []byte("\xef\xbb\xbf")), &cfg)
 		}
 	}
 	if cfg.ActiveMinutes <= 0 {

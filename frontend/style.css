@@ -5,6 +5,8 @@
     --text: #e6e9f0; --dim: #aab1c3; --strong: #ffffff; --accent: #7aa2f7;
     --good: #4ade80; --warn: #fbbf24; --danger: #f87171; --crit: #ff4d4d;
     --font: 'Segoe UI', system-ui, sans-serif; --fs: 13px;
+    --radius: 8px; --bw: 1px; --bg-image: none; --bg-size: auto;
+    --title-pre: ""; --title-post: ""; --logo: ""; --title-case: uppercase;
 }
 
 * {
@@ -15,17 +17,27 @@
 
 body {
     font-family: var(--font);
-    background: var(--bg);
+    background-color: var(--bg);
+    background-image: var(--bg-image);
+    background-size: var(--bg-size);
+    background-attachment: fixed;
     color: var(--text);
     min-height: 100vh;
     font-size: var(--fs);
+}
+
+/* The window never scrolls as a whole: the session list scrolls, while Limits and the
+   footer (with the Settings button) stay pinned at the bottom. */
+html, body {
+    height: 100%;
+    overflow: hidden;
 }
 
 .container {
     padding: 12px;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    height: 100vh;
 }
 
 header {
@@ -43,6 +55,11 @@ header h1 {
     font-weight: 700;
     color: var(--strong);
     flex: 1;
+}
+
+header h1::before {
+    content: var(--logo);
+    color: var(--accent);
 }
 
 .status {
@@ -71,12 +88,15 @@ header h1 {
     font-size: 1.1em;
     font-weight: 800;
     letter-spacing: 0.14em;
-    text-transform: uppercase;
+    text-transform: var(--title-case);
     color: var(--accent);
     padding-bottom: 5px;
     margin-bottom: 10px;
     border-bottom: 2px solid var(--accent);
 }
+
+.section-title::before { content: var(--title-pre); }
+.section-title::after { content: var(--title-post); }
 
 .context {
     flex: 1;
@@ -95,9 +115,9 @@ header h1 {
 
 .session {
     background: var(--panel);
-    border-radius: 8px;
+    border-radius: var(--radius);
     padding: 9px 12px;
-    border: 1px solid var(--border);
+    border: var(--bw) solid var(--border);
 }
 
 .session.dragging {
@@ -163,15 +183,48 @@ body.is-dragging {
 
 .progress-container {
     background: var(--track);
-    border-radius: 4px;
+    border-radius: min(var(--radius), 5px);
     height: 8px;
     overflow: hidden;
 }
 
 .progress-bar {
     height: 100%;
-    border-radius: 4px;
+    border-radius: min(var(--radius), 5px);
+    background-color: var(--c, var(--good));
     transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* Bar styles, chosen by the theme */
+html[data-bar="blocks"] .progress-container,
+html[data-bar="blocks"] .progress-bar {
+    -webkit-mask: repeating-linear-gradient(90deg, #000 0 7px, transparent 7px 9px);
+    border-radius: 1px;
+}
+html[data-bar="pixel"] .progress-container { height: 12px; }
+html[data-bar="pixel"] .progress-container,
+html[data-bar="pixel"] .progress-bar {
+    -webkit-mask: repeating-linear-gradient(90deg, #000 0 10px, transparent 10px 12px);
+    border-radius: 0;
+}
+html[data-bar="rope"] .progress-container,
+html[data-bar="rope"] .progress-bar {
+    -webkit-mask: repeating-linear-gradient(90deg, #000 0 12px, transparent 12px 15px);
+    border-radius: 3px;
+}
+html[data-bar="stripes"] .progress-container { height: 11px; border-radius: 0; }
+html[data-bar="stripes"] .progress-bar {
+    border-radius: 0;
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.28) 0 6px, transparent 6px 12px);
+}
+html[data-bar="glow"] .progress-bar {
+    box-shadow: 0 0 10px var(--c, var(--good));
+}
+
+/* Neon themes: a soft glow on panels */
+html[data-glow="1"] .session,
+html[data-glow="1"] .limits {
+    box-shadow: 0 0 14px -4px var(--accent);
 }
 
 .session-footer {
@@ -187,8 +240,8 @@ body.is-dragging {
     margin-top: 14px;
     padding: 10px 12px 12px;
     background: var(--panel2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    border: var(--bw) solid var(--border);
+    border-radius: var(--radius);
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -268,20 +321,12 @@ body.is-dragging {
 }
 
 /* Color states */
-.state-good .percentage { color: var(--good); }
-.state-good .progress-bar { background: var(--good); }
-
-.state-warning .percentage { color: var(--warn); }
-.state-warning .progress-bar { background: var(--warn); }
-
-.state-danger .percentage { color: var(--danger); }
-.state-danger .progress-bar { background: var(--danger); }
-
-.state-critical .percentage { color: var(--crit); }
-.state-critical .progress-bar {
-    background: var(--crit);
-    animation: pulse 1s infinite;
-}
+.state-good { --c: var(--good); }
+.state-warning { --c: var(--warn); }
+.state-danger { --c: var(--danger); }
+.state-critical { --c: var(--crit); }
+.percentage { color: var(--c, var(--text)); }
+.state-critical .progress-bar { animation: pulse 1s infinite; }
 
 @keyframes pulse {
     0%, 100% { opacity: 1; }
@@ -428,7 +473,7 @@ footer {
     background: var(--panel);
     color: var(--text);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: min(var(--radius), 8px);
     padding: 7px 14px;
     font: inherit;
     cursor: pointer;
@@ -477,7 +522,7 @@ footer {
 
 .theme-card {
     border: 2px solid var(--border);
-    border-radius: 8px;
+    border-radius: min(var(--radius), 10px);
     padding: 0;
     overflow: hidden;
     cursor: pointer;
@@ -503,7 +548,43 @@ footer {
 .theme-card .tname {
     padding: 4px 6px;
     font-size: 0.85em;
-    background: var(--panel);
+    line-height: 1.25;
+}
+
+.theme-card .tname small {
+    display: block;
+    opacity: 0.75;
+    font-size: 0.85em;
+}
+
+.group-label {
+    margin: 12px 0 6px;
+    font-size: 0.8em;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dim);
+}
+
+.footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.settings-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: min(var(--radius), 8px);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.95em;
+    padding: 3px 10px;
+    cursor: pointer;
+}
+
+.settings-btn:hover {
+    border-color: var(--accent);
+    color: var(--strong);
 }
 
 .checklist {

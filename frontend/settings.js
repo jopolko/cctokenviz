@@ -68,21 +68,25 @@ function closeOverlay() {
 /* ---------- Sections (shared by the wizard and the settings panel) ---------- */
 
 function lookSection() {
-    const cards = Object.entries(THEMES).map(([id, t]) => {
+    const card = ([id, t]) => {
         const v = t.vars;
-        return `<button class="theme-card ${cfg.theme === id || (!cfg.theme && id === DEFAULT_THEME) ? 'on' : ''}" data-theme="${id}">
+        const on = (cfg.theme || DEFAULT_THEME) === id;
+        return `<button class="theme-card ${on ? 'on' : ''}" data-theme="${id}">
             <div class="swatch"><i style="background:${v.bg}"></i><i style="background:${v.panel}"></i><i style="background:${v.accent}"></i><i style="background:${v.good}"></i><i style="background:${v.danger}"></i></div>
-            <div class="tname" style="color:${v.text};background:${v.bg}">${t.name}</div>
+            <div class="tname" style="color:${v.text};background:${v.bg}">${t.icon ? t.icon + ' ' : ''}${t.name}<small>${t.tag}</small></div>
         </button>`;
-    }).join('');
+    };
+    const group = (name) => Object.entries(THEMES).filter(([, t]) => t.group === name).map(card).join('');
+    const cards = `<div class="group-label">Styles</div><div class="theme-grid">${group('styles')}</div>
+                   <div class="group-label">Classic colors</div><div class="theme-grid">${group('classic')}</div>`;
 
-    const fonts = FONTS.map(f => `<option value="${f.id}" ${((cfg.font || DEFAULT_FONT) === f.id) ? 'selected' : ''} style="font-family:${f.stack}">${f.name}</option>`).join('');
+    const fonts = FONTS.map(f => `<option value="${f.id}" ${((cfg.font || 'theme') === f.id) ? 'selected' : ''} style="font-family:${f.stack || 'inherit'}">${f.name}</option>`).join('');
     const accent = /^#[0-9a-fA-F]{6}$/.test(cfg.accent || '') ? cfg.accent : (THEMES[cfg.theme] || THEMES[DEFAULT_THEME]).vars.accent;
 
     return `
         <div class="section">
             <h2 class="section-title">Look</h2>
-            <div class="theme-grid">${cards}</div>
+            ${cards}
             <div class="row"><span>Accent</span>
                 <input type="color" id="accent" value="${accent}">
                 <button class="btn" data-action="accent-reset">Use theme's</button></div>
@@ -166,7 +170,7 @@ const WIZARD_STEPS = [
     () => `
         <h2>Welcome to HeadRoom</h2>
         <p class="lead">HeadRoom shows how much room you have left in Claude Code: the context window of each project you have open, and your 5-hour and weekly limits.</p>
-        <p class="lead">This takes about a minute. Everything stays on your computer, and you can change any of it later from the ⚙ button.</p>`,
+        <p class="lead">This takes about a minute. Everything stays on your computer, and you can change any of it later from the Settings button at the bottom of the window.</p>`,
     () => `<h2>Pick a look</h2><p class="lead">Choose a theme, then adjust the accent color and font if you like.</p>${lookSection()}`,
     () => `<h2>Which projects?</h2><p class="lead">HeadRoom finds your sessions on its own. Limit it to the projects you care about, or show everything.</p>${projectsSection()}`,
     () => `<h2>Context size</h2><p class="lead">How big is your model's context window?</p>${contextSection()}`,
@@ -174,7 +178,7 @@ const WIZARD_STEPS = [
     () => `
         <h2>You're set</h2>
         <p class="lead">Your sessions will show up under <b>Context</b>, and your limits under <b>Limits</b>. Drag the ⋮⋮ grip on a row to reorder it, and click ✕ to hide a session.</p>
-        <p class="lead">Open settings any time with the ⚙ button.</p>`,
+        <p class="lead">Open Settings any time from the button at the bottom of the window.</p>`,
 ];
 
 async function openSetup() {

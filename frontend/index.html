@@ -15,7 +15,7 @@
         </header>
 
         <section class="context">
-            <h2 class="section-title">Context</h2>
+            <h2 class="section-title" id="contextTitle">Context</h2>
             <div id="sessions" class="sessions">
                 <!-- Sessions will be populated here -->
             </div>
@@ -25,7 +25,10 @@
 
         <footer>
             <span id="lastUpdate">--</span>
-            <button class="icon-btn" onclick="resetAlerts()" title="Reset alert history">🔔</button>
+            <span class="footer-actions">
+                <button class="icon-btn" onclick="resetAlerts()" title="Reset alert history">🔔</button>
+                <button class="settings-btn" onclick="openSettings()" title="Theme, projects, limits and more">⚙ Settings</button>
+            </span>
         </footer>
     </div>
 
