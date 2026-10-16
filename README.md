@@ -4,7 +4,7 @@ A lightweight desktop app that shows how much room you have left in Claude Code:
 
 Forked from [gosparq/claudewatch](https://github.com/gosparq/claudewatch) (MIT). Not affiliated with Anthropic.
 
-![HeadRoom Screenshot](screenshot.png)
+<p align="center"><img src="docs/screenshot.png" alt="HeadRoom in the Terminal theme: context per project and 5-hour and weekly limits" width="260"> &nbsp; <img src="docs/themes.png" alt="The theme picker: ten styles, each shown as a live miniature" width="300"></p>
 
 ## Why?
 
