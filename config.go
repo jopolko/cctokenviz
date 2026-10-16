@@ -21,12 +21,6 @@ type Config struct {
 	PollLimits  bool `json:"pollLimits"`  // opt in to the background headless call that refreshes limits
 	PollMinutes int  `json:"pollMinutes"` // gap between automatic polls (default 10, minimum 5)
 
-	// Alerts: a notification (and sound) when a session's context passes a threshold
-	AlertsOff   bool `json:"alertsOff"`   // true turns alerts off entirely
-	SoundOff    bool `json:"soundOff"`    // true keeps the notification but drops the sound
-	AlertWarn   int  `json:"alertWarn"`   // first threshold, percent (default 75)
-	AlertUrgent int  `json:"alertUrgent"` // second threshold, percent (default 90)
-
 	// Look
 	Theme     string `json:"theme"`
 	Accent    string `json:"accent"` // optional #rrggbb override for headings and highlights

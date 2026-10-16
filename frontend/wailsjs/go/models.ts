@@ -6,10 +6,6 @@ export namespace main {
 	    contextTokens: number;
 	    pollLimits: boolean;
 	    pollMinutes: number;
-	    alertsOff: boolean;
-	    soundOff: boolean;
-	    alertWarn: number;
-	    alertUrgent: number;
 	    theme: string;
 	    accent: string;
 	    font: string;
@@ -28,10 +24,6 @@ export namespace main {
 	        this.contextTokens = source["contextTokens"];
 	        this.pollLimits = source["pollLimits"];
 	        this.pollMinutes = source["pollMinutes"];
-	        this.alertsOff = source["alertsOff"];
-	        this.soundOff = source["soundOff"];
-	        this.alertWarn = source["alertWarn"];
-	        this.alertUrgent = source["alertUrgent"];
 	        this.theme = source["theme"];
 	        this.accent = source["accent"];
 	        this.font = source["font"];

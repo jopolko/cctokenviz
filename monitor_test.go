@@ -64,25 +64,3 @@ func TestParseSessionIncremental(t *testing.T) {
 		t.Fatalf("shrunk file not reparsed: %+v", info)
 	}
 }
-
-
-func TestCrossedRearms(t *testing.T) {
-	seen := map[int]bool{}
-	steps := []struct {
-		pct  int
-		want bool
-	}{
-		{60, false}, // below
-		{75, true},  // first crossing alerts
-		{80, false}, // already alerted
-		{72, false}, // dipped, but within the margin: still armed off
-		{76, false}, // back over, must not repeat
-		{69, false}, // 6 below: re-armed
-		{75, true},  // next climb alerts again
-	}
-	for i, st := range steps {
-		if got := crossed(seen, st.pct, 75); got != st.want {
-			t.Fatalf("step %d at %d%%: crossed=%v, want %v", i, st.pct, got, st.want)
-		}
-	}
-}
