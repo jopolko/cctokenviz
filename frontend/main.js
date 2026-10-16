@@ -114,7 +114,7 @@ async function updateLimits() {
         if (!limits || !limits.windows || limits.windows.length === 0) {
             panel.innerHTML = `
                 <h2 class="section-title">${LABELS.limits}</h2>
-                <div class="limits-empty">Shown after your next message in a Claude Code session. Turn on automatic checks in Settings to keep them current.</div>`;
+                <div class="limits-empty">Shown after your next message in a Claude Code session. Turn on automatic checks in Settings (the gear, top right) to keep them current.</div>`;
             return;
         }
         panel.innerHTML = `

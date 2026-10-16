@@ -189,7 +189,7 @@ const WIZARD_STEPS = [
     () => `
         <h2>Welcome to HeadRoom</h2>
         <p class="lead">HeadRoom shows how much room you have left in Claude Code: the context window of each project you have open, and your 5-hour and weekly limits.</p>
-        <p class="lead">This takes about a minute. Everything stays on your computer, and you can change any of it later from the Settings button at the bottom of the window.</p>`,
+        <p class="lead">This takes about a minute. Everything stays on your computer, and you can change any of it later from the gear at the top right.</p>`,
     () => `<h2>Pick a look</h2><p class="lead">Choose a theme, then adjust the accent color and font if you like.</p>${lookSection()}`,
     () => `<h2>Which projects?</h2><p class="lead">HeadRoom finds your sessions on its own. Limit it to the projects you care about, or show everything.</p>${projectsSection()}`,
     () => `<h2>Context size</h2><p class="lead">How big is your model's context window?</p>${contextSection()}`,
@@ -197,7 +197,7 @@ const WIZARD_STEPS = [
     () => `
         <h2>You're set</h2>
         <p class="lead">Your sessions will show up under <b>Context</b>, and your limits under <b>Limits</b>. Drag the ⋮⋮ grip on a row to reorder it, and click ✕ to hide a session.</p>
-        <p class="lead">Open Settings any time from the button at the bottom of the window.</p>`,
+        <p class="lead">Open Settings any time from the gear at the top right.</p>`,
 ];
 
 async function openSetup() {

@@ -53,7 +53,7 @@ Without structure, AI-assisted development often becomes chaotic: context gets l
 - 📈 **Limits** - 5-hour and weekly usage with reset countdowns, for Pro/Max plans (see [Limits](#limits-where-the-numbers-come-from))
 - ↕️ **Your order** - Drag the ⋮⋮ grip on a row to reorder; the order stays put
 - 🎨 **Themes** - Ten full styles (Linux terminal, sci-fi, Bitcoin, AI, cowboy, anime, kawaii, garden, celestial, lab notebook) each with its own meter, fonts, headings and wording, three plain themes, an accent color picker, and a font and size selector
-- 🧭 **Setup wizard** - A first-run walkthrough, and a Settings button for changing anything afterwards
+- 🧭 **Setup wizard** - A first-run walkthrough, and a gear icon for changing anything afterwards
 
 Works with the Claude Code terminal and the Claude desktop app (Code tab); both write the same session logs.
 
@@ -104,7 +104,7 @@ make install-mac
 
 ### Alerts
 
-Alerts are on by default, and Settings (⚙) has an **Alerts** section where you can:
+Alerts are on by default, and Settings (the gear at the top right) has an **Alerts** section where you can:
 
 - turn them off, or keep the notification and drop the sound
 - change the two levels (first alert 50-80%, urgent 80-95%)
@@ -120,7 +120,7 @@ HeadRoom doesn't need to be pointed at your project folders. Claude Code (termin
 
 **Row names.** Each row is labelled with the project folder the session is working in, with the session's title underneath. The project is the first folder under a directory named `projects` in the session's working directory (`C:\Users\me\projects\my-app\src` gives `my-app`), and it follows the session if it moves between projects. If the working directory isn't under a `projects` folder, the row uses that folder's own name.
 
-**Showing only some projects.** By default every active session is listed. To limit it, open settings (⚙) and choose "Only these projects", or set `projects` in `~/.headroom.json`. Names are matched against the row names above, ignoring case.
+**Showing only some projects.** By default every active session is listed. To limit it, open Settings (the gear at the top right) and choose "Only these projects", or set `projects` in `~/.headroom.json`. Names are matched against the row names above, ignoring case.
 
 **Order.** Rows stay where you put them. Drag the ⋮⋮ grip on a row to move it up or down; the order is remembered. A new session is added at the bottom.
 
@@ -136,7 +136,7 @@ The app scans `~/.claude/projects/` for active sessions and takes the last assis
 
 ## Settings
 
-Open the **⚙ Settings** button at the bottom of the window any time. **Look** has ten styles and three plain themes. A style is a whole personality, not a palette: its own meter, fonts, background pattern, heading decoration, logo and wording, and the picker shows each one as a live miniature.
+Open Settings from the gear at the top right any time. **Look** has ten styles and three plain themes. A style is a whole personality, not a palette: its own meter, fonts, background pattern, heading decoration, logo and wording, and the picker shows each one as a live miniature.
 
 | Style | Meter | Flavor |
 |-------|-------|--------|

@@ -126,6 +126,19 @@ header h1::before {
     border: var(--bw) solid var(--border);
 }
 
+.gear {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px;
+    opacity: 0.85;
+}
+
+.gear:hover {
+    color: var(--accent);
+    transform: rotate(45deg);
+    transition: transform 0.25s ease, color 0.2s;
+}
+
 .session, .limits { clip-path: var(--clip); }
 
 .session.dragging {
