@@ -60,7 +60,7 @@ install-mac: build-mac
 
 # Help
 help:
-	@echo "Headroom - Build Commands"
+	@echo "HeadRoom - Build Commands"
 	@echo ""
 	@echo "  make install-wails  - Install Wails CLI (run once)"
 	@echo "  make dev            - Run in development mode"

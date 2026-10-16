@@ -80,7 +80,7 @@ func (m *Monitor) anySessionActive(within time.Duration) bool {
 // MaybePollLimits runs the headless call if a session is active and the last attempt is old enough.
 func (m *Monitor) MaybePollLimits() {
 	// Opt-in: each probe is a real (tiny) request that counts against the user's plan
-	if cfg := loadConfig(); cfg.PollLimits == nil || !*cfg.PollLimits {
+	if cfg := loadConfig(); !cfg.PollLimits {
 		return
 	}
 
@@ -107,7 +107,7 @@ func (m *Monitor) MaybePollLimits() {
 // RefreshLimitsNow is the manual refresh button: one probe now, still opt-in, and rate
 // limited to one per 15 seconds so a stuck button can't spam requests.
 func (m *Monitor) RefreshLimitsNow() {
-	if cfg := loadConfig(); cfg.PollLimits == nil || !*cfg.PollLimits {
+	if cfg := loadConfig(); !cfg.PollLimits {
 		return
 	}
 	if m.GetLimits().Paused {

@@ -265,3 +265,50 @@ func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 	}
 }
 
+
+// KnownProjects returns the project names found in sessions from the last two weeks,
+// for the project picker. It parses at most the three newest logs per folder.
+func (m *Monitor) KnownProjects() []string {
+	var names []string
+	seen := map[string]bool{}
+	dirs, err := os.ReadDir(m.claudeDir)
+	if err != nil {
+		return names
+	}
+	cutoff := time.Now().Add(-14 * 24 * time.Hour)
+
+	for _, d := range dirs {
+		if !d.IsDir() {
+			continue
+		}
+		type logFile struct {
+			path string
+			mod  time.Time
+		}
+		var logs []logFile
+		files, err := os.ReadDir(filepath.Join(m.claudeDir, d.Name()))
+		if err != nil {
+			continue
+		}
+		for _, f := range files {
+			if !strings.HasSuffix(f.Name(), ".jsonl") || strings.HasPrefix(f.Name(), "agent-") {
+				continue
+			}
+			if info, err := f.Info(); err == nil && info.ModTime().After(cutoff) {
+				logs = append(logs, logFile{filepath.Join(m.claudeDir, d.Name(), f.Name()), info.ModTime()})
+			}
+		}
+		sort.Slice(logs, func(i, j int) bool { return logs[i].mod.After(logs[j].mod) })
+		if len(logs) > 3 {
+			logs = logs[:3]
+		}
+		for _, l := range logs {
+			if info := m.parseSession(l.path, d.Name()); info != nil && !seen[info.ProjectName] {
+				seen[info.ProjectName] = true
+				names = append(names, info.ProjectName)
+			}
+		}
+	}
+	sort.Slice(names, func(i, j int) bool { return strings.ToLower(names[i]) < strings.ToLower(names[j]) })
+	return names
+}

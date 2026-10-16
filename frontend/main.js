@@ -17,16 +17,22 @@ function getStateClass(percentage) {
     return 'state-good';
 }
 
+function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 // Render a single session
 function renderSession(session) {
     const stateClass = getStateClass(session.percentage);
-    
+    const id = escapeHtml(session.id);
+
     return `
-        <div class="session ${stateClass}">
+        <div class="session ${stateClass}" data-id="${id}">
             <div class="session-header">
-                <span class="project-name" title="${session.title || session.projectPath}">${session.projectName}${session.title ? ' <small class="session-title">' + session.title + '</small>' : ''}</span>
+                <span class="grip" title="Drag to reorder">⋮⋮</span>
+                <span class="project-name" title="${escapeHtml(session.title || session.projectPath)}">${escapeHtml(session.projectName)}${session.title ? ' <small class="session-title">' + escapeHtml(session.title) + '</small>' : ''}</span>
                 <span class="percentage">${session.percentage}%</span>
-                <button class="dismiss" title="Hide until it has new activity" onclick="dismissSession('${session.id}')">✕</button>
+                <button class="dismiss" title="Hide until it has new activity" onclick="dismissSession('${id}')">✕</button>
             </div>
             <div class="progress-container">
                 <div class="progress-bar" style="width: ${session.percentage}%"></div>
@@ -43,56 +49,10 @@ function renderSession(session) {
 async function dismissSession(id) {
     try {
         await window.go.main.App.DismissSession(id);
+        lastSessionsHtml = null;
         updateSessions();
     } catch (error) {
         console.error('Error dismissing session:', error);
-    }
-}
-
-function formatMoney(n) {
-    return '$' + n.toFixed(2);
-}
-
-// Credit balances under the limits: Console (estimated from spend) and claude.ai (as typed)
-async function updateCredits() {
-    const panel = document.getElementById('credits');
-    try {
-        const c = await window.go.main.App.GetCredits();
-        if (!c || (!c.hasConsole && !c.claudeAi)) {
-            panel.innerHTML = '';
-            panel.style.display = 'none';
-            return;
-        }
-        panel.style.display = '';
-
-        let rows = '';
-        if (c.hasConsole) {
-            const stateClass = c.consoleBalance < 1 ? 'state-critical' : c.consoleBalance < 5 ? 'state-warning' : 'state-good';
-            const approx = c.consoleEstimated ? '≈ ' : '';
-            const sub = c.consoleEstimated
-                ? `${formatMoney(c.consoleSnapshot)} on ${c.consoleAsOf}, ${formatMoney(c.consoleSpentSince)} spent since`
-                : (c.consoleNote || `Snapshot from ${c.consoleAsOf}`);
-            rows += `
-                <div class="credit ${stateClass}">
-                    <div class="limit-header">
-                        <span class="limit-label">Console (API)</span>
-                        <span class="percentage">${approx}${formatMoney(Math.max(c.consoleBalance, 0))}</span>
-                    </div>
-                    <div class="limit-reset">${sub}</div>
-                </div>`;
-        }
-        if (c.claudeAi) {
-            rows += `
-                <div class="credit state-good">
-                    <div class="limit-header">
-                        <span class="limit-label">claude.ai credits</span>
-                        <span class="percentage">${c.claudeAi}</span>
-                    </div>
-                </div>`;
-        }
-        panel.innerHTML = `<div class="limits-title">Credits</div>${rows}`;
-    } catch (error) {
-        console.error('Error fetching credits:', error);
     }
 }
 
@@ -119,7 +79,7 @@ function formatDuration(seconds) {
     return `${Math.max(m, 1)}m`;
 }
 
-// Render one plan limit: a usage bar and the time until it resets
+// Render one limit: a usage bar and the time until it resets
 function renderLimit(limit) {
     const pct = Math.min(100, Math.round(limit.percentage));
     const remaining = limit.resetsAt - Math.floor(Date.now() / 1000);
@@ -138,23 +98,23 @@ function renderLimit(limit) {
     `;
 }
 
-// Update the plan limits panel at the bottom
+// Update the limits panel at the bottom
 async function updateLimits() {
     const panel = document.getElementById('limits');
     try {
         const limits = await window.go.main.App.GetLimits();
         if (!limits || !limits.windows || limits.windows.length === 0) {
             panel.innerHTML = `
-                <div class="limits-title">Plan limits</div>
-                <div class="limits-empty">Shown after your next message in any Claude Code session</div>`;
+                <h2 class="section-title">Limits</h2>
+                <div class="limits-empty">Shown after your next message in a Claude Code session. Turn on automatic checks in settings (⚙) to keep them current.</div>`;
             return;
         }
         panel.innerHTML = `
-            <div class="limits-title">Plan limits</div>
+            <h2 class="section-title">Limits</h2>
             ${limits.windows.map(renderLimit).join('')}
             <div class="limits-asof">
                 <span>${limits.paused ? 'Limit reached, not checking' : 'Last reported ' + formatDuration(Math.floor(Date.now() / 1000) - limits.asOf) + ' ago'}</span>
-                ${limits.paused ? '' : '<button id="refreshLimits" class="refresh" title="Check now (uses one tiny request; needs pollLimits)" onclick="refreshLimits()">↻ Refresh</button>'}
+                ${limits.paused ? '' : '<button id="refreshLimits" class="refresh" title="Check now (uses one tiny request; needs automatic checks turned on in settings)" onclick="refreshLimits()">↻ Refresh</button>'}
             </div>`;
     } catch (error) {
         console.error('Error fetching limits:', error);
@@ -166,37 +126,93 @@ function renderEmpty() {
     return `
         <div class="empty-state">
             <div class="icon">💤</div>
-            <p>No active Claude sessions<br>Sessions modified in the last 60 min will appear here</p>
+            <p>No active Claude sessions<br>Open a project in Claude Code and it will appear here</p>
         </div>
     `;
 }
 
+let lastSessionsHtml = null;
+let draggingRow = null;
+
 // Update the UI with session data
 async function updateSessions() {
+    if (draggingRow) return; // don't redraw under the user's pointer
+
     const container = document.getElementById('sessions');
     const status = document.getElementById('status');
     const lastUpdate = document.getElementById('lastUpdate');
-    
+
     try {
-        // Call Go backend
         const sessions = await window.go.main.App.GetSessions();
-        
-        if (!sessions || sessions.length === 0) {
-            container.innerHTML = renderEmpty();
-            status.textContent = 'No sessions';
-        } else {
-            container.innerHTML = sessions.map(renderSession).join('');
-            status.textContent = `${sessions.length} session${sessions.length > 1 ? 's' : ''}`;
+        const html = (!sessions || sessions.length === 0) ? renderEmpty() : sessions.map(renderSession).join('');
+
+        // Only touch the DOM when something changed, so rows don't flicker
+        if (html !== lastSessionsHtml) {
+            container.innerHTML = html;
+            lastSessionsHtml = html;
         }
-        
-        // Update timestamp
-        const now = new Date();
-        lastUpdate.textContent = `Updated ${now.toLocaleTimeString()}`;
-        
+        status.textContent = (!sessions || sessions.length === 0) ? 'No sessions'
+            : `${sessions.length} session${sessions.length > 1 ? 's' : ''}`;
+
+        lastUpdate.textContent = `Updated ${new Date().toLocaleTimeString()}`;
     } catch (error) {
         console.error('Error fetching sessions:', error);
         status.textContent = 'Error';
     }
+}
+
+// Drag a row by its grip to reorder; the new order is saved and stays put
+function setupDragging() {
+    const container = document.getElementById('sessions');
+
+    container.addEventListener('pointerdown', (e) => {
+        const grip = e.target.closest('.grip');
+        if (!grip) return;
+        const row = grip.closest('.session');
+        if (!row) return;
+
+        e.preventDefault();
+        draggingRow = row;
+        row.classList.add('dragging');
+        document.body.classList.add('is-dragging');
+        grip.setPointerCapture(e.pointerId);
+
+        const move = (ev) => {
+            const siblings = [...container.querySelectorAll('.session')].filter(r => r !== row);
+            const next = siblings.find(r => {
+                const box = r.getBoundingClientRect();
+                return ev.clientY < box.top + box.height / 2;
+            });
+            if (next) container.insertBefore(row, next);
+            else container.appendChild(row);
+
+            // Scroll when dragging near the edge of the list
+            const box = container.getBoundingClientRect();
+            if (ev.clientY < box.top + 24) container.scrollTop -= 8;
+            else if (ev.clientY > box.bottom - 24) container.scrollTop += 8;
+        };
+
+        const finish = async () => {
+            grip.removeEventListener('pointermove', move);
+            grip.removeEventListener('pointerup', finish);
+            grip.removeEventListener('pointercancel', finish);
+            row.classList.remove('dragging');
+            document.body.classList.remove('is-dragging');
+            const ids = [...container.querySelectorAll('.session')].map(r => r.dataset.id);
+            try {
+                await window.go.main.App.SetOrder(ids);
+            } catch (error) {
+                console.error('Error saving order:', error);
+            }
+            draggingRow = null;
+            lastSessionsHtml = null;
+            updateSessions();
+        };
+
+        grip.addEventListener('pointermove', move);
+        grip.addEventListener('pointerup', finish);
+        grip.addEventListener('pointercancel', finish);
+    });
 }
 
 // Reset alert history
@@ -213,14 +229,22 @@ async function resetAlerts() {
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    // Initial update
+document.addEventListener('DOMContentLoaded', async () => {
+    setupDragging();
+
+    // Apply the saved look first so the window never flashes the wrong theme
+    try {
+        const cfg = await window.go.main.App.GetSettings();
+        applyAppearance(cfg);
+        if (!cfg.setupDone) openSetup();
+    } catch (error) {
+        console.error('Error loading settings:', error);
+        applyAppearance({});
+    }
+
     updateSessions();
     updateLimits();
 
-    // Periodic updates
     setInterval(updateSessions, UPDATE_INTERVAL);
     setInterval(updateLimits, UPDATE_INTERVAL);
-    updateCredits();
-    setInterval(updateCredits, 60 * 1000);
 });

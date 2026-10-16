@@ -6,10 +6,6 @@ export function DismissSession(arg1) {
   return window['go']['main']['App']['DismissSession'](arg1);
 }
 
-export function GetCredits() {
-  return window['go']['main']['App']['GetCredits']();
-}
-
 export function GetLimits() {
   return window['go']['main']['App']['GetLimits']();
 }
@@ -18,10 +14,30 @@ export function GetSessions() {
   return window['go']['main']['App']['GetSessions']();
 }
 
+export function GetSettings() {
+  return window['go']['main']['App']['GetSettings']();
+}
+
+export function HasClaudeCLI() {
+  return window['go']['main']['App']['HasClaudeCLI']();
+}
+
+export function KnownProjects() {
+  return window['go']['main']['App']['KnownProjects']();
+}
+
 export function RefreshLimits() {
   return window['go']['main']['App']['RefreshLimits']();
 }
 
 export function ResetAlerts() {
   return window['go']['main']['App']['ResetAlerts']();
+}
+
+export function SaveSettings(arg1) {
+  return window['go']['main']['App']['SaveSettings'](arg1);
+}
+
+export function SetOrder(arg1) {
+  return window['go']['main']['App']['SetOrder'](arg1);
 }

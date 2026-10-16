@@ -3,29 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Headroom</title>
+    <title>HeadRoom</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
+    <div class="container" id="main">
         <header>
-            <h1>🔍 Headroom</h1>
+            <h1>HeadRoom</h1>
             <span class="status" id="status">Scanning...</span>
+            <button id="gear" class="icon-btn" title="Settings" onclick="openSettings()">⚙</button>
         </header>
-        
-        <div id="sessions" class="sessions">
-            <!-- Sessions will be populated here -->
-        </div>
+
+        <section class="context">
+            <h2 class="section-title">Context</h2>
+            <div id="sessions" class="sessions">
+                <!-- Sessions will be populated here -->
+            </div>
+        </section>
 
         <section id="limits" class="limits"></section>
-        <section id="credits" class="limits" style="display: none"></section>
 
         <footer>
             <span id="lastUpdate">--</span>
-            <button onclick="resetAlerts()" title="Reset alert history">🔔</button>
+            <button class="icon-btn" onclick="resetAlerts()" title="Reset alert history">🔔</button>
         </footer>
     </div>
 
+    <div id="overlay" class="overlay" hidden></div>
+
+    <script src="themes.js"></script>
     <script src="main.js"></script>
+    <script src="settings.js"></script>
 </body>
 </html>

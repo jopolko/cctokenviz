@@ -4,6 +4,7 @@ import (
 	"context"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"sync"
 	"time"
 
@@ -71,7 +72,7 @@ func (a *App) shutdown(ctx context.Context) {
 
 // GetSessions returns all active Claude sessions with their context usage
 func (a *App) GetSessions() []SessionInfo {
-	return a.monitor.GetActiveSessions()
+	return applyOrder(a.monitor.GetActiveSessions())
 }
 
 // GetLimits returns the account's 5-hour and weekly plan limits, if a session has reported them
@@ -85,9 +86,29 @@ func (a *App) RefreshLimits() Limits {
 	return a.monitor.GetLimits()
 }
 
-// GetCredits returns the credit balances to show under the limits
-func (a *App) GetCredits() Credits {
-	return GetCredits()
+// GetSettings returns the saved settings
+func (a *App) GetSettings() Config {
+	return loadConfig()
+}
+
+// SaveSettings stores settings from the wizard or settings panel
+func (a *App) SaveSettings(cfg Config) error {
+	return saveConfig(cfg)
+}
+
+// SetOrder remembers the order the rows were dragged into
+func (a *App) SetOrder(ids []string) {
+	saveOrder(ids)
+}
+
+// HasClaudeCLI reports whether the claude command is available for limit polling
+func (a *App) HasClaudeCLI() bool {
+	return findClaude() != ""
+}
+
+// KnownProjects lists project names seen in recent sessions, for the project picker
+func (a *App) KnownProjects() []string {
+	return a.monitor.KnownProjects()
 }
 
 // DismissSession hides a session until it sees new activity
@@ -135,8 +156,8 @@ func (a *App) checkThresholds(session SessionInfo) {
 
 // triggerAlert sends OS-specific notifications and sounds
 func (a *App) triggerAlert(session SessionInfo, threshold int) {
-	title := "Headroom"
-	message := session.ProjectName + " - " + string(rune(threshold)) + "% context used"
+	title := "HeadRoom"
+	message := session.ProjectName + " - " + strconv.Itoa(threshold) + "% context used"
 
 	if threshold >= 90 {
 		message = "⚠️ " + session.ProjectName + " - Context almost full!"
@@ -193,7 +214,7 @@ func (a *App) windowsAlert(title, message string, threshold int) {
 	$xml = New-Object Windows.Data.Xml.Dom.XmlDocument
 	$xml.LoadXml($template)
 	$toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
-	[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Headroom").Show($toast)
+	[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("HeadRoom").Show($toast)
 	`
 	exec.Command("powershell", "-Command", ps).Run()
 

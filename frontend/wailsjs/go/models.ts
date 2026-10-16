@@ -1,29 +1,33 @@
 export namespace main {
 	
-	export class Credits {
-	    claudeAi: string;
-	    hasConsole: boolean;
-	    consoleBalance: number;
-	    consoleSnapshot: number;
-	    consoleAsOf: string;
-	    consoleSpentSince: number;
-	    consoleEstimated: boolean;
-	    consoleNote: string;
+	export class Config {
+	    projects: string[];
+	    activeMinutes: number;
+	    contextTokens: number;
+	    pollLimits: boolean;
+	    pollMinutes: number;
+	    theme: string;
+	    accent: string;
+	    font: string;
+	    fontSize: number;
+	    setupDone: boolean;
 	
 	    static createFrom(source: any = {}) {
-	        return new Credits(source);
+	        return new Config(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.claudeAi = source["claudeAi"];
-	        this.hasConsole = source["hasConsole"];
-	        this.consoleBalance = source["consoleBalance"];
-	        this.consoleSnapshot = source["consoleSnapshot"];
-	        this.consoleAsOf = source["consoleAsOf"];
-	        this.consoleSpentSince = source["consoleSpentSince"];
-	        this.consoleEstimated = source["consoleEstimated"];
-	        this.consoleNote = source["consoleNote"];
+	        this.projects = source["projects"];
+	        this.activeMinutes = source["activeMinutes"];
+	        this.contextTokens = source["contextTokens"];
+	        this.pollLimits = source["pollLimits"];
+	        this.pollMinutes = source["pollMinutes"];
+	        this.theme = source["theme"];
+	        this.accent = source["accent"];
+	        this.font = source["font"];
+	        this.fontSize = source["fontSize"];
+	        this.setupDone = source["setupDone"];
 	    }
 	}
 	export class LimitInfo {

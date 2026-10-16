@@ -17,7 +17,7 @@ func main() {
 	app := NewApp()
 
 	err := wails.Run(&options.App{
-		Title:     "Headroom",
+		Title:     "HeadRoom",
 		Width:     240,
 		Height:    460,
 		MinWidth:  200,

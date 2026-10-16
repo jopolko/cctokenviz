@@ -5,53 +5,64 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
-// Config is read from ~/.headroom.json on every refresh, so edits apply live.
-//
-//	{"projects": ["my-app", "my-api"], "activeMinutes": 30}
-//
-// projects: only show sessions whose project folder (under ~/projects) matches. Empty shows all.
-// activeMinutes: how recently a session must have been modified to be listed.
-//
-// contextTokens: context window size for sessions that haven't exported one (default 200000;
-// use 1000000 for 1M-context models). Sessions using the status line export report their own.
-//
-// pollLimits: opt in (true) to a background headless `claude -p` call that refreshes plan limits.
-// Off by default. See the README for what it does and what it costs.
-// pollMinutes: gap between automatic polls (default 10, minimum 5; halved above 85% usage).
-// credits: balances shown in the panel. "console" is a snapshot (balance in USD, asOf as YYYY-MM-DD);
-// with ANTHROPIC_ADMIN_KEY set, spend since asOf is subtracted. "claudeAi" is shown as typed.
+// Config is the user's settings, stored in ~/.headroom.json. The setup wizard and the
+// settings panel edit it; it is re-read on every refresh, so hand edits apply live too.
 type Config struct {
-	Projects      []string `json:"projects"`
-	ActiveMinutes int      `json:"activeMinutes"`
-	ContextTokens int      `json:"contextTokens"`
-	PollLimits    *bool    `json:"pollLimits"`
-	PollMinutes   int      `json:"pollMinutes"`
-	Credits       struct {
-		Console *struct {
-			Balance float64 `json:"balance"`
-			AsOf    string  `json:"asOf"`
-		} `json:"console"`
-		ClaudeAi string `json:"claudeAi"`
-	} `json:"credits"`
+	// What to show
+	Projects      []string `json:"projects"`      // only these project folders; empty shows all
+	ActiveMinutes int      `json:"activeMinutes"` // how recently a session must have changed to be listed
+	ContextTokens int      `json:"contextTokens"` // context window for sessions that haven't reported one
+
+	// Plan limits
+	PollLimits  bool `json:"pollLimits"`  // opt in to the background headless call that refreshes limits
+	PollMinutes int  `json:"pollMinutes"` // gap between automatic polls (default 10, minimum 5)
+
+	// Look
+	Theme     string `json:"theme"`
+	Accent    string `json:"accent"` // optional #rrggbb override for headings and highlights
+	Font      string `json:"font"`
+	FontSize  int    `json:"fontSize"`
+	SetupDone bool   `json:"setupDone"`
+}
+
+var configMu sync.Mutex
+
+func configPath() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(home, ".headroom.json")
 }
 
 func loadConfig() Config {
 	cfg := Config{ActiveMinutes: ActiveMinutes}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return cfg
+	if p := configPath(); p != "" {
+		if data, err := os.ReadFile(p); err == nil {
+			json.Unmarshal(data, &cfg)
+		}
 	}
-	data, err := os.ReadFile(filepath.Join(home, ".headroom.json"))
-	if err != nil {
-		return cfg
-	}
-	json.Unmarshal(data, &cfg)
 	if cfg.ActiveMinutes <= 0 {
 		cfg.ActiveMinutes = ActiveMinutes
 	}
 	return cfg
+}
+
+func saveConfig(cfg Config) error {
+	configMu.Lock()
+	defer configMu.Unlock()
+	p := configPath()
+	if p == "" {
+		return os.ErrNotExist
+	}
+	data, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(p, append(data, '\n'), 0o644)
 }
 
 func (c Config) allows(project string) bool {

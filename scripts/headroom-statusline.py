@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Minimal Claude Code status line that also feeds Headroom.
+"""Minimal Claude Code status line that also feeds HeadRoom.
 
 Claude Code pipes a JSON blob to the status line command on every refresh. This script
-saves that JSON to ~/.headroom/status-<session_id>.json, which is where Headroom
+saves that JSON to ~/.headroom/status-<session_id>.json, which is where HeadRoom
 reads plan limits (5-hour / weekly) and the real context window size from, then prints a
 short status line.
 
@@ -18,7 +18,7 @@ import sys
 
 
 def export_for_headroom(d):
-    """Write the raw status JSON where Headroom can read it. Never raises."""
+    """Write the raw status JSON where HeadRoom can read it. Never raises."""
     try:
         sid = str(d.get("session_id") or "")
         if not sid or not all(c.isalnum() or c in "-_" for c in sid):
