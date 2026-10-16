@@ -193,7 +193,7 @@ HeadRoom can use two sources for the limits. You only need one. Context bars nee
 | Source | Shows | Authentication | Cost |
 |--------|-------|----------------|------|
 | **Status line export** | 5-hour and weekly plan limits, plus each session's real context window size | None. Claude Code runs your status line script and hands it the data. | Free. No extra requests. |
-| **Headless polling** (opt-in) | 5-hour and weekly plan limits | Your own `claude` login, used by the official CLI on your machine. HeadRoom never reads or stores it. | One small real request per poll, counted against your plan. See below. |
+| **Headless polling** (opt-in) | 5-hour and weekly plan limits | Your own `claude` login, used by the official CLI on your machine. HeadRoom never reads or stores it. | A small real request per poll: it slowly draws on your plan, or bills your API key. See [What polling costs](#what-polling-costs). |
 
 ### Limits, option A: status line export
 
@@ -219,7 +219,17 @@ claude -p "reply with: ok" --model haiku --output-format stream-json --verbose -
 
 Claude Code emits a `rate_limit_event` with both windows, which HeadRoom reads.
 
-**What it costs.** Each probe is a real Haiku request. Claude Code sends its normal system prompt and tool definitions even for a one-word reply, so one probe is about 40,000 input tokens (mostly cache reads) and a handful of output tokens, roughly $0.002 at API list prices. On a subscription you pay no money, but every probe counts toward your plan usage. I could not measure its share of your limit because the usage figure only moves in whole percents; expect it to be small, but it is not zero.
+#### What polling costs
+
+Polling is a slow drip, not a one-off. Each poll is a real Haiku request: Claude Code sends its normal system prompt and tool definitions even for a one-word reply, so one poll is about 40,000 input tokens (mostly cache reads) and a handful of output tokens. At the default of one poll every 10 minutes while you're working, that's about 6 polls and 240,000 mostly cached tokens an hour. HeadRoom never charges anything itself; what you pay depends on what the `claude` command is signed in to:
+
+| `claude` is signed in with | What a poll costs |
+|----------------------------|-------------------|
+| **A Pro or Max subscription** | No money. Each poll takes a small slice of your 5-hour and weekly limits, so HeadRoom's own checking slowly uses some of the quota it is showing you. I couldn't measure the share, because the usage figure only moves in whole percents; expect it to be small, but it is not zero. |
+| **An Anthropic API key** (an `ANTHROPIC_API_KEY` set, or a Console login) | Real money: roughly $0.002 per poll at API list prices, about 1.3 cents an hour at the default. The key's credit balance goes down a little while you work. |
+| **A subscription with extra usage switched on** | Free until the 5-hour limit is used up. At 100%, a poll goes through and is billed to extra usage. HeadRoom stops polling once it sees a limit at 100% and starts again after the reset, but it can only react after it has seen the 100%. |
+
+HeadRoom can't tell which of these applies to you. To keep the drip small, it only polls while one of your sessions has been active in the last 30 minutes, and you can lower the frequency or turn polling off in Settings. The status line export (option A, above) costs nothing, at the price of only updating from terminal sessions.
 
 - It uses the official `claude` CLI under your own login, on your machine. HeadRoom never reads or stores your credentials.
 - It never runs while you're idle, so it won't start a new 5-hour window by itself.
