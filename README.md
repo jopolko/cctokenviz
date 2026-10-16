@@ -2,6 +2,10 @@
 
 A lightweight desktop app that shows how much room you have left in Claude Code: context window usage across all your active sessions, plus your 5-hour and weekly plan limits.
 
+**It replaces the status line for the desktop app.** In the Claude Code terminal, a `/statusline` can show context remaining, 5-hour usage and 7-day usage. The Claude desktop app has no status line, so those numbers aren't available there. HeadRoom puts them in a small always-on-top window, for the desktop app and the terminal alike.
+
+**[Download for Windows](https://github.com/jopolko/headroom/releases/latest)** (a single portable `.exe`, no installer needed)
+
 Forked from [gosparq/claudewatch](https://github.com/gosparq/claudewatch) (MIT). Not affiliated with Anthropic.
 
 <p align="center"><img src="docs/screenshot.png" alt="HeadRoom in the Terminal theme: context per project and 5-hour and weekly limits" width="260"> &nbsp; <img src="docs/themes.png" alt="The theme picker: ten styles, each shown as a live miniature" width="300"></p>
@@ -55,7 +59,7 @@ Works with the Claude Code terminal and the Claude desktop app (Code tab); both 
 
 ### Pre-built Binaries
 
-Download from the project's GitHub Releases page.
+Download the latest Windows build from the [Releases page](https://github.com/jopolko/headroom/releases/latest): unzip it and run `HeadRoom.exe`. Binaries are published as release downloads, not stored in the repository.
 
 ### Build from Source
 
