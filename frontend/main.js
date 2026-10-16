@@ -181,7 +181,8 @@ async function updateSessions() {
         status.textContent = (!sessions || sessions.length === 0) ? 'No sessions'
             : `${sessions.length} session${sessions.length > 1 ? 's' : ''}`;
 
-        lastUpdate.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+        lastUpdate.textContent = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        lastUpdate.title = 'Last refreshed';
     } catch (error) {
         console.error('Error fetching sessions:', error);
         status.textContent = 'Error';
