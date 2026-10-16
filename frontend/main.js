@@ -108,9 +108,6 @@ async function refreshLimits() {
     updateLimits();
 }
 
-// Window lengths in seconds, used for the "time elapsed" tick on each limit bar
-const WINDOW_SECONDS = { '5-hour': 5 * 3600, 'Weekly': 7 * 86400 };
-
 // Format seconds as "2h 14m" / "3d 4h" / "12m"
 function formatDuration(seconds) {
     if (seconds <= 0) return 'now';
@@ -122,14 +119,10 @@ function formatDuration(seconds) {
     return `${Math.max(m, 1)}m`;
 }
 
-// Render one plan limit: bar for usage, tick for how far through the window we are
+// Render one plan limit: a usage bar and the time until it resets
 function renderLimit(limit) {
     const pct = Math.min(100, Math.round(limit.percentage));
     const remaining = limit.resetsAt - Math.floor(Date.now() / 1000);
-    const total = WINDOW_SECONDS[limit.label];
-    const elapsed = total ? Math.min(100, Math.max(0, (1 - remaining / total) * 100)) : null;
-    const tick = elapsed === null ? '' :
-        `<div class="limit-tick" style="left: ${elapsed}%" title="${Math.round(elapsed)}% of the window has passed"></div>`;
 
     return `
         <div class="limit ${getStateClass(pct)}">
@@ -139,7 +132,6 @@ function renderLimit(limit) {
             </div>
             <div class="progress-container limit-bar">
                 <div class="progress-bar" style="width: ${pct}%"></div>
-                ${tick}
             </div>
             <div class="limit-reset">Resets in ${formatDuration(remaining)}</div>
         </div>
@@ -158,7 +150,7 @@ async function updateLimits() {
             return;
         }
         panel.innerHTML = `
-            <div class="limits-title">Plan limits <span class="limits-hint">| = time passed</span></div>
+            <div class="limits-title">Plan limits</div>
             ${limits.windows.map(renderLimit).join('')}
             <div class="limits-asof">
                 <span>${limits.paused ? 'Limit reached, not checking' : 'Last reported ' + formatDuration(Math.floor(Date.now() / 1000) - limits.asOf) + ' ago'}</span>

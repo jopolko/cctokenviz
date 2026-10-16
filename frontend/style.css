@@ -126,14 +126,6 @@ header h1 {
     color: #c0c0c0;
 }
 
-.limits-hint {
-    font-weight: 400;
-    letter-spacing: 0;
-    text-transform: none;
-    color: #999;
-    margin-left: 6px;
-}
-
 .limits-empty {
     font-size: 12px;
     line-height: 1.4;
@@ -200,22 +192,6 @@ header h1 {
     font-size: 12px;
     font-weight: 500;
     color: #fff;
-}
-
-.limit-bar {
-    position: relative;
-    overflow: visible;
-}
-
-.limit-tick {
-    position: absolute;
-    top: -3px;
-    bottom: -3px;
-    width: 2px;
-    margin-left: -1px;
-    background: #e8e8e8;
-    border-radius: 1px;
-    opacity: 0.9;
 }
 
 .limit-reset {
