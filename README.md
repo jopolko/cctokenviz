@@ -141,15 +141,15 @@ Open Settings from the gear at the top right any time. **Look** has ten styles a
 | Style | Meter | Flavor |
 |-------|-------|--------|
 | **Terminal** (Linux) | Segmented LED blocks | `$ context`, lowercase `used`/`free`, scanlines, monospace |
-| **Starship** (sci-fi) | Glowing gauge with tick marks | `[ CONTEXT ]`, cut corners, grid, `T-minus` countdown |
+| **Starship** (sci-fi) | Glowing gauge with tick marks | `[ CONTEXT ]`, cut corners, grid |
 | **Satoshi** (Bitcoin) | Minted coins | `₿` headings, `Spent`/`Left`, orange on black |
-| **Neural** (AI) | Chain of nodes on a wire | `context_window`, `rate_limits`, `resets_in`, monospace |
-| **Frontier** (cowboy) | A belt of cartridges | `★ CONTEXT ★`, slab serif, wood grain, `Back in` |
+| **Neural** (AI) | Chain of nodes on a wire | `context_window`, `rate_limits`, monospace |
+| **Frontier** (cowboy) | A belt of cartridges | `★ CONTEXT ★`, slab serif, wood grain |
 | **Shonen** (anime) | Slanted power gauge | `CONTEXT!`, impact lettering, speed lines, `Power used`/`Power left` |
 | **Sweet** (kawaii) | Hearts | `♡ Context ♡`, handwriting headings, pastel pink, hearts and sparkles |
-| **Bloom** (garden and eco) | Leaves | `❦ Context ❦`, italic serif, sage and cream, `Renews in` |
-| **Celestial** | Stars | `☾ Context ☽`, starfield, gold on indigo, `Rises again in` |
-| **Lab Notebook** (scientific) | Ruled gauge | `Fig. 1 — Context`, graph paper, serif, `Reset after` |
+| **Bloom** (garden and eco) | Leaves | `❦ Context ❦`, italic serif, sage and cream |
+| **Celestial** | Stars | `☾ Context ☽`, starfield, gold on indigo |
+| **Lab Notebook** (scientific) | Ruled gauge | `Fig. 1 — Context`, graph paper, serif |
 
 The plain themes are Midnight, Daylight and High contrast. They are original designs and don't use any brand's characters or logos.
 

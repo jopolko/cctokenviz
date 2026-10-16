@@ -194,7 +194,26 @@ body.is-dragging {
     font-size: 0.8em;
     color: var(--dim);
     overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.title-text {
+    display: inline-block;
+    white-space: nowrap;
+}
+
+/* A title that doesn't fit scrolls left, pauses, and scrolls back */
+.title-text.scroll {
+    animation: ticker linear infinite alternate;
+}
+
+@keyframes ticker {
+    0%, 12% { transform: translateX(0); }
+    88%, 100% { transform: translateX(calc(-1 * var(--dist))); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .title-text.scroll { animation: none; }
 }
 
 .percentage {

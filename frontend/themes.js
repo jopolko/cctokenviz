@@ -5,12 +5,12 @@
 //   meter   - the indicator: its kind (block, led, heart, star, leaf, bullet, node, slant,
 //             smooth...), how many segments, and optional ticks
 //   font    - body font id from FONTS (headFont for headings)
-//   labels  - the words for Context, Limits, Used, Free and Resets
+//   labels  - the words for Context, Limits, Used and Free
 // style.css reads all of it, so a new theme is just a new entry here.
 
 const FLAT_LOOK = { radius: 8, bw: 1, bg: 'none', bgSize: 'auto', pre: '', post: '', logo: '', glow: false, caps: true, clip: 'none', headWeight: 800, headStyle: 'normal', headSpacing: '0.14em' };
 const SMOOTH = { kind: 'smooth', n: 0 };
-const PLAIN_LABELS = { context: 'Context', limits: 'Limits', used: 'Used', free: 'Free', resets: 'Resets in' };
+const PLAIN_LABELS = { context: 'Context', limits: 'Limits', used: 'Used', free: 'Free' };
 
 // Pattern helpers (inline SVG and gradients, so nothing is downloaded)
 const gridBg = (rgba, size) => ({ bg: `linear-gradient(${rgba} 1px, transparent 1px), linear-gradient(90deg, ${rgba} 1px, transparent 1px)`, bgSize: `${size}px ${size}px` });
@@ -36,7 +36,7 @@ const THEMES = {
         vars: { bg: '#0a0e0a', panel: '#0d140d', panel2: '#0a110a', border: '#1d3a1d', track: '#142214', text: '#b6f5b6', dim: '#5fbf5f', strong: '#e6ffe6', accent: '#39ff14', good: '#39ff14', warn: '#e6ff4d', danger: '#ffb000', crit: '#ff4040' },
         look: { ...FLAT_LOOK, radius: 0, ...scanBg('rgba(0,0,0,0.28)'), pre: '$ ', logo: '>_ ', caps: false, headWeight: 700, headSpacing: '0.04em' },
         meter: { kind: 'block', n: 20 },
-        labels: { context: 'context', limits: 'limits', used: 'used', free: 'free', resets: 'resets in' },
+        labels: { context: 'context', limits: 'limits', used: 'used', free: 'free' },
     },
     scifi: {
         name: 'Starship', tag: 'Bridge console', group: 'styles', icon: '◈', font: 'bahnsemi', headFont: 'bahnsemi',
@@ -44,7 +44,7 @@ const THEMES = {
         look: { ...FLAT_LOOK, radius: 0, ...gridBg('rgba(41,217,255,0.07)', 24), pre: '[ ', post: ' ]', logo: '◈ ', glow: true, headSpacing: '0.22em',
             clip: 'polygon(0 7px, 7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%)' },
         meter: { kind: 'smooth', n: 0, ticks: true, glow: true },
-        labels: { ...PLAIN_LABELS, context: 'Context', limits: 'Limits', resets: 'T-minus' },
+        labels: { ...PLAIN_LABELS, context: 'Context', limits: 'Limits' },
     },
     bitcoin: {
         name: 'Satoshi', tag: 'Number go up', group: 'styles', icon: '₿', font: 'franklin', headFont: 'franklin',
@@ -58,14 +58,14 @@ const THEMES = {
         vars: { bg: '#0b0820', panel: '#15113a', panel2: '#110e30', border: '#3b2f8f', track: '#241c5e', text: '#e8e4ff', dim: '#aca3f2', strong: '#ffffff', accent: '#a78bfa', good: '#34d399', warn: '#fbbf24', danger: '#fb7185', crit: '#f43f5e' },
         look: { ...FLAT_LOOK, radius: 12, ...dotBg('rgba(167,139,250,0.16)', 28), pre: '◉ ', logo: '◉ ', glow: true, caps: false, headWeight: 700, headSpacing: '0.03em' },
         meter: { kind: 'node', n: 14 },
-        labels: { context: 'context_window', limits: 'rate_limits', used: 'used', free: 'free', resets: 'resets_in' },
+        labels: { context: 'context_window', limits: 'rate_limits', used: 'used', free: 'free' },
     },
     cowboy: {
         name: 'Frontier', tag: 'Yeehaw', group: 'styles', icon: '★', font: 'rockwell', headFont: 'rockwell',
         vars: { bg: '#3b2616', panel: '#4a301c', panel2: '#43291a', border: '#8a5a2b', track: '#2e1d10', text: '#f3e2c3', dim: '#d2b184', strong: '#fff4dc', accent: '#e0a03a', good: '#9bc53d', warn: '#e0a03a', danger: '#d9622b', crit: '#c0392b' },
         look: { ...FLAT_LOOK, radius: 3, bw: 2, bg: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.10) 0 2px, transparent 2px 7px)', pre: '★ ', post: ' ★', logo: '🤠 ', headWeight: 800 },
         meter: { kind: 'bullet', n: 12 },
-        labels: { ...PLAIN_LABELS, free: 'Left', resets: 'Back in' },
+        labels: { ...PLAIN_LABELS, free: 'Left' },
     },
     anime: {
         name: 'Shonen', tag: 'Anime energy', group: 'styles', icon: '⚡', font: 'bahnschrift', headFont: 'impact',
@@ -79,28 +79,28 @@ const THEMES = {
         vars: { bg: '#fff0f6', panel: '#ffffff', panel2: '#fff7fb', border: '#ffb6d5', track: '#ffe0ee', text: '#6b3a55', dim: '#a0678a', strong: '#4a2040', accent: '#ff5fa2', good: '#ff5fa2', warn: '#ffa94d', danger: '#ff7aa2', crit: '#e8336d' },
         look: { ...FLAT_LOOK, radius: 20, ...emojiBg('💗', '✨', 100, 0.2), pre: '♡ ', post: ' ♡', logo: '💗 ', caps: false, headWeight: 400, headSpacing: '0.04em' },
         meter: { kind: 'heart', n: 10 },
-        labels: { context: 'Context', limits: 'Limits', used: 'Used', free: 'Left', resets: 'Resets in' },
+        labels: { context: 'Context', limits: 'Limits', used: 'Used', free: 'Left' },
     },
     bloom: {
         name: 'Bloom', tag: 'Garden and eco', group: 'styles', icon: '🌿', font: 'constantia', headFont: 'constantia',
         vars: { bg: '#f1f0e4', panel: '#fbfaf2', panel2: '#f6f5e8', border: '#c5d1ae', track: '#dfe6cf', text: '#34453a', dim: '#6b7f62', strong: '#233328', accent: '#5f8f4e', good: '#5f9a4e', warn: '#e0a83a', danger: '#d9776b', crit: '#c0453a' },
         look: { ...FLAT_LOOK, radius: 16, ...emojiBg('🍃', '🌼', 104, 0.22), pre: '❦ ', post: ' ❦', logo: '🌿 ', caps: false, headWeight: 700, headStyle: 'italic', headSpacing: '0.04em' },
         meter: { kind: 'leaf', n: 12 },
-        labels: { context: 'Context', limits: 'Limits', used: 'Used', free: 'Fresh', resets: 'Renews in' },
+        labels: { context: 'Context', limits: 'Limits', used: 'Used', free: 'Fresh' },
     },
     celestial: {
         name: 'Celestial', tag: 'Moon and stars', group: 'styles', icon: '☾', font: 'corbel', headFont: 'constantia',
         vars: { bg: '#120d2b', panel: '#1d1646', panel2: '#181239', border: '#4a3c96', track: '#2c2468', text: '#ece6ff', dim: '#b6a9ee', strong: '#ffffff', accent: '#ffd166', good: '#ffd166', warn: '#ff9f68', danger: '#ff7aa8', crit: '#ff4d6d' },
         look: { ...FLAT_LOOK, radius: 14, ...starsBg(), pre: '☾ ', post: ' ☽', logo: '☾ ', glow: true, caps: false, headWeight: 700, headStyle: 'italic', headSpacing: '0.06em' },
         meter: { kind: 'star', n: 10 },
-        labels: { ...PLAIN_LABELS, free: 'Left', resets: 'Rises again in' },
+        labels: { ...PLAIN_LABELS, free: 'Left' },
     },
     lab: {
         name: 'Lab Notebook', tag: 'Scientific method', group: 'styles', icon: '⚗', font: 'cambria', headFont: 'cambria',
         vars: { bg: '#f7f9fc', panel: '#ffffff', panel2: '#ffffff', border: '#9db4d6', track: '#e4ebf5', text: '#1d2b44', dim: '#4d6288', strong: '#0f1b30', accent: '#1f5fbf', good: '#1f8a5b', warn: '#c77a00', danger: '#c8432f', crit: '#a1211a' },
         look: { ...FLAT_LOOK, radius: 2, ...gridBg('rgba(31,95,191,0.10)', 16), logo: '⚗ ', caps: false, headWeight: 700, headSpacing: '0.02em' },
         meter: { kind: 'smooth', n: 0, ticks: true },
-        labels: { context: 'Fig. 1 — Context', limits: 'Fig. 2 — Limits', used: 'Used', free: 'Free', resets: 'Reset after' },
+        labels: { context: 'Fig. 1 — Context', limits: 'Fig. 2 — Limits', used: 'Used', free: 'Free' },
     },
 
     /* ---------- Simple ---------- */

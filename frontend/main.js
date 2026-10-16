@@ -30,7 +30,7 @@ function renderSession(session) {
         <div class="session ${stateClass}" data-id="${id}">
             <div class="session-header">
                 <span class="grip" title="Drag to reorder">⋮⋮</span>
-                <span class="project-name" title="${escapeHtml(session.title || session.projectPath)}">${escapeHtml(session.projectName)}${session.title ? ' <small class="session-title">' + escapeHtml(session.title) + '</small>' : ''}</span>
+                <span class="project-name" title="${escapeHtml(session.title || session.projectPath)}">${escapeHtml(session.projectName)}${session.title ? '<small class="session-title"><span class="title-text">' + escapeHtml(session.title) + '</span></small>' : ''}</span>
                 <span class="percentage">${session.percentage}%</span>
                 <button class="dismiss" title="Hide until it has new activity" onclick="dismissSession('${id}')">✕</button>
             </div>
@@ -100,7 +100,7 @@ function renderLimit(limit) {
                 <span class="percentage">${pct}%</span>
             </div>
             ${meterHtml(pct)}
-            <div class="limit-reset"><span>${LABELS.resets} ${formatDuration(remaining)}</span><span class="limit-at" title="${new Date(limit.resetsAt * 1000).toLocaleString()}">${formatResetClock(limit.resetsAt)}</span></div>
+            <div class="limit-reset"><span>${formatDuration(remaining)}</span><span class="limit-at" title="${new Date(limit.resetsAt * 1000).toLocaleString()}">${formatResetClock(limit.resetsAt)}</span></div>
         </div>
     `;
 }
@@ -177,28 +177,63 @@ async function updateSessions() {
 
     const container = document.getElementById('sessions');
     const status = document.getElementById('status');
-    const lastUpdate = document.getElementById('lastUpdate');
 
     try {
         const sessions = await window.go.main.App.GetSessions();
-        const html = (!sessions || sessions.length === 0) ? renderEmpty() : sessions.map(renderSession).join('');
+        const list = sessions || [];
+        const signature = list.map(x => `${x.id}|${x.projectName}|${x.title}`).join('\n');
 
-        // Only touch the DOM when something changed, so rows don't flicker
-        if (html !== lastSessionsHtml) {
-            container.innerHTML = html;
-            lastSessionsHtml = html;
+        if (list.length && signature === lastSessionsHtml && container.querySelectorAll('.session').length === list.length) {
+            // Same rows, same names: refresh only the numbers and meters
+            list.forEach((session) => {
+                const row = [...container.querySelectorAll('.session')].find(r => r.dataset.id === session.id);
+                if (row) updateRow(row, session);
+            });
+        } else {
+            container.innerHTML = list.length ? list.map(renderSession).join('') : renderEmpty();
+            lastSessionsHtml = signature;
+            applyTicker(container);
             scheduleFit();
         }
         status.textContent = (!sessions || sessions.length === 0) ? 'No sessions'
             : `${sessions.length} session${sessions.length > 1 ? 's' : ''}`;
 
-        lastUpdate.textContent = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-        lastUpdate.title = 'Last refreshed';
     } catch (error) {
         console.error('Error fetching sessions:', error);
         status.textContent = 'Error';
     }
 }
+
+// Refresh one row's numbers without rebuilding it (keeps the title ticker running)
+function updateRow(row, session) {
+    row.className = `session ${getStateClass(session.percentage)}${row.classList.contains('dragging') ? ' dragging' : ''}`;
+    row.querySelector('.percentage').textContent = session.percentage + '%';
+    row.querySelector('.meter').outerHTML = meterHtml(session.percentage);
+    const spans = row.querySelectorAll('.session-footer span');
+    spans[0].textContent = `${LABELS.used}: ${formatTokens(session.usedTokens)}`;
+    spans[1].textContent = `${LABELS.free}: ${formatTokens(session.freeTokens)}`;
+}
+
+// A session title too long for its row slowly scrolls to the left and back, so it can be read in full
+function applyTicker(container) {
+    container.querySelectorAll('.session-title').forEach((box) => {
+        const text = box.firstElementChild;
+        if (!text) return;
+        text.classList.remove('scroll');
+        const distance = text.scrollWidth - box.clientWidth;
+        if (distance > 2) {
+            text.style.setProperty('--dist', distance + 'px');
+            text.style.animationDuration = (distance / 22 + 5) + 's'; // ~22px a second, plus pauses at each end
+            text.classList.add('scroll');
+        }
+    });
+}
+
+let tickerTimer = null;
+window.addEventListener('resize', () => {
+    clearTimeout(tickerTimer);
+    tickerTimer = setTimeout(() => applyTicker(document.getElementById('sessions')), 250);
+});
 
 // Drag a row by its grip to reorder; the new order is saved and stays put
 function setupDragging() {
