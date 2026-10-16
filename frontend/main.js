@@ -161,8 +161,8 @@ async function updateLimits() {
             <div class="limits-title">Plan limits <span class="limits-hint">| = time passed</span></div>
             ${limits.windows.map(renderLimit).join('')}
             <div class="limits-asof">
-                <span>Last reported ${formatDuration(Math.floor(Date.now() / 1000) - limits.asOf)} ago</span>
-                <button id="refreshLimits" class="refresh" title="Check now (uses one tiny request; needs pollLimits)" onclick="refreshLimits()">↻ Refresh</button>
+                <span>${limits.paused ? 'Limit reached, not checking' : 'Last reported ' + formatDuration(Math.floor(Date.now() / 1000) - limits.asOf) + ' ago'}</span>
+                ${limits.paused ? '' : '<button id="refreshLimits" class="refresh" title="Check now (uses one tiny request; needs pollLimits)" onclick="refreshLimits()">↻ Refresh</button>'}
             </div>`;
     } catch (error) {
         console.error('Error fetching limits:', error);

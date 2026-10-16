@@ -39,6 +39,7 @@ type LimitInfo struct {
 type Limits struct {
 	Windows []LimitInfo `json:"windows"`
 	AsOf    int64       `json:"asOf"` // unix seconds when a session last reported these numbers
+	Paused  bool        `json:"paused"` // a window is at 100%: polling stops so probes can't spend extra-usage credits
 }
 
 func statusDir() string {
@@ -103,6 +104,9 @@ func (m *Monitor) GetLimits() Limits {
 			}
 		}
 		if best != nil {
+			if best.Percentage >= 100 {
+				out.Paused = true
+			}
 			out.Windows = append(out.Windows, *best)
 			if bestAsOf > out.AsOf {
 				out.AsOf = bestAsOf

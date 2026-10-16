@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -82,8 +84,14 @@ func (m *Monitor) MaybePollLimits() {
 		return
 	}
 
+	if m.GetLimits().Paused {
+		return
+	}
+
+	// pollInterval reads the merged limits, which takes the same lock, so call it before locking
+	interval := m.pollInterval()
 	polled.mu.Lock()
-	recentAttempt := time.Since(polled.lastAttempt) < m.pollInterval()
+	recentAttempt := time.Since(polled.lastAttempt) < interval
 	polled.mu.Unlock()
 	if recentAttempt {
 		return
@@ -100,6 +108,9 @@ func (m *Monitor) MaybePollLimits() {
 // limited to one per 15 seconds so a stuck button can't spam requests.
 func (m *Monitor) RefreshLimitsNow() {
 	if cfg := loadConfig(); cfg.PollLimits == nil || !*cfg.PollLimits {
+		return
+	}
+	if m.GetLimits().Paused {
 		return
 	}
 	polled.mu.Lock()
@@ -138,11 +149,34 @@ func (m *Monitor) pollNow() {
 	polled.lastAttempt = time.Now()
 	polled.mu.Unlock()
 
-	if limits, ok := runHeadlessProbe(); ok {
-		polled.mu.Lock()
-		polled.limits = limits
-		polled.mu.Unlock()
+	limits, err := runHeadlessProbe()
+	if err != nil {
+		pollLog("probe failed: " + err.Error())
+		return
 	}
+	pollLog(fmt.Sprintf("probe ok: %d windows", len(limits.Windows)))
+	polled.mu.Lock()
+	polled.limits = limits
+	polled.mu.Unlock()
+}
+
+// pollLog appends to ~/.headroom/poll.log (trimmed when large) so a quiet failure can be diagnosed
+func pollLog(msg string) {
+	dir := statusDir()
+	if dir == "" {
+		return
+	}
+	os.MkdirAll(dir, 0o755)
+	path := filepath.Join(dir, "poll.log")
+	if info, err := os.Stat(path); err == nil && info.Size() > 100*1024 {
+		os.Remove(path)
+	}
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	fmt.Fprintf(f, "%s %s\n", time.Now().Format("2006-01-02 15:04:05"), msg)
 }
 
 func findClaude() string {
@@ -169,11 +203,11 @@ type rateLimitEvent struct {
 	} `json:"rate_limit_info"`
 }
 
-func runHeadlessProbe() (Limits, bool) {
+func runHeadlessProbe() (Limits, error) {
 	var out Limits
 	claude := findClaude()
 	if claude == "" {
-		return out, false
+		return out, errors.New("claude CLI not found")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), pollTimeout)
@@ -188,9 +222,8 @@ func runHeadlessProbe() (Limits, bool) {
 
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
-	if err := cmd.Run(); err != nil {
-		return out, false
-	}
+	// A non-zero exit can still carry a usable rate_limit_event, so parse what we got first
+	runErr := cmd.Run()
 
 	scanner := bufio.NewScanner(&stdout)
 	scanner.Buffer(make([]byte, 0, 1024*1024), 10*1024*1024)
@@ -207,8 +240,11 @@ func runHeadlessProbe() (Limits, bool) {
 		}
 	}
 	if len(out.Windows) == 0 {
-		return out, false
+		if runErr != nil {
+			return out, runErr
+		}
+		return out, errors.New("no rate_limit_event in output")
 	}
 	out.AsOf = time.Now().Unix()
-	return out, true
+	return out, nil
 }

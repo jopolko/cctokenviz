@@ -45,6 +45,7 @@ export namespace main {
 	export class Limits {
 	    windows: LimitInfo[];
 	    asOf: number;
+	    paused: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Limits(source);
@@ -54,6 +55,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.windows = this.convertValues(source["windows"], LimitInfo);
 	        this.asOf = source["asOf"];
+	        this.paused = source["paused"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
