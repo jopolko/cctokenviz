@@ -7,6 +7,7 @@
     --font: 'Segoe UI', system-ui, sans-serif; --fs: 13px;
     --radius: 8px; --bw: 1px; --bg-image: none; --bg-size: auto;
     --title-pre: ""; --title-post: ""; --logo: ""; --title-case: uppercase;
+    --clip: none; --font-head: var(--font); --head-weight: 800; --head-style: normal; --head-spacing: 0.14em;
 }
 
 * {
@@ -51,6 +52,7 @@ header {
 }
 
 header h1 {
+    font-family: var(--font-head);
     font-size: 1.15em;
     font-weight: 700;
     color: var(--strong);
@@ -85,9 +87,11 @@ header h1::before {
 
 /* Section headings: bigger and bolder than anything inside them */
 .section-title {
+    font-family: var(--font-head);
     font-size: 1.1em;
-    font-weight: 800;
-    letter-spacing: 0.14em;
+    font-weight: var(--head-weight);
+    font-style: var(--head-style);
+    letter-spacing: var(--head-spacing);
     text-transform: var(--title-case);
     color: var(--accent);
     padding-bottom: 5px;
@@ -99,14 +103,16 @@ header h1::before {
 .section-title::after { content: var(--title-post); }
 
 .context {
-    flex: 1;
+    flex: 0 1 auto;
     display: flex;
     flex-direction: column;
     min-height: 0;
 }
 
+.grow { flex: 1; }
+
 .sessions {
-    flex: 1;
+    flex: 0 1 auto;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -119,6 +125,8 @@ header h1::before {
     padding: 9px 12px;
     border: var(--bw) solid var(--border);
 }
+
+.session, .limits { clip-path: var(--clip); }
 
 .session.dragging {
     opacity: 0.85;
@@ -181,45 +189,87 @@ body.is-dragging {
     font-size: 1em;
 }
 
-.progress-container {
-    background: var(--track);
-    border-radius: min(var(--radius), 5px);
+/* Meters: the indicator for context and limits. The theme picks the kind (see themes.js). */
+.meter { width: 100%; }
+
+.meter.smooth {
+    position: relative;
     height: 8px;
+    background: var(--track);
+    border-radius: min(var(--radius), 6px);
     overflow: hidden;
 }
-
-.progress-bar {
+.meter.smooth .fill {
     height: 100%;
-    border-radius: min(var(--radius), 5px);
-    background-color: var(--c, var(--good));
-    transition: width 0.3s ease, background-color 0.3s ease;
+    background: var(--c, var(--good));
+    border-radius: inherit;
+    transition: width 0.3s ease;
+}
+.meter.smooth.ticks { height: 12px; border-radius: 1px; }
+.meter.smooth.ticks::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 1px), var(--panel) calc(10% - 1px) 10%);
+}
+.meter.smooth.glowing .fill { box-shadow: 0 0 10px var(--c, var(--good)); }
+
+.meter.segs { display: flex; align-items: center; gap: 2px; min-height: 12px; }
+.meter.segs i { display: block; font-style: normal; transition: background-color 0.3s; }
+
+/* block: terminal-style segments */
+.segs[data-kind="block"] i { flex: 1; height: 12px; background: var(--track); }
+.segs[data-kind="block"] i.on { background: var(--c); box-shadow: 0 0 5px -1px var(--c); }
+
+/* coin: round, minted look */
+.segs[data-kind="coin"] { justify-content: space-between; }
+.segs[data-kind="coin"] i { flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--track); }
+.segs[data-kind="coin"] i.on {
+    background: radial-gradient(circle at 35% 30%, #ffe3a8, var(--c) 60%, #b86a0a);
+    box-shadow: 0 0 6px -1px var(--c);
 }
 
-/* Bar styles, chosen by the theme */
-html[data-bar="blocks"] .progress-container,
-html[data-bar="blocks"] .progress-bar {
-    -webkit-mask: repeating-linear-gradient(90deg, #000 0 7px, transparent 7px 9px);
-    border-radius: 1px;
+/* node: a chain of nodes joined by a wire */
+.segs[data-kind="node"] { position: relative; justify-content: space-between; height: 14px; }
+.segs[data-kind="node"]::before {
+    content: '';
+    position: absolute;
+    left: 4px; right: 4px; top: 50%;
+    height: 2px; margin-top: -1px;
+    background: var(--track);
 }
-html[data-bar="pixel"] .progress-container { height: 12px; }
-html[data-bar="pixel"] .progress-container,
-html[data-bar="pixel"] .progress-bar {
-    -webkit-mask: repeating-linear-gradient(90deg, #000 0 10px, transparent 10px 12px);
-    border-radius: 0;
+.segs[data-kind="node"] i {
+    position: relative;
+    flex: none;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--panel);
+    border: 2px solid var(--track);
 }
-html[data-bar="rope"] .progress-container,
-html[data-bar="rope"] .progress-bar {
-    -webkit-mask: repeating-linear-gradient(90deg, #000 0 12px, transparent 12px 15px);
-    border-radius: 3px;
-}
-html[data-bar="stripes"] .progress-container { height: 11px; border-radius: 0; }
-html[data-bar="stripes"] .progress-bar {
-    border-radius: 0;
-    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.28) 0 6px, transparent 6px 12px);
-}
-html[data-bar="glow"] .progress-bar {
-    box-shadow: 0 0 10px var(--c, var(--good));
-}
+.segs[data-kind="node"] i.on { background: var(--c); border-color: var(--c); box-shadow: 0 0 7px var(--c); }
+
+/* bullet: a belt of cartridges */
+.segs[data-kind="bullet"] { justify-content: space-between; }
+.segs[data-kind="bullet"] i { flex: none; width: 9px; height: 17px; border-radius: 5px 5px 1px 1px; background: var(--track); }
+.segs[data-kind="bullet"] i.on { background: linear-gradient(to bottom, var(--c) 0 38%, #d9a441 38% 100%); }
+
+/* slant: a fighting-game power gauge */
+.segs[data-kind="slant"] i { flex: 1; height: 13px; transform: skewX(-24deg); background: var(--track); }
+.segs[data-kind="slant"] i.on { background: var(--c); }
+
+/* heart and star: glyph rows */
+.segs[data-kind="heart"], .segs[data-kind="star"] { justify-content: space-between; gap: 0; }
+.segs[data-kind="heart"] i, .segs[data-kind="star"] i { flex: none; font-size: 16px; line-height: 1; }
+.segs[data-kind="heart"] i.on::before { content: '♥'; color: var(--c); }
+.segs[data-kind="heart"] i.off::before { content: '♡'; color: var(--dim); opacity: 0.6; }
+.segs[data-kind="star"] i.on::before { content: '★'; color: var(--c); text-shadow: 0 0 6px var(--c); }
+.segs[data-kind="star"] i.off::before { content: '☆'; color: var(--dim); opacity: 0.55; }
+
+/* leaf: a row of leaves */
+.segs[data-kind="leaf"] { justify-content: space-between; }
+.segs[data-kind="leaf"] i { flex: none; width: 12px; height: 12px; border-radius: 0 100% 0 100%; background: var(--track); transform: rotate(-8deg); }
+.segs[data-kind="leaf"] i.on { background: var(--c); }
 
 /* Neon themes: a soft glow on panels */
 html[data-glow="1"] .session,
@@ -326,7 +376,7 @@ html[data-glow="1"] .limits {
 .state-danger { --c: var(--danger); }
 .state-critical { --c: var(--crit); }
 .percentage { color: var(--c, var(--text)); }
-.state-critical .progress-bar { animation: pulse 1s infinite; }
+.state-critical .meter .fill, .state-critical .meter i.on { animation: pulse 1s infinite; }
 
 @keyframes pulse {
     0%, 100% { opacity: 1; }
@@ -516,37 +566,51 @@ footer {
 
 .theme-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
 }
 
+/* Each card is a miniature of its theme: its own colors, font, background, heading and meter.
+   The colors are set inline on the card, so the shared meter styles just work inside it. */
 .theme-card {
+    position: relative;
+    padding: 10px 10px 8px;
     border: 2px solid var(--border);
-    border-radius: min(var(--radius), 10px);
-    padding: 0;
-    overflow: hidden;
+    border-radius: 12px;
     cursor: pointer;
-    background: none;
     font: inherit;
-    color: inherit;
     text-align: left;
+    overflow: hidden;
 }
 
-.theme-card.on {
-    border-color: var(--accent);
+.theme-card.on::after {
+    content: '✓';
+    position: absolute;
+    top: 4px; right: 8px;
+    font-weight: 700;
+    color: var(--accent);
 }
 
-.theme-card .swatch {
+.theme-card .tp-head {
+    font-size: 0.95em;
+    font-weight: var(--head-weight);
+    margin-bottom: 7px;
+    color: var(--accent);
+    white-space: nowrap;
+}
+
+.theme-card .tp-row {
     display: flex;
-    height: 34px;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 5px;
+    font-size: 0.9em;
 }
 
-.theme-card .swatch i {
-    flex: 1;
-}
+.theme-card .tp-row b { color: var(--c); }
 
 .theme-card .tname {
-    padding: 4px 6px;
+    margin-top: 8px;
     font-size: 0.85em;
     line-height: 1.25;
 }

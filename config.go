@@ -27,6 +27,9 @@ type Config struct {
 	Font      string `json:"font"`
 	FontSize  int    `json:"fontSize"`
 	SetupDone bool   `json:"setupDone"`
+
+	// Window
+	FixedSize bool `json:"fixedSize"` // true keeps the window size you set; false fits its height to the content
 }
 
 var configMu sync.Mutex

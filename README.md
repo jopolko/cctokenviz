@@ -44,7 +44,7 @@ Without structure, AI-assisted development often becomes chaotic: context gets l
 - ✕ **Dismiss** - Hide a session until it has new activity
 - 📈 **Limits** - 5-hour and weekly usage with reset countdowns, for Pro/Max plans (see [Limits](#limits-where-the-numbers-come-from))
 - ↕️ **Your order** - Drag the ⋮⋮ grip on a row to reorder; the order stays put
-- 🎨 **Themes** - 22 themes, from sci-fi, Linux terminal, Bitcoin, AI, cowboy, kawaii and anime styles to classic color schemes, plus an accent color picker and a font and size selector
+- 🎨 **Themes** - Ten full styles (Linux terminal, sci-fi, Bitcoin, AI, cowboy, anime, kawaii, garden, celestial, lab notebook) each with its own meter, fonts, headings and wording, three plain themes, an accent color picker, and a font and size selector
 - 🧭 **Setup wizard** - A first-run walkthrough, and a Settings button for changing anything afterwards
 
 Works with the Claude Code terminal and the Claude desktop app (Code tab); both write the same session logs.
@@ -119,10 +119,22 @@ The app scans `~/.claude/projects/` for active sessions and takes the last assis
 
 ## Settings
 
-Open the **⚙ Settings** button at the bottom of the window any time. **Look** has two kinds of theme:
+Open the **⚙ Settings** button at the bottom of the window any time. **Look** has ten styles and three plain themes. A style is a whole personality, not a palette: its own meter, fonts, background pattern, heading decoration, logo and wording, and the picker shows each one as a live miniature.
 
-- **Styles** change more than color: the bar shape, borders and corners, a background pattern, the heading decoration, a logo glyph, the font, and even the wording (Terminal says `$ context` and `used`/`free`, Frontier says `Back in`, Satoshi says `Spent`/`Left`). They are Starship (sci-fi), Terminal (Linux), Satoshi (Bitcoin), Neural (AI), Frontier (cowboy), Sweet (kawaii pastels), Shonen (anime energy), 8-bit, Neon City (cyberpunk) and Vaporwave. They are original designs and don't use any brand's characters or logos.
-- **Classic colors** are plain palettes: Midnight, Graphite, Daylight, Paper, Nord, Dracula, Solarized Dark and Light, Gruvbox, Ocean, Sunset and High contrast.
+| Style | Meter | Flavor |
+|-------|-------|--------|
+| **Terminal** (Linux) | Segmented LED blocks | `$ context`, lowercase `used`/`free`, scanlines, monospace |
+| **Starship** (sci-fi) | Glowing gauge with tick marks | `[ CONTEXT ]`, cut corners, grid, `T-minus` countdown |
+| **Satoshi** (Bitcoin) | Minted coins | `₿` headings, `Spent`/`Left`, orange on black |
+| **Neural** (AI) | Chain of nodes on a wire | `context_window`, `rate_limits`, `resets_in`, monospace |
+| **Frontier** (cowboy) | A belt of cartridges | `★ CONTEXT ★`, slab serif, wood grain, `Back in` |
+| **Shonen** (anime) | Slanted power gauge | `CONTEXT!`, impact lettering, speed lines, `Power used`/`Power left` |
+| **Sweet** (kawaii) | Hearts | `♡ Context ♡`, handwriting headings, pastel pink, hearts and sparkles |
+| **Bloom** (garden and eco) | Leaves | `❦ Context ❦`, italic serif, sage and cream, `Renews in` |
+| **Celestial** | Stars | `☾ Context ☽`, starfield, gold on indigo, `Rises again in` |
+| **Lab Notebook** (scientific) | Ruled gauge | `Fig. 1 — Context`, graph paper, serif, `Reset after` |
+
+The plain themes are Midnight, Daylight and High contrast. They are original designs and don't use any brand's characters or logos.
 
 You can override the accent color and the font (the fonts are the ones that ship with Windows, so nothing is bundled) and set the text size. **Projects**, **Context window** and **Limits** are covered below. Changes save as you make them, and "Run setup again" replays the wizard.
 
@@ -139,7 +151,8 @@ Settings are stored in `~/.headroom.json`, which you never need to edit by hand 
   "accent": "",
   "font": "system",
   "fontSize": 13,
-  "setupDone": true
+  "setupDone": true,
+  "fixedSize": false
 }
 ```
 
@@ -150,8 +163,9 @@ Settings are stored in `~/.headroom.json`, which you never need to edit by hand 
 | `contextTokens` | 200000 | Context window to measure against, for sessions that haven't exported their own size (use 1000000 for 1M-context models) |
 | `pollLimits` | false | Opt in to background limit refreshes, see [headless polling](#limits-option-b-headless-polling-opt-in) |
 | `pollMinutes` | 10 | Minutes between automatic polls (minimum 5; halved above 85% usage) |
-| `theme`, `accent`, `font`, `fontSize` | midnight, theme's, theme's, 13 | Appearance: a theme id such as `scifi`, `linux`, `bitcoin`, `ai`, `cowboy`, `sweet`, `anime`, `arcade`, `cyber`, `vapor`, `midnight`; `accent` is an optional `#rrggbb`; `font` empty or `theme` uses the theme's own |
+| `theme`, `accent`, `font`, `fontSize` | midnight, theme's, theme's, 13 | Appearance: a theme id: `linux`, `scifi`, `bitcoin`, `ai`, `cowboy`, `anime`, `sweet`, `bloom`, `celestial`, `lab`, `midnight`, `light` or `contrast`; `accent` is an optional `#rrggbb`; `font` empty or `theme` uses the theme's own |
 | `setupDone` | false | Set once the wizard has been completed |
+| `fixedSize` | false | By default the window fits its height to what it is showing; set true to keep your own size |
 
 ## Limits: where the numbers come from
 

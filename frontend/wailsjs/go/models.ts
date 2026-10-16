@@ -11,6 +11,7 @@ export namespace main {
 	    font: string;
 	    fontSize: number;
 	    setupDone: boolean;
+	    fixedSize: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Config(source);
@@ -28,6 +29,7 @@ export namespace main {
 	        this.font = source["font"];
 	        this.fontSize = source["fontSize"];
 	        this.setupDone = source["setupDone"];
+	        this.fixedSize = source["fixedSize"];
 	    }
 	}
 	export class LimitInfo {

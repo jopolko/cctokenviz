@@ -59,7 +59,9 @@ function closeOverlay() {
     overlay().hidden = true;
     overlay().innerHTML = '';
     wizardMode = false;
+    appCfg = { ...cfg };
     restoreWindow();
+    scheduleFit();
     lastSessionsHtml = null;
     updateSessions();
     updateLimits();
@@ -68,17 +70,27 @@ function closeOverlay() {
 /* ---------- Sections (shared by the wizard and the settings panel) ---------- */
 
 function lookSection() {
+    // Each card is a miniature of the theme itself: its colors, fonts, background, heading and meter
     const card = ([id, t]) => {
         const v = t.vars;
         const on = (cfg.theme || DEFAULT_THEME) === id;
-        return `<button class="theme-card ${on ? 'on' : ''}" data-theme="${id}">
-            <div class="swatch"><i style="background:${v.bg}"></i><i style="background:${v.panel}"></i><i style="background:${v.accent}"></i><i style="background:${v.good}"></i><i style="background:${v.danger}"></i></div>
-            <div class="tname" style="color:${v.text};background:${v.bg}">${t.icon ? t.icon + ' ' : ''}${t.name}<small>${t.tag}</small></div>
+        const vars = Object.entries(v).map(([k, val]) => `--${k}:${val}`).join(';');
+        const heading = `${t.look.pre}${t.labels.context}${t.look.post}`;
+        const style = `${vars};--c:${v.good};--clip:none;--head-weight:${t.look.headWeight};` +
+            `background-color:${v.bg};background-image:${t.look.bg};background-size:${t.look.bgSize};` +
+            `color:${v.text};font-family:${fontStack(t.font)};border-color:${on ? v.accent : v.border};` +
+            `border-radius:${Math.min(t.look.radius, 14)}px`;
+        const headStyle = `font-family:${fontStack(t.headFont)};font-style:${t.look.headStyle};` +
+            `letter-spacing:${t.look.headSpacing};text-transform:${t.look.caps ? 'uppercase' : 'none'}`;
+        return `<button class="theme-card ${on ? 'on' : ''}" data-theme="${id}" style="${style}">
+            <div class="tp-head" style="${headStyle}">${escapeHtml(heading)}</div>
+            <div class="tp-row"><span style="color:${v.strong}">lookout</span><b>62%</b></div>
+            ${meterHtml(62, t)}
+            <div class="tname" style="color:${v.strong}">${t.icon ? t.icon + ' ' : ''}${t.name}<small style="color:${v.dim}">${t.tag}</small></div>
         </button>`;
     };
     const group = (name) => Object.entries(THEMES).filter(([, t]) => t.group === name).map(card).join('');
-    const cards = `<div class="group-label">Styles</div><div class="theme-grid">${group('styles')}</div>
-                   <div class="group-label">Classic colors</div><div class="theme-grid">${group('classic')}</div>`;
+    const cards = THEME_GROUPS.map(([id, label]) => `<div class="group-label">${label}</div><div class="theme-grid">${group(id)}</div>`).join('');
 
     const fonts = FONTS.map(f => `<option value="${f.id}" ${((cfg.font || 'theme') === f.id) ? 'selected' : ''} style="font-family:${f.stack || 'inherit'}">${f.name}</option>`).join('');
     const accent = /^#[0-9a-fA-F]{6}$/.test(cfg.accent || '') ? cfg.accent : (THEMES[cfg.theme] || THEMES[DEFAULT_THEME]).vars.accent;
@@ -125,6 +137,15 @@ function contextSection() {
         </div>`;
 }
 
+function windowSection() {
+    return `
+        <div class="section">
+            <h2 class="section-title">Window</h2>
+            <label><input type="checkbox" id="fixedSize" ${cfg.fixedSize ? 'checked' : ''}> Keep my window size</label>
+            <div class="hint">By default HeadRoom fits its height to what it is showing, so there's no empty space. Tick this to size it yourself.</div>
+        </div>`;
+}
+
 function limitsSection() {
     const minutes = cfg.pollMinutes || 10;
     const opts = [5, 10, 15, 30].map(m => `<option value="${m}" ${minutes === m ? 'selected' : ''}>every ${m} minutes</option>`).join('');
@@ -155,7 +176,7 @@ function renderSettings() {
     overlay().innerHTML = `
         <h2>Settings</h2>
         <p class="lead">Changes save as you make them.</p>
-        ${lookSection()}${projectsSection()}${contextSection()}${limitsSection()}
+        ${lookSection()}${projectsSection()}${contextSection()}${limitsSection()}${windowSection()}
         <div class="nav">
             <button class="btn" data-action="rerun">Run setup again</button>
             <span class="spacer"></span>
@@ -274,6 +295,9 @@ function setupOverlayEvents() {
             if (t.checked && !cfg.pollMinutes) cfg.pollMinutes = 10;
             persist();
             rerender();
+        } else if (t.id === 'fixedSize') {
+            cfg.fixedSize = t.checked;
+            persist();
         } else if (t.id === 'pollMin') {
             cfg.pollMinutes = parseInt(t.value, 10);
             persist();

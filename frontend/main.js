@@ -34,9 +34,7 @@ function renderSession(session) {
                 <span class="percentage">${session.percentage}%</span>
                 <button class="dismiss" title="Hide until it has new activity" onclick="dismissSession('${id}')">✕</button>
             </div>
-            <div class="progress-container">
-                <div class="progress-bar" style="width: ${session.percentage}%"></div>
-            </div>
+            ${meterHtml(session.percentage)}
             <div class="session-footer">
                 <span>${LABELS.used}: ${formatTokens(session.usedTokens)}</span>
                 <span>${LABELS.free}: ${formatTokens(session.freeTokens)}</span>
@@ -90,9 +88,7 @@ function renderLimit(limit) {
                 <span class="limit-label">${limit.label}</span>
                 <span class="percentage">${pct}%</span>
             </div>
-            <div class="progress-container limit-bar">
-                <div class="progress-bar" style="width: ${pct}%"></div>
-            </div>
+            ${meterHtml(pct)}
             <div class="limit-reset">${LABELS.resets} ${formatDuration(remaining)}</div>
         </div>
     `;
@@ -103,6 +99,7 @@ async function updateLimits() {
     const panel = document.getElementById('limits');
     try {
         const limits = await window.go.main.App.GetLimits();
+        const before = panel.innerHTML.length;
         if (!limits || !limits.windows || limits.windows.length === 0) {
             panel.innerHTML = `
                 <h2 class="section-title">${LABELS.limits}</h2>
@@ -116,6 +113,7 @@ async function updateLimits() {
                 <span>${limits.paused ? 'Limit reached, not checking' : 'Last reported ' + formatDuration(Math.floor(Date.now() / 1000) - limits.asOf) + ' ago'}</span>
                 ${limits.paused ? '' : '<button id="refreshLimits" class="refresh" title="Check now (uses one tiny request; needs automatic checks turned on in settings)" onclick="refreshLimits()">↻ Refresh</button>'}
             </div>`;
+        if (panel.innerHTML.length !== before) scheduleFit();
     } catch (error) {
         console.error('Error fetching limits:', error);
     }
@@ -133,6 +131,34 @@ function renderEmpty() {
 
 let lastSessionsHtml = null;
 let draggingRow = null;
+let appCfg = {};
+
+// Fit the window's height to its content, so there is never a blank gap and nothing is cut off.
+// Turned off by "Keep my window size" in Settings. Only runs when the content changes.
+let fitTimer = null;
+function scheduleFit() {
+    clearTimeout(fitTimer);
+    fitTimer = setTimeout(fitWindow, 300);
+}
+
+async function fitWindow() {
+    const panel = document.getElementById('overlay');
+    if (appCfg.fixedSize || !panel.hidden || draggingRow) return;
+    try {
+        const container = document.querySelector('.container');
+        const previous = container.style.height;
+        container.style.height = 'auto';
+        const natural = container.offsetHeight;
+        container.style.height = previous;
+
+        const delta = natural - window.innerHeight;
+        if (Math.abs(delta) < 6) return;
+        const size = await window.runtime.WindowGetSize();
+        const limit = Math.floor(window.screen.availHeight * 0.92);
+        const height = Math.max(300, Math.min(limit, size.h + delta));
+        if (Math.abs(height - size.h) >= 6) window.runtime.WindowSetSize(size.w, height);
+    } catch (error) { /* leave the window as it is */ }
+}
 
 // Update the UI with session data
 async function updateSessions() {
@@ -150,6 +176,7 @@ async function updateSessions() {
         if (html !== lastSessionsHtml) {
             container.innerHTML = html;
             lastSessionsHtml = html;
+            scheduleFit();
         }
         status.textContent = (!sessions || sessions.length === 0) ? 'No sessions'
             : `${sessions.length} session${sessions.length > 1 ? 's' : ''}`;
@@ -234,6 +261,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Apply the saved look first so the window never flashes the wrong theme
     try {
         const cfg = await window.go.main.App.GetSettings();
+        appCfg = cfg;
         applyAppearance(cfg);
         if (!cfg.setupDone) openSetup();
     } catch (error) {
