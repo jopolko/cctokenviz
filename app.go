@@ -74,6 +74,21 @@ func (a *App) GetSessions() []SessionInfo {
 	return a.monitor.GetActiveSessions()
 }
 
+// GetLimits returns the account's 5-hour and weekly plan limits, if a session has reported them
+func (a *App) GetLimits() Limits {
+	return a.monitor.GetLimits()
+}
+
+// GetCredits returns the credit balances to show under the limits
+func (a *App) GetCredits() Credits {
+	return GetCredits()
+}
+
+// DismissSession hides a session until it sees new activity
+func (a *App) DismissSession(id string) {
+	dismissSession(id)
+}
+
 // backgroundMonitor checks for threshold crossings and triggers alerts
 func (a *App) backgroundMonitor() {
 	ticker := time.NewTicker(5 * time.Second)
@@ -84,6 +99,8 @@ func (a *App) backgroundMonitor() {
 		case <-a.stopChan:
 			return
 		case <-ticker.C:
+			// Refreshes plan limits via a tiny headless call, only when stale and a session is active
+			go a.monitor.MaybePollLimits()
 			sessions := a.monitor.GetActiveSessions()
 			for _, session := range sessions {
 				a.checkThresholds(session)
@@ -112,7 +129,7 @@ func (a *App) checkThresholds(session SessionInfo) {
 
 // triggerAlert sends OS-specific notifications and sounds
 func (a *App) triggerAlert(session SessionInfo, threshold int) {
-	title := "Claude Watch"
+	title := "Headroom"
 	message := session.ProjectName + " - " + string(rune(threshold)) + "% context used"
 
 	if threshold >= 90 {
@@ -170,7 +187,7 @@ func (a *App) windowsAlert(title, message string, threshold int) {
 	$xml = New-Object Windows.Data.Xml.Dom.XmlDocument
 	$xml.LoadXml($template)
 	$toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
-	[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Claude Watch").Show($toast)
+	[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Headroom").Show($toast)
 	`
 	exec.Command("powershell", "-Command", ps).Run()
 

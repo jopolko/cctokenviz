@@ -36,7 +36,7 @@ header h1 {
 
 .status {
     font-size: 11px;
-    color: #888;
+    color: #c0c0c0;
 }
 
 .sessions {
@@ -71,6 +71,15 @@ header h1 {
     max-width: 180px;
 }
 
+.session-title {
+    display: block;
+    font-weight: 400;
+    font-size: 10px;
+    color: #b0b0b0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .percentage {
     font-weight: 600;
     font-size: 13px;
@@ -93,8 +102,103 @@ header h1 {
     display: flex;
     justify-content: space-between;
     margin-top: 6px;
+    font-size: 12px;
+    color: #d0d0d0;
+}
+
+/* Plan limits, pinned above the footer */
+.limits {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: #202020;
+    border: 1px solid #333;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.limits-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #c0c0c0;
+}
+
+.limits-hint {
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    color: #999;
+    margin-left: 6px;
+}
+
+.limits-empty {
+    font-size: 12px;
+    line-height: 1.4;
+    color: #b0b0b0;
+}
+
+#credits {
+    margin-top: 8px;
+}
+
+.dismiss {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 12px;
+    cursor: pointer;
+    margin-left: 8px;
+    padding: 0 2px;
+    line-height: 1;
+}
+
+.dismiss:hover {
+    color: #fff;
+}
+
+.limits-asof {
     font-size: 10px;
-    color: #777;
+    color: #999;
+    border-top: 1px solid #333;
+    padding-top: 6px;
+}
+
+.limit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 5px;
+}
+
+.limit-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #fff;
+}
+
+.limit-bar {
+    position: relative;
+    overflow: visible;
+}
+
+.limit-tick {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    width: 2px;
+    margin-left: -1px;
+    background: #e8e8e8;
+    border-radius: 1px;
+    opacity: 0.9;
+}
+
+.limit-reset {
+    margin-top: 5px;
+    font-size: 11px;
+    color: #c0c0c0;
 }
 
 /* Color states */
@@ -142,8 +246,8 @@ footer {
     margin-top: 12px;
     padding-top: 8px;
     border-top: 1px solid #333;
-    font-size: 10px;
-    color: #666;
+    font-size: 11px;
+    color: #aaa;
 }
 
 footer button {

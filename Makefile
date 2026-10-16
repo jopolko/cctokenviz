@@ -1,6 +1,6 @@
 .PHONY: dev build-mac build-windows build-linux build-all clean install-wails
 
-APP_NAME := claude-watch
+APP_NAME := headroom
 BUILD_DIR := build/bin
 
 # Install Wails CLI (run once)
@@ -60,7 +60,7 @@ install-mac: build-mac
 
 # Help
 help:
-	@echo "Claude Watch - Build Commands"
+	@echo "Headroom - Build Commands"
 	@echo ""
 	@echo "  make install-wails  - Install Wails CLI (run once)"
 	@echo "  make dev            - Run in development mode"

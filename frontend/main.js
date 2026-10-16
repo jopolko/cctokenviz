@@ -24,8 +24,9 @@ function renderSession(session) {
     return `
         <div class="session ${stateClass}">
             <div class="session-header">
-                <span class="project-name" title="${session.projectPath}">${session.projectName}</span>
+                <span class="project-name" title="${session.title || session.projectPath}">${session.projectName}${session.title ? ' <small class="session-title">' + session.title + '</small>' : ''}</span>
                 <span class="percentage">${session.percentage}%</span>
+                <button class="dismiss" title="Hide until it has new activity" onclick="dismissSession('${session.id}')">✕</button>
             </div>
             <div class="progress-container">
                 <div class="progress-bar" style="width: ${session.percentage}%"></div>
@@ -36,6 +37,121 @@ function renderSession(session) {
             </div>
         </div>
     `;
+}
+
+// Hide a session until it sees new activity
+async function dismissSession(id) {
+    try {
+        await window.go.main.App.DismissSession(id);
+        updateSessions();
+    } catch (error) {
+        console.error('Error dismissing session:', error);
+    }
+}
+
+function formatMoney(n) {
+    return '$' + n.toFixed(2);
+}
+
+// Credit balances under the limits: Console (estimated from spend) and claude.ai (as typed)
+async function updateCredits() {
+    const panel = document.getElementById('credits');
+    try {
+        const c = await window.go.main.App.GetCredits();
+        if (!c || (!c.hasConsole && !c.claudeAi)) {
+            panel.innerHTML = '';
+            panel.style.display = 'none';
+            return;
+        }
+        panel.style.display = '';
+
+        let rows = '';
+        if (c.hasConsole) {
+            const stateClass = c.consoleBalance < 1 ? 'state-critical' : c.consoleBalance < 5 ? 'state-warning' : 'state-good';
+            const approx = c.consoleEstimated ? '≈ ' : '';
+            const sub = c.consoleEstimated
+                ? `${formatMoney(c.consoleSnapshot)} on ${c.consoleAsOf}, ${formatMoney(c.consoleSpentSince)} spent since`
+                : (c.consoleNote || `Snapshot from ${c.consoleAsOf}`);
+            rows += `
+                <div class="credit ${stateClass}">
+                    <div class="limit-header">
+                        <span class="limit-label">Console (API)</span>
+                        <span class="percentage">${approx}${formatMoney(Math.max(c.consoleBalance, 0))}</span>
+                    </div>
+                    <div class="limit-reset">${sub}</div>
+                </div>`;
+        }
+        if (c.claudeAi) {
+            rows += `
+                <div class="credit state-good">
+                    <div class="limit-header">
+                        <span class="limit-label">claude.ai credits</span>
+                        <span class="percentage">${c.claudeAi}</span>
+                    </div>
+                </div>`;
+        }
+        panel.innerHTML = `<div class="limits-title">Credits</div>${rows}`;
+    } catch (error) {
+        console.error('Error fetching credits:', error);
+    }
+}
+
+// Window lengths in seconds, used for the "time elapsed" tick on each limit bar
+const WINDOW_SECONDS = { '5-hour': 5 * 3600, 'Weekly': 7 * 86400 };
+
+// Format seconds as "2h 14m" / "3d 4h" / "12m"
+function formatDuration(seconds) {
+    if (seconds <= 0) return 'now';
+    const d = Math.floor(seconds / 86400);
+    const h = Math.floor((seconds % 86400) / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    if (d > 0) return `${d}d ${h}h`;
+    if (h > 0) return `${h}h ${m}m`;
+    return `${Math.max(m, 1)}m`;
+}
+
+// Render one plan limit: bar for usage, tick for how far through the window we are
+function renderLimit(limit) {
+    const pct = Math.min(100, Math.round(limit.percentage));
+    const remaining = limit.resetsAt - Math.floor(Date.now() / 1000);
+    const total = WINDOW_SECONDS[limit.label];
+    const elapsed = total ? Math.min(100, Math.max(0, (1 - remaining / total) * 100)) : null;
+    const tick = elapsed === null ? '' :
+        `<div class="limit-tick" style="left: ${elapsed}%" title="${Math.round(elapsed)}% of the window has passed"></div>`;
+
+    return `
+        <div class="limit ${getStateClass(pct)}">
+            <div class="limit-header">
+                <span class="limit-label">${limit.label}</span>
+                <span class="percentage">${pct}%</span>
+            </div>
+            <div class="progress-container limit-bar">
+                <div class="progress-bar" style="width: ${pct}%"></div>
+                ${tick}
+            </div>
+            <div class="limit-reset">Resets in ${formatDuration(remaining)}</div>
+        </div>
+    `;
+}
+
+// Update the plan limits panel at the bottom
+async function updateLimits() {
+    const panel = document.getElementById('limits');
+    try {
+        const limits = await window.go.main.App.GetLimits();
+        if (!limits || !limits.windows || limits.windows.length === 0) {
+            panel.innerHTML = `
+                <div class="limits-title">Plan limits</div>
+                <div class="limits-empty">Shown after your next message in any Claude Code session</div>`;
+            return;
+        }
+        panel.innerHTML = `
+            <div class="limits-title">Plan limits <span class="limits-hint">| = time passed</span></div>
+            ${limits.windows.map(renderLimit).join('')}
+            <div class="limits-asof">Last reported ${formatDuration(Math.floor(Date.now() / 1000) - limits.asOf)} ago</div>`;
+    } catch (error) {
+        console.error('Error fetching limits:', error);
+    }
 }
 
 // Render empty state
@@ -93,7 +209,11 @@ async function resetAlerts() {
 document.addEventListener('DOMContentLoaded', () => {
     // Initial update
     updateSessions();
-    
+    updateLimits();
+
     // Periodic updates
     setInterval(updateSessions, UPDATE_INTERVAL);
+    setInterval(updateLimits, UPDATE_INTERVAL);
+    updateCredits();
+    setInterval(updateCredits, 60 * 1000);
 });

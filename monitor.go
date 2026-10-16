@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	MaxContextTokens = 200000
+	MaxContextTokens = 200000 // fallback; see contextTokens in the config and the status line export
 	MaxProjects      = 10
 	ActiveMinutes    = 60
 )
@@ -22,6 +22,7 @@ type SessionInfo struct {
 	ID          string `json:"id"`
 	ProjectName string `json:"projectName"`
 	ProjectPath string `json:"projectPath"`
+	Title       string `json:"title"`
 	UsedTokens  int    `json:"usedTokens"`
 	FreeTokens  int    `json:"freeTokens"`
 	Percentage  int    `json:"percentage"`
@@ -37,6 +38,7 @@ type Monitor struct {
 type AssistantMessage struct {
 	Type    string `json:"type"`
 	Cwd     string `json:"cwd"`
+	AiTitle string `json:"aiTitle"`
 	Message struct {
 		Usage *Usage `json:"usage"`
 	} `json:"message"`
@@ -82,7 +84,8 @@ func (m *Monitor) GetActiveSessions() []SessionInfo {
 
 	var allSessions []sessionFile
 
-	cutoff := time.Now().Add(-ActiveMinutes * time.Minute)
+	cfg := loadConfig()
+	cutoff := time.Now().Add(-time.Duration(cfg.ActiveMinutes) * time.Minute)
 
 	for _, projectDir := range projectDirs {
 		if !projectDir.IsDir() {
@@ -123,26 +126,13 @@ func (m *Monitor) GetActiveSessions() []SessionInfo {
 		return allSessions[i].modTime.After(allSessions[j].modTime)
 	})
 
-	// Keep only the most recent session per project
-	seenProjects := make(map[string]bool)
-	var uniqueSessions []sessionFile
+	// Parse each session, keeping only configured projects
 	for _, sf := range allSessions {
-		if !seenProjects[sf.project] {
-			seenProjects[sf.project] = true
-			uniqueSessions = append(uniqueSessions, sf)
+		if len(sessions) >= MaxProjects {
+			break
 		}
-	}
-	allSessions = uniqueSessions
-
-	// Limit to MaxProjects
-	if len(allSessions) > MaxProjects {
-		allSessions = allSessions[:MaxProjects]
-	}
-
-	// Parse each session
-	for _, sf := range allSessions {
 		info := m.parseSession(sf.path, sf.project)
-		if info != nil {
+		if info != nil && cfg.allows(info.ProjectName) && !isDismissed(info.ID, sf.modTime.Unix()) {
 			info.LastUpdated = sf.modTime.Format("15:04:05")
 			sessions = append(sessions, *info)
 		}
@@ -160,7 +150,7 @@ func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 	defer file.Close()
 
 	var lastUsage *Usage
-	var cwd string
+	var cwd, projectFolder, title string
 
 	scanner := bufio.NewScanner(file)
 	// Increase buffer size for large lines
@@ -178,6 +168,15 @@ func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 			cwd = msg.Cwd
 		}
 
+		// Sessions often start in a parent folder and move into a project,
+		// so the latest project folder seen wins
+		if name := projectFromCwd(msg.Cwd); name != "" {
+			projectFolder = name
+		}
+		if msg.AiTitle != "" {
+			title = msg.AiTitle
+		}
+
 		if msg.Type == "assistant" && msg.Message.Usage != nil {
 			lastUsage = msg.Message.Usage
 		}
@@ -189,8 +188,17 @@ func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 
 	// Calculate context usage (matches official Claude Code status bar hook)
 	totalUsed := lastUsage.InputTokens + lastUsage.CacheReadInputTokens + lastUsage.CacheCreationInputTokens
-	percentage := (totalUsed * 100) / MaxContextTokens
-	freeTokens := MaxContextTokens - totalUsed
+
+	// Prefer the window size Claude Code reports for this session; fall back to the default
+	maxTokens := MaxContextTokens
+	if cfg := loadConfig(); cfg.ContextTokens > 0 {
+		maxTokens = cfg.ContextTokens
+	}
+	if size := contextSizeFor(strings.TrimSuffix(filepath.Base(filePath), ".jsonl")); size > 0 {
+		maxTokens = size
+	}
+	percentage := (totalUsed * 100) / maxTokens
+	freeTokens := maxTokens - totalUsed
 
 	if freeTokens < 0 {
 		freeTokens = 0
@@ -204,11 +212,15 @@ func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 	if projectName == "" || projectName == "." {
 		projectName = projectDir
 	}
+	if projectFolder != "" {
+		projectName = projectFolder
+	}
 
 	return &SessionInfo{
 		ID:          filepath.Base(filePath),
 		ProjectName: projectName,
 		ProjectPath: projectDir,
+		Title:       title,
 		UsedTokens:  totalUsed,
 		FreeTokens:  freeTokens,
 		Percentage:  percentage,

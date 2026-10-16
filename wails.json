@@ -1,7 +1,7 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
-  "name": "claude-watch",
-  "outputfilename": "claude-watch",
+  "name": "headroom",
+  "outputfilename": "headroom",
   "frontend:install": "",
   "frontend:build": "",
   "frontend:dev:watcher": "",

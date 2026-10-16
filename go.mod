@@ -1,4 +1,4 @@
-module claude-watch
+module headroom
 
 go 1.22.0
 
