@@ -117,6 +117,8 @@ Several rows with the same project name are separate sessions (each conversation
 
 The app scans `~/.claude/projects/` for active sessions and takes the last assistant message's input and cache tokens as the current context size, shown as a percentage of the context window. It reads local files only.
 
+**Why it may differ from Claude's own meter.** The count is the same one Claude Code's status line uses: input plus cache tokens of the latest response, not counting that response's output. Headroom reads the log every 2 seconds, and in a long turn every tool call writes a new entry, so it can run ahead of the desktop app's context display, which appears to update less often. In one check the app was about four minutes behind, and the two also differed by about 1% for reasons I couldn't determine. Compare right after a turn finishes and they should agree within a percent or two.
+
 ## Configuration
 
 Settings live in `~/.headroom.json` and are re-read on every refresh, so edits apply without a restart. Every key is optional:

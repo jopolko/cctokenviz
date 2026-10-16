@@ -3,11 +3,13 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -141,46 +143,82 @@ func (m *Monitor) GetActiveSessions() []SessionInfo {
 	return sessions
 }
 
-// parseSession parses a single session file and returns context stats
+// sessionState is what we have learned from a session log so far. Logs are append-only,
+// so each refresh reads only the bytes added since the last one.
+type sessionState struct {
+	offset        int64 // bytes consumed, always ending on a line boundary
+	lastUsage     *Usage
+	cwd           string
+	projectFolder string
+	title         string
+}
+
+var (
+	sessionCache   = map[string]*sessionState{}
+	sessionCacheMu sync.Mutex
+)
+
+// parseSession returns context stats for a session file, reading only what is new since last time
 func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil
 	}
 	defer file.Close()
+	stat, err := file.Stat()
+	if err != nil {
+		return nil
+	}
 
-	var lastUsage *Usage
-	var cwd, projectFolder, title string
+	sessionCacheMu.Lock()
+	defer sessionCacheMu.Unlock()
 
-	scanner := bufio.NewScanner(file)
-	// Increase buffer size for large lines
-	buf := make([]byte, 0, 1024*1024)
-	scanner.Buffer(buf, 10*1024*1024)
+	st := sessionCache[filePath]
+	if st == nil || stat.Size() < st.offset {
+		// First sight, or the file shrank (replaced or rewritten): start over
+		st = &sessionState{}
+		sessionCache[filePath] = st
+	}
 
-	for scanner.Scan() {
-		var msg AssistantMessage
-		if err := json.Unmarshal(scanner.Bytes(), &msg); err != nil {
-			continue
+	if stat.Size() > st.offset {
+		if _, err := file.Seek(st.offset, io.SeekStart); err != nil {
+			return nil
 		}
+		reader := bufio.NewReaderSize(file, 1024*1024)
+		for {
+			line, err := reader.ReadBytes('\n')
+			if err != nil {
+				// A trailing partial line (no newline yet) is left for the next refresh
+				break
+			}
+			st.offset += int64(len(line))
 
-		// Capture cwd from the first message that has it
-		if cwd == "" && msg.Cwd != "" {
-			cwd = msg.Cwd
-		}
+			var msg AssistantMessage
+			if json.Unmarshal(line, &msg) != nil {
+				continue
+			}
 
-		// Sessions often start in a parent folder and move into a project,
-		// so the latest project folder seen wins
-		if name := projectFromCwd(msg.Cwd); name != "" {
-			projectFolder = name
-		}
-		if msg.AiTitle != "" {
-			title = msg.AiTitle
-		}
+			// Capture cwd from the first message that has it
+			if st.cwd == "" && msg.Cwd != "" {
+				st.cwd = msg.Cwd
+			}
 
-		if msg.Type == "assistant" && msg.Message.Usage != nil {
-			lastUsage = msg.Message.Usage
+			// Sessions often start in a parent folder and move into a project,
+			// so the latest project folder seen wins
+			if name := projectFromCwd(msg.Cwd); name != "" {
+				st.projectFolder = name
+			}
+			if msg.AiTitle != "" {
+				st.title = msg.AiTitle
+			}
+
+			if msg.Type == "assistant" && msg.Message.Usage != nil {
+				st.lastUsage = msg.Message.Usage
+			}
 		}
 	}
+
+	lastUsage, cwd, projectFolder, title := st.lastUsage, st.cwd, st.projectFolder, st.title
 
 	if lastUsage == nil {
 		return nil
