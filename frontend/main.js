@@ -253,19 +253,6 @@ function setupDragging() {
     });
 }
 
-// Reset alert history
-async function resetAlerts() {
-    try {
-        await window.go.main.App.ResetAlerts();
-        // Visual feedback
-        const btn = document.querySelector('footer button');
-        btn.textContent = '✓';
-        setTimeout(() => { btn.textContent = '🔔'; }, 1000);
-    } catch (error) {
-        console.error('Error resetting alerts:', error);
-    }
-}
-
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     setupDragging();

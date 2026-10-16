@@ -152,9 +152,28 @@ func alertThresholds(cfg Config) (int, int) {
 	return warn, urgent
 }
 
-// checkThresholds alerts when a session first crosses a threshold. A session that is already
-// past a threshold when HeadRoom first sees it (at launch, or after re-arming) is recorded
-// silently, so starting the app never fires a burst of old alerts.
+// rearmMargin is how far below a level a session must fall before that level can alert again.
+// It stops a session hovering around a level from alerting over and over.
+const rearmMargin = 5
+
+// crossed records where a session is relative to one level and reports whether it has just
+// crossed it. A level is re-armed once the session drops well below it, so after /compact or
+// /clear the next climb alerts again with nothing to reset by hand.
+func crossed(seen map[int]bool, percentage, threshold int) bool {
+	if percentage < threshold-rearmMargin {
+		seen[threshold] = false
+		return false
+	}
+	if percentage < threshold || seen[threshold] {
+		return false
+	}
+	seen[threshold] = true
+	return true
+}
+
+// checkThresholds alerts when a session first crosses a level. A session that is already past
+// a level when HeadRoom first sees it (at launch) is recorded silently, so starting the app
+// never fires a burst of old alerts.
 func (a *App) checkThresholds(session SessionInfo) {
 	cfg := loadConfig()
 	warn, urgent := alertThresholds(cfg)
@@ -169,11 +188,7 @@ func (a *App) checkThresholds(session SessionInfo) {
 	}
 
 	for _, threshold := range []int{warn, urgent} {
-		if session.Percentage < threshold || seen[threshold] {
-			continue
-		}
-		seen[threshold] = true
-		if known && !cfg.AlertsOff {
+		if crossed(seen, session.Percentage, threshold) && known && !cfg.AlertsOff {
 			go a.triggerAlert(session, threshold, cfg)
 		}
 	}
@@ -275,17 +290,6 @@ func (a *App) linuxAlert(title, message string, threshold int) {
 
 	// Fallback to terminal bell
 	exec.Command("echo", "-e", "\a").Run()
-}
-
-// ResetAlerts re-arms alerts. Sessions already past a threshold stay quiet; each one alerts
-// again only when it next crosses a threshold it hasn't been recorded at.
-func (a *App) ResetAlerts() {
-	a.mu.Lock()
-	a.alertTracker = make(map[string]map[int]bool)
-	a.mu.Unlock()
-	for _, session := range a.monitor.GetActiveSessions() {
-		a.checkThresholds(session) // first sight: record silently
-	}
 }
 
 // TestAlert sends one alert so you can check notifications and sound work

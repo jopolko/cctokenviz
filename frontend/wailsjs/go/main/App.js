@@ -30,10 +30,6 @@ export function RefreshLimits() {
   return window['go']['main']['App']['RefreshLimits']();
 }
 
-export function ResetAlerts() {
-  return window['go']['main']['App']['ResetAlerts']();
-}
-
 export function SaveSettings(arg1) {
   return window['go']['main']['App']['SaveSettings'](arg1);
 }

@@ -44,7 +44,7 @@ Without structure, AI-assisted development often becomes chaotic: context gets l
 
 - 🖥️ **Floating window** - Always on top, stays visible while you work
 - 📊 **Real-time monitoring** - Updates every 2 seconds
-- 🔔 **Smart alerts** - Notification + sound at 75% and 90% context usage
+- 🔔 **Smart alerts** - A notification and sound when a session passes 75% and 90% context (levels adjustable); re-arms itself after you compact or clear
 - 🌍 **Cross-platform** - Works on macOS, Windows, and Linux
 - 🚀 **Lightweight** - ~10MB binary, minimal resource usage
 - 📁 **Multi-project** - Monitors all active Claude Code sessions automatically
@@ -110,7 +110,7 @@ Alerts are on by default, and Settings (the gear at the top right) has an **Aler
 - change the two levels (first alert 50-80%, urgent 80-95%)
 - press **Send a test alert** to check that notifications and sound work on your machine
 
-A session that is already past a level when HeadRoom starts doesn't alert; each session alerts once per level. The 🔔 button in the footer re-arms alerts: sessions already past a level stay quiet until they cross the next one.
+A session that is already past a level when HeadRoom starts doesn't alert, and each session alerts once per level. A level re-arms itself once the session drops 5 points below it (for example after `/compact` or `/clear`), so there is nothing to reset by hand.
 
 On Windows the notification comes from Windows PowerShell (it appears under that name) because Windows only shows toasts from apps it has registered, which needs an installer. If you don't see notifications, check that Focus assist or Do not disturb is off and that notifications from Windows PowerShell are allowed.
 
