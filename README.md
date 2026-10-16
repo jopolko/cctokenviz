@@ -100,10 +100,19 @@ make install-mac
 1. **Launch the app** - Double-click `HeadRoom.app` (macOS) or `HeadRoom.exe` (Windows). The first launch opens a short setup wizard; HeadRoom is a single executable and needs nothing installed beyond what Windows already has (the WebView2 runtime that Windows 10/11 ship). On Windows, add a Start Menu shortcut and pin it to the taskbar for one-click launch.
 2. **Window auto-positions** - Opens in the top-right corner, always on top (drag to reposition).
 3. **Work normally** - Open projects in Claude Code, in the terminal or the Claude desktop app. Each active session shows up as a row on its own; there is nothing to register.
-4. **Get alerted** - At 75% and 90% context you'll receive:
-   - System notification
-   - Audio alert
-   - Voice warning (macOS at 90%)
+4. **Get alerted** - By default HeadRoom shows a notification, with a sound, the first time a session's context passes 75% and again at 90%, so you can save your work before Claude compacts it. See [Alerts](#alerts).
+
+### Alerts
+
+Alerts are on by default, and Settings (⚙) has an **Alerts** section where you can:
+
+- turn them off, or keep the notification and drop the sound
+- change the two levels (first alert 50-80%, urgent 80-95%)
+- press **Send a test alert** to check that notifications and sound work on your machine
+
+A session that is already past a level when HeadRoom starts doesn't alert; each session alerts once per level. The 🔔 button in the footer re-arms alerts: sessions already past a level stay quiet until they cross the next one.
+
+On Windows the notification comes from Windows PowerShell (it appears under that name) because Windows only shows toasts from apps it has registered, which needs an installer. If you don't see notifications, check that Focus assist or Do not disturb is off and that notifications from Windows PowerShell are allowed.
 
 ### How projects show up
 
@@ -172,6 +181,8 @@ Settings are stored in `~/.headroom.json`, which you never need to edit by hand 
 | `pollLimits` | false | Opt in to background limit refreshes, see [headless polling](#limits-option-b-headless-polling-opt-in) |
 | `pollMinutes` | 10 | Minutes between automatic polls (minimum 5; halved above 85% usage) |
 | `theme`, `accent`, `font`, `fontSize` | midnight, theme's, theme's, 13 | Appearance: a theme id: `linux`, `scifi`, `bitcoin`, `ai`, `cowboy`, `anime`, `sweet`, `bloom`, `celestial`, `lab`, `midnight`, `light` or `contrast`; `accent` is an optional `#rrggbb`; `font` empty or `theme` uses the theme's own |
+| `alertsOff`, `soundOff` | false, false | Turn alerts, or just their sound, off |
+| `alertWarn`, `alertUrgent` | 75, 90 | The two context levels (percent) that trigger an alert |
 | `setupDone` | false | Set once the wizard has been completed |
 | `fixedSize` | false | By default the window fits its height to what it is showing; set true to keep your own size |
 

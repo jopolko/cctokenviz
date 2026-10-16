@@ -21,3 +21,5 @@ export function ResetAlerts():Promise<void>;
 export function SaveSettings(arg1:main.Config):Promise<void>;
 
 export function SetOrder(arg1:Array<string>):Promise<void>;
+
+export function TestAlert():Promise<void>;

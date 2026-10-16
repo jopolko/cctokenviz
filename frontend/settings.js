@@ -119,6 +119,22 @@ function contextSection() {
         </div>`;
 }
 
+function alertsSection() {
+    const warn = cfg.alertWarn || 75;
+    const urgent = cfg.alertUrgent || 90;
+    const opts = (list, current) => list.map(v => `<option value="${v}" ${v === current ? 'selected' : ''}>${v}%</option>`).join('');
+    return `
+        <div class="section">
+            <h2 class="section-title">Alerts</h2>
+            <label><input type="checkbox" id="alertsOn" ${cfg.alertsOff ? '' : 'checked'}> Notify me when a session's context is filling up</label>
+            <div class="hint">A Windows notification appears the first time a session passes each level, so you can save your work before Claude compacts it. Sessions already past a level when HeadRoom starts don't alert.</div>
+            <div class="row"><span>First alert</span><select id="alertWarn" ${cfg.alertsOff ? 'disabled' : ''}>${opts([50, 60, 70, 75, 80], warn)}</select></div>
+            <div class="row"><span>Urgent</span><select id="alertUrgent" ${cfg.alertsOff ? 'disabled' : ''}>${opts([80, 85, 90, 95], urgent)}</select></div>
+            <label><input type="checkbox" id="soundOn" ${cfg.soundOff ? '' : 'checked'} ${cfg.alertsOff ? 'disabled' : ''}> Play a sound</label>
+            <div class="row"><button class="btn" data-action="test-alert" ${cfg.alertsOff ? 'disabled' : ''}>Send a test alert</button></div>
+        </div>`;
+}
+
 function windowSection() {
     return `
         <div class="section">
@@ -158,7 +174,7 @@ function renderSettings() {
     overlay().innerHTML = `
         <h2>Settings</h2>
         <p class="lead">Changes save as you make them.</p>
-        ${lookSection()}${projectsSection()}${contextSection()}${limitsSection()}${windowSection()}
+        ${lookSection()}${projectsSection()}${contextSection()}${limitsSection()}${alertsSection()}${windowSection()}
         <div class="nav">
             <button class="btn" data-action="rerun">Run setup again</button>
             <span class="spacer"></span>
@@ -235,6 +251,7 @@ function setupOverlayEvents() {
             case 'back': wizardStep--; renderWizard(); break;
             case 'finish': cfg.setupDone = true; persist(); closeOverlay(); break;
             case 'close': closeOverlay(); break;
+            case 'test-alert': window.go.main.App.TestAlert(); break;
             case 'rerun': wizardMode = true; wizardStep = 0; renderWizard(); break;
         }
     });
@@ -277,6 +294,21 @@ function setupOverlayEvents() {
             if (t.checked && !cfg.pollMinutes) cfg.pollMinutes = 10;
             persist();
             rerender();
+        } else if (t.id === 'alertsOn') {
+            cfg.alertsOff = !t.checked;
+            persist();
+            rerender();
+        } else if (t.id === 'soundOn') {
+            cfg.soundOff = !t.checked;
+            persist();
+        } else if (t.id === 'alertWarn') {
+            cfg.alertWarn = parseInt(t.value, 10);
+            if (cfg.alertUrgent <= cfg.alertWarn) cfg.alertUrgent = Math.min(95, cfg.alertWarn + 5);
+            persist();
+            rerender();
+        } else if (t.id === 'alertUrgent') {
+            cfg.alertUrgent = parseInt(t.value, 10);
+            persist();
         } else if (t.id === 'fixedSize') {
             cfg.fixedSize = t.checked;
             persist();

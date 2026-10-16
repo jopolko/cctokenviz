@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -136,40 +137,65 @@ func (a *App) backgroundMonitor() {
 	}
 }
 
-// checkThresholds checks if a session has crossed alert thresholds
+// alertThresholds returns the two configured thresholds, with defaults
+func alertThresholds(cfg Config) (int, int) {
+	warn, urgent := cfg.AlertWarn, cfg.AlertUrgent
+	if warn <= 0 {
+		warn = 75
+	}
+	if urgent <= 0 {
+		urgent = 90
+	}
+	if urgent <= warn {
+		urgent = warn + 1
+	}
+	return warn, urgent
+}
+
+// checkThresholds alerts when a session first crosses a threshold. A session that is already
+// past a threshold when HeadRoom first sees it (at launch, or after re-arming) is recorded
+// silently, so starting the app never fires a burst of old alerts.
 func (a *App) checkThresholds(session SessionInfo) {
+	cfg := loadConfig()
+	warn, urgent := alertThresholds(cfg)
+
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	if _, exists := a.alertTracker[session.ID]; !exists {
-		a.alertTracker[session.ID] = make(map[int]bool)
+	seen, known := a.alertTracker[session.ID]
+	if !known {
+		seen = make(map[int]bool)
+		a.alertTracker[session.ID] = seen
 	}
 
-	thresholds := []int{75, 90}
-	for _, threshold := range thresholds {
-		if session.Percentage >= threshold && !a.alertTracker[session.ID][threshold] {
-			a.alertTracker[session.ID][threshold] = true
-			go a.triggerAlert(session, threshold)
+	for _, threshold := range []int{warn, urgent} {
+		if session.Percentage < threshold || seen[threshold] {
+			continue
+		}
+		seen[threshold] = true
+		if known && !cfg.AlertsOff {
+			go a.triggerAlert(session, threshold, cfg)
 		}
 	}
 }
 
 // triggerAlert sends OS-specific notifications and sounds
-func (a *App) triggerAlert(session SessionInfo, threshold int) {
+func (a *App) triggerAlert(session SessionInfo, threshold int, cfg Config) {
 	title := "HeadRoom"
 	message := session.ProjectName + " - " + strconv.Itoa(threshold) + "% context used"
 
-	if threshold >= 90 {
-		message = "⚠️ " + session.ProjectName + " - Context almost full!"
+	_, urgent := alertThresholds(cfg)
+	if threshold >= urgent {
+		message = session.ProjectName + ": context almost full (" + strconv.Itoa(session.Percentage) + "%)"
 	} else {
-		message = session.ProjectName + " - Save context soon!"
+		message = session.ProjectName + ": save context soon (" + strconv.Itoa(session.Percentage) + "%)"
 	}
 
 	switch runtime.GOOS {
 	case "darwin":
 		a.macAlert(title, message, threshold)
 	case "windows":
-		a.windowsAlert(title, message, threshold)
+		a.windowsAlert(title, message, !cfg.SoundOff)
 	case "linux":
 		a.linuxAlert(title, message, threshold)
 	}
@@ -194,9 +220,17 @@ func (a *App) macAlert(title, message string, threshold int) {
 	}
 }
 
-// windowsAlert triggers Windows notification and sound
-func (a *App) windowsAlert(title, message string, threshold int) {
-	// PowerShell toast notification
+// windowsAlert shows a toast and optionally plays a sound. Everything runs in hidden PowerShell
+// processes. The toast is sent under Windows PowerShell's own app id: Windows silently drops
+// toasts from an app id it doesn't know, and registering one needs an installer.
+func (a *App) windowsAlert(title, message string, sound bool) {
+	esc := func(x string) string {
+		return strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;", `"`, "&quot;", "'", "&apos;").Replace(x)
+	}
+	audio := `<audio silent="true"/>`
+	if sound {
+		audio = `<audio src="ms-winsoundevent:Notification.Default"/>`
+	}
 	ps := `
 	[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
 	[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
@@ -204,22 +238,21 @@ func (a *App) windowsAlert(title, message string, threshold int) {
 	<toast>
 		<visual>
 			<binding template="ToastText02">
-				<text id="1">` + title + `</text>
-				<text id="2">` + message + `</text>
+				<text id="1">` + esc(title) + `</text>
+				<text id="2">` + esc(message) + `</text>
 			</binding>
 		</visual>
-		<audio src="ms-winsoundevent:Notification.Default"/>
+		` + audio + `
 	</toast>
 "@
 	$xml = New-Object Windows.Data.Xml.Dom.XmlDocument
 	$xml.LoadXml($template)
 	$toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
-	[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("HeadRoom").Show($toast)
+	[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe").Show($toast)
 	`
-	exec.Command("powershell", "-Command", ps).Run()
-
-	// Play system sound
-	exec.Command("powershell", "-Command", "[console]::beep(800,300)").Start()
+	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", ps)
+	hideWindow(cmd)
+	cmd.Run()
 }
 
 // linuxAlert triggers Linux notification and sound
@@ -244,9 +277,21 @@ func (a *App) linuxAlert(title, message string, threshold int) {
 	exec.Command("echo", "-e", "\a").Run()
 }
 
-// ResetAlerts clears alert history (useful when starting new sessions)
+// ResetAlerts re-arms alerts. Sessions already past a threshold stay quiet; each one alerts
+// again only when it next crosses a threshold it hasn't been recorded at.
 func (a *App) ResetAlerts() {
 	a.mu.Lock()
-	defer a.mu.Unlock()
 	a.alertTracker = make(map[string]map[int]bool)
+	a.mu.Unlock()
+	for _, session := range a.monitor.GetActiveSessions() {
+		a.checkThresholds(session) // first sight: record silently
+	}
+}
+
+// TestAlert sends one alert so you can check notifications and sound work
+func (a *App) TestAlert() {
+	cfg := loadConfig()
+	cfg.AlertsOff = false
+	_, urgent := alertThresholds(cfg)
+	go a.triggerAlert(SessionInfo{ProjectName: "Test alert", Percentage: urgent}, urgent, cfg)
 }
