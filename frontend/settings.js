@@ -70,25 +70,7 @@ function closeOverlay() {
 /* ---------- Sections (shared by the wizard and the settings panel) ---------- */
 
 function lookSection() {
-    // Each card is a miniature of the theme itself: its colors, fonts, background, heading and meter
-    const card = ([id, t]) => {
-        const v = t.vars;
-        const on = (cfg.theme || DEFAULT_THEME) === id;
-        const vars = Object.entries(v).map(([k, val]) => `--${k}:${val}`).join(';');
-        const heading = `${t.look.pre}${t.labels.context}${t.look.post}`;
-        const style = `${vars};--c:${v.good};--clip:none;--head-weight:${t.look.headWeight};` +
-            `background-color:${v.bg};background-image:${t.look.bg};background-size:${t.look.bgSize};` +
-            `color:${v.text};font-family:${fontStack(t.font)};border-color:${on ? v.accent : v.border};` +
-            `border-radius:${Math.min(t.look.radius, 14)}px`;
-        const headStyle = `font-family:${fontStack(t.headFont)};font-style:${t.look.headStyle};` +
-            `letter-spacing:${t.look.headSpacing};text-transform:${t.look.caps ? 'uppercase' : 'none'}`;
-        return `<button class="theme-card ${on ? 'on' : ''}" data-theme="${id}" style="${style}">
-            <div class="tp-head" style="${headStyle}">${escapeHtml(heading)}</div>
-            <div class="tp-row"><span style="color:${v.strong}">lookout</span><b>62%</b></div>
-            ${meterHtml(62, t)}
-            <div class="tname" style="color:${v.strong}">${t.icon ? t.icon + ' ' : ''}${t.name}<small style="color:${v.dim}">${t.tag}</small></div>
-        </button>`;
-    };
+    const card = ([id]) => themeCardHtml(id, (cfg.theme || DEFAULT_THEME) === id);
     const group = (name) => Object.entries(THEMES).filter(([, t]) => t.group === name).map(card).join('');
     const cards = THEME_GROUPS.map(([id, label]) => `<div class="group-label">${label}</div><div class="theme-grid">${group(id)}</div>`).join('');
 

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HeadRoom themes</title>
+<link rel="stylesheet" href="../../frontend/style.css">
+<style>
+    /* Used only to render docs/themes.png: open this page, or run it through a headless browser. */
+    html, body { height: auto; overflow: visible; }
+    body { background: #0f1115; padding: 20px; }
+    .sheet { display: grid; grid-template-columns: repeat(5, 190px); gap: 14px; width: max-content; margin: 0 auto; }
+    .sheet .theme-card { cursor: default; }
+</style>
+</head>
+<body>
+<div class="sheet" id="sheet"></div>
+<script src="../../frontend/themes.js"></script>
+<script>
+    const order = ['linux', 'scifi', 'bitcoin', 'ai', 'cowboy', 'anime', 'sweet', 'bloom', 'celestial', 'lab'];
+    document.getElementById('sheet').innerHTML = order.map(id => themeCardHtml(id, false, 'my-app')).join('');
+</script>
+</body>
+</html>

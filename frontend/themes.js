@@ -198,3 +198,25 @@ function applyAppearance(cfg) {
     if (ct) ct.textContent = LABELS.context;
     if (typeof lastSessionsHtml !== 'undefined') lastSessionsHtml = null; // words and meters changed, redraw
 }
+
+// A theme card is a miniature of the theme itself: its colors, fonts, background, heading and
+// meter. Used by the Settings picker and by docs/preview/themes.html (the README image).
+function themeCardHtml(id, selected, sample) {
+    const t = THEMES[id];
+    const v = t.vars;
+    const esc = (x) => String(x).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const vars = Object.entries(v).map(([k, val]) => `--${k}:${val}`).join(';');
+    const heading = `${t.look.pre}${t.labels.context}${t.look.post}`;
+    const style = `${vars};--c:${v.good};--clip:none;--head-weight:${t.look.headWeight};` +
+        `background-color:${v.bg};background-image:${t.look.bg};background-size:${t.look.bgSize};` +
+        `color:${v.text};font-family:${fontStack(t.font)};border-color:${selected ? v.accent : v.border};` +
+        `border-radius:${Math.min(t.look.radius, 14)}px`;
+    const headStyle = `font-family:${fontStack(t.headFont)};font-style:${t.look.headStyle};` +
+        `letter-spacing:${t.look.headSpacing};text-transform:${t.look.caps ? 'uppercase' : 'none'}`;
+    return `<button class="theme-card ${selected ? 'on' : ''}" data-theme="${id}" style="${style}">
+        <div class="tp-head" style="${headStyle}">${esc(heading)}</div>
+        <div class="tp-row"><span style="color:${v.strong}">${esc(sample || 'my-app')}</span><b>62%</b></div>
+        ${meterHtml(62, t)}
+        <div class="tname" style="color:${v.strong}">${t.icon ? t.icon + ' ' : ''}${t.name}<small style="color:${v.dim}">${t.tag}</small></div>
+    </button>`;
+}
