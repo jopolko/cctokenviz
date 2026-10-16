@@ -77,7 +77,18 @@ function formatDuration(seconds) {
     return `${Math.max(m, 1)}m`;
 }
 
-// Render one limit: a usage bar and the time until it resets
+// The clock time a limit resets at: "5:20 PM" today, "Tomorrow 2:50 AM", or "Sun 12:00 PM" further out
+function formatResetClock(epochSeconds) {
+    const when = new Date(epochSeconds * 1000);
+    const time = when.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const dayStart = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const days = Math.round((dayStart(when) - dayStart(new Date())) / 86400000);
+    if (days <= 0) return time;
+    if (days === 1) return `Tomorrow ${time}`;
+    return `${when.toLocaleDateString([], { weekday: 'short' })} ${time}`;
+}
+
+// Render one limit: a usage bar, the countdown, and the clock time it resets
 function renderLimit(limit) {
     const pct = Math.min(100, Math.round(limit.percentage));
     const remaining = limit.resetsAt - Math.floor(Date.now() / 1000);
@@ -89,7 +100,7 @@ function renderLimit(limit) {
                 <span class="percentage">${pct}%</span>
             </div>
             ${meterHtml(pct)}
-            <div class="limit-reset">${LABELS.resets} ${formatDuration(remaining)}</div>
+            <div class="limit-reset"><span>${LABELS.resets} ${formatDuration(remaining)}</span><span class="limit-at" title="${new Date(limit.resetsAt * 1000).toLocaleString()}">${formatResetClock(limit.resetsAt)}</span></div>
         </div>
     `;
 }

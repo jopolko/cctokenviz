@@ -365,9 +365,19 @@ html[data-glow="1"] .limits {
 }
 
 .limit-reset {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
     margin-top: 5px;
     font-size: 0.85em;
     color: var(--dim);
+}
+
+.limit-at {
+    color: var(--strong);
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 /* Color states */
