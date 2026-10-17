@@ -76,7 +76,7 @@ const THEMES = {
     },
     sweet: {
         name: 'Sweet', tag: 'Hearts and pastels', group: 'styles', icon: '💗', font: 'candara', headFont: 'inkfree',
-        vars: { bg: '#fff0f6', panel: '#ffffff', panel2: '#fff7fb', border: '#ffb6d5', track: '#ffe0ee', text: '#6b3a55', dim: '#8a5a78', strong: '#4a2040', accent: '#ff5fa2', good: '#d6246e', warn: '#b45309', danger: '#c2255c', crit: '#a4133c', head: '#b3236a' },
+        vars: { bg: '#fff0f6', panel: '#ffffff', panel2: '#fff7fb', border: '#ffb6d5', track: '#ffe0ee', text: '#6b3a55', dim: '#8a5a78', strong: '#4a2040', accent: '#ff5fa2', good: '#d6246e', warn: '#9b27af', danger: '#c2185b', crit: '#880e4f', head: '#b3236a' },
         look: { ...FLAT_LOOK, radius: 20, ...emojiBg('💗', '✨', 100, 0.2), pre: '♡ ', post: ' ♡', logo: '💗 ', caps: false, headWeight: 400, headSpacing: '0.04em' },
         meter: { kind: 'heart', n: 10 },
         labels: { context: 'Context', limits: 'Limits', used: 'Used', free: 'Left' },

@@ -105,6 +105,10 @@ header h1::before {
     display: flex;
     flex-direction: column;
     min-height: 0;
+    padding: 10px 12px 12px;
+    background: var(--panel2);
+    border: var(--bw) solid var(--border);
+    border-radius: var(--radius);
 }
 
 .grow { flex: 1; }
@@ -113,15 +117,18 @@ header h1::before {
     flex: 0 1 auto;
     display: flex;
     flex-direction: column;
-    gap: 10px;
     overflow-y: auto;
 }
 
+/* Rows sit inside the Context box, separated by a hairline, the way the limits sit inside theirs */
 .session {
-    background: var(--panel);
-    border-radius: var(--radius);
-    padding: 9px 12px;
-    border: var(--bw) solid var(--border);
+    padding: 0;
+}
+
+.session + .session {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
 }
 
 .gear {
@@ -137,11 +144,14 @@ header h1::before {
     transition: transform 0.25s ease, color 0.2s;
 }
 
-.session, .limits { clip-path: var(--clip); }
+.context, .limits { clip-path: var(--clip); }
 
 .session.dragging {
-    opacity: 0.85;
-    border-color: var(--accent);
+    opacity: 0.92;
+    background: var(--panel);
+    border: var(--bw) solid var(--accent);
+    border-radius: var(--radius);
+    padding: 8px 10px;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
     position: relative;
     z-index: 5;
@@ -322,7 +332,7 @@ body.is-dragging {
 .segs[data-kind="leaf"] i.on { background: var(--c); }
 
 /* Neon themes: a soft glow on panels */
-html[data-glow="1"] .session,
+html[data-glow="1"] .context,
 html[data-glow="1"] .limits {
     box-shadow: 0 0 14px -4px var(--accent);
 }
