@@ -216,6 +216,26 @@ body.is-dragging {
     .title-text.scroll { animation: none; }
 }
 
+.pct-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.15;
+}
+
+/* An idle session keeps its last known reading, dimmed and marked */
+.session.idle .meter,
+.session.idle .percentage,
+.session.idle .session-footer {
+    opacity: 0.55;
+}
+
+.idle-tag {
+    font-size: 0.72em;
+    color: var(--dim);
+    white-space: nowrap;
+}
+
 .percentage {
     font-weight: 600;
     font-size: 1em;

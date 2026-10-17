@@ -91,6 +91,8 @@ export namespace main {
 	    freeTokens: number;
 	    percentage: number;
 	    lastUpdated: string;
+	    idle: boolean;
+	    idleSeconds: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new SessionInfo(source);
@@ -106,6 +108,8 @@ export namespace main {
 	        this.freeTokens = source["freeTokens"];
 	        this.percentage = source["percentage"];
 	        this.lastUpdated = source["lastUpdated"];
+	        this.idle = source["idle"];
+	        this.idleSeconds = source["idleSeconds"];
 	    }
 	}
 

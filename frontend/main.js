@@ -27,11 +27,14 @@ function renderSession(session) {
     const id = escapeHtml(session.id);
 
     return `
-        <div class="session ${stateClass}" data-id="${id}">
+        <div class="session ${stateClass}${session.idle ? ' idle' : ''}" data-id="${id}">
             <div class="session-header">
                 <span class="grip" title="Drag to reorder">⋮⋮</span>
                 <span class="project-name" title="${escapeHtml(session.title || session.projectPath)}">${escapeHtml(session.projectName)}${session.title ? '<small class="session-title"><span class="title-text">' + escapeHtml(session.title) + '</span></small>' : ''}</span>
-                <span class="percentage">${session.percentage}%</span>
+                <span class="pct-wrap">
+                    <span class="percentage">${session.percentage}%</span>
+                    ${session.idle ? `<small class="idle-tag" title="No activity since the last reading">idle ${formatDuration(session.idleSeconds)}</small>` : ''}
+                </span>
                 <button class="dismiss" title="Hide until it has new activity" onclick="dismissSession('${id}')">✕</button>
             </div>
             ${meterHtml(session.percentage)}
@@ -181,7 +184,7 @@ async function updateSessions() {
     try {
         const sessions = await window.go.main.App.GetSessions();
         const list = sessions || [];
-        const signature = list.map(x => `${x.id}|${x.projectName}|${x.title}`).join('\n');
+        const signature = list.map(x => `${x.id}|${x.projectName}|${x.title}|${x.idle ? 'idle' : 'live'}`).join('\n');
 
         if (list.length && signature === lastSessionsHtml && container.querySelectorAll('.session').length === list.length) {
             // Same rows, same names: refresh only the numbers and meters
@@ -206,7 +209,9 @@ async function updateSessions() {
 
 // Refresh one row's numbers without rebuilding it (keeps the title ticker running)
 function updateRow(row, session) {
-    row.className = `session ${getStateClass(session.percentage)}${row.classList.contains('dragging') ? ' dragging' : ''}`;
+    row.className = `session ${getStateClass(session.percentage)}${session.idle ? ' idle' : ''}${row.classList.contains('dragging') ? ' dragging' : ''}`;
+    const idleTag = row.querySelector('.idle-tag');
+    if (idleTag) idleTag.textContent = `idle ${formatDuration(session.idleSeconds)}`;
     row.querySelector('.percentage').textContent = session.percentage + '%';
     row.querySelector('.meter').outerHTML = meterHtml(session.percentage);
     const spans = row.querySelectorAll('.session-footer span');

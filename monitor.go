@@ -29,6 +29,8 @@ type SessionInfo struct {
 	FreeTokens  int    `json:"freeTokens"`
 	Percentage  int    `json:"percentage"`
 	LastUpdated string `json:"lastUpdated"`
+	Idle        bool   `json:"idle"`        // no activity for a while: the last known context is shown
+	IdleSeconds int64  `json:"idleSeconds"` // how long since the log last changed
 }
 
 // Monitor handles scanning and parsing Claude session files
@@ -82,6 +84,7 @@ func (m *Monitor) GetActiveSessions() []SessionInfo {
 		path    string
 		modTime time.Time
 		project string
+		idle    bool
 	}
 
 	var allSessions []sessionFile
@@ -123,22 +126,78 @@ func (m *Monitor) GetActiveSessions() []SessionInfo {
 		}
 	}
 
+	// Remember sessions seen active, and bring back the ones that have gone idle
+	trackedMu.Lock()
+	tracked := loadTracked()
+	changed := false
+	activeIDs := map[string]bool{}
+	for _, sf := range allSessions {
+		id := filepath.Base(sf.path)
+		activeIDs[id] = true
+		if e, ok := tracked[id]; !ok || e.Path != sf.path || e.Project != sf.project {
+			tracked[id] = trackedEntry{Path: sf.path, Project: sf.project}
+			changed = true
+		}
+	}
+
+	var idle []sessionFile
+	for id, e := range tracked {
+		if activeIDs[id] {
+			continue
+		}
+		info, err := os.Stat(e.Path)
+		if err != nil { // the log is gone
+			delete(tracked, id)
+			changed = true
+			continue
+		}
+		idle = append(idle, sessionFile{path: e.Path, modTime: info.ModTime(), project: e.Project, idle: true})
+	}
+	// Keep only the most recent idle sessions
+	sort.Slice(idle, func(i, j int) bool { return idle[i].modTime.After(idle[j].modTime) })
+	if len(idle) > maxIdleTracked {
+		for _, sf := range idle[maxIdleTracked:] {
+			delete(tracked, filepath.Base(sf.path))
+			changed = true
+		}
+		idle = idle[:maxIdleTracked]
+	}
+	allSessions = append(allSessions, idle...)
+
 	// Sort by modification time (newest first)
 	sort.Slice(allSessions, func(i, j int) bool {
 		return allSessions[i].modTime.After(allSessions[j].modTime)
 	})
 
-	// Parse each session, keeping only configured projects
+	// Parse each session, keeping only configured projects. An idle session that you hid with the
+	// X is forgotten; resuming it later makes it active again and it comes back.
 	for _, sf := range allSessions {
-		if len(sessions) >= MaxProjects {
-			break
-		}
 		info := m.parseSession(sf.path, sf.project)
-		if info != nil && cfg.allows(info.ProjectName) && !isDismissed(info.ID, sf.modTime.Unix()) {
-			info.LastUpdated = sf.modTime.Format("15:04:05")
-			sessions = append(sessions, *info)
+		if info == nil {
+			continue
 		}
+		if isDismissed(info.ID, sf.modTime.Unix()) {
+			if sf.idle {
+				delete(tracked, info.ID)
+				changed = true
+			}
+			continue
+		}
+		if len(sessions) >= MaxProjects || !cfg.allows(info.ProjectName) {
+			continue
+		}
+		info.LastUpdated = sf.modTime.Format("15:04:05")
+		info.Idle = sf.idle
+		if sf.idle {
+			info.IdleSeconds = int64(time.Since(sf.modTime).Seconds())
+		}
+		sessions = append(sessions, *info)
 	}
+
+	if changed {
+		saveTracked(tracked)
+	}
+	trackedMu.Unlock()
 
 	return sessions
 }

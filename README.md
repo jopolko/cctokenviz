@@ -103,7 +103,9 @@ make install-mac
 
 ### How projects show up
 
-HeadRoom doesn't need to be pointed at your project folders. Claude Code (terminal and desktop app) records every session in `~/.claude/projects/`, and HeadRoom lists any session that has had activity in the last `activeMinutes` (default 60). Open a project in Claude and its row appears within a couple of seconds; stop using it and the row drops off after the cutoff.
+HeadRoom doesn't need to be pointed at your project folders. Claude Code (terminal and desktop app) records every session in `~/.claude/projects/`, and HeadRoom lists every session it has seen active. Open a project in Claude and its row appears within a couple of seconds.
+
+**Idle sessions keep their last reading.** After `activeMinutes` (default 60) without activity, a session's row stays, dimmed and marked `idle 2h 10m`, showing the last known context. Nothing is polled for an idle session (its log isn't changing, so there is nothing to read), and the row goes back to normal the moment you resume that session. It stays until you remove it with the ✕, even across restarts.
 
 **Row names.** Each row is labelled with the project folder the session is working in, with the session's title underneath. The project is the first folder under a directory named `projects` in the session's working directory (`C:\Users\me\projects\my-app\src` gives `my-app`), and it follows the session if it moves between projects. If the working directory isn't under a `projects` folder, the row uses that folder's own name.
 
@@ -111,7 +113,7 @@ HeadRoom doesn't need to be pointed at your project folders. Claude Code (termin
 
 **Order.** Rows stay where you put them. Drag the ⋮⋮ grip on a row to move it up or down; the order is remembered. A new session is added at the bottom.
 
-**Hiding a session.** Click the **✕** on a row to hide it. It stays hidden until that session has new activity, then comes back on its own, so reopening a project in Claude and working in it brings its row back. A brand-new session in the same project always appears as a new row.
+**Hiding a session.** Click the **✕** on a row to remove it. It stays gone until that session has new activity, then comes back on its own, so reopening a project in Claude and working in it brings its row back. A brand-new session in the same project always appears as a new row.
 
 Several rows with the same project name are separate sessions (each conversation is its own log); the title under the name tells them apart.
 
@@ -163,7 +165,7 @@ Settings are stored in `~/.headroom.json`, which you never need to edit by hand 
 | Key | Default | Meaning |
 |-----|---------|---------|
 | `projects` | all | Only show sessions in these project folders (the first folder under a `projects` directory in the session's working directory) |
-| `activeMinutes` | 60 | How recently a session must have changed to be listed |
+| `activeMinutes` | 60 | How long a session can go without activity before its row is marked idle (it stays listed) |
 | `contextTokens` | 200000 | Context window to measure against, for sessions that haven't exported their own size (use 1000000 for 1M-context models) |
 | `pollLimits` | false | Opt in to background limit refreshes, see [headless polling](#limits-option-b-headless-polling-opt-in) |
 | `pollMinutes` | 10 | Minutes between automatic polls (minimum 5; halved above 85% usage) |
@@ -264,7 +266,7 @@ make dev
 ## Troubleshooting
 
 ### "No active Claude sessions"
-- Sessions must have had activity within `activeMinutes` (default 60)
+- A session only appears once HeadRoom has seen it active (a change in its log while HeadRoom is running, or within `activeMinutes` of launching it)
 - If you set `projects` in `~/.headroom.json`, only those project names are shown
 - A session you hid with ✕ stays hidden until it has new activity (reset by deleting `~/.headroom/dismissed.json`)
 - Check that Claude Code is storing sessions in `~/.claude/projects/`
