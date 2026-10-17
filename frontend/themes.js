@@ -62,28 +62,28 @@ const THEMES = {
     },
     cowboy: {
         name: 'Frontier', tag: 'Yeehaw', group: 'styles', icon: '★', font: 'rockwell', headFont: 'rockwell',
-        vars: { bg: '#3b2616', panel: '#4a301c', panel2: '#43291a', border: '#8a5a2b', track: '#2e1d10', text: '#f3e2c3', dim: '#d2b184', strong: '#fff4dc', accent: '#e0a03a', good: '#9bc53d', warn: '#e0a03a', danger: '#d9622b', crit: '#c0392b' },
+        vars: { bg: '#3b2616', panel: '#4a301c', panel2: '#43291a', border: '#8a5a2b', track: '#2e1d10', text: '#f3e2c3', dim: '#d2b184', strong: '#fff4dc', accent: '#e0a03a', good: '#9bc53d', warn: '#e0a03a', danger: '#f08c58', crit: '#ff7a6c' },
         look: { ...FLAT_LOOK, radius: 3, bw: 2, bg: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.10) 0 2px, transparent 2px 7px)', pre: '★ ', post: ' ★', logo: '🤠 ', headWeight: 800 },
         meter: { kind: 'bullet', n: 12 },
         labels: { ...PLAIN_LABELS, free: 'Left' },
     },
     anime: {
         name: 'Shonen', tag: 'Anime energy', group: 'styles', icon: '⚡', font: 'bahnschrift', headFont: 'impact',
-        vars: { bg: '#101018', panel: '#1b1b2a', panel2: '#161622', border: '#ff3b3b', track: '#2a2a3c', text: '#ffffff', dim: '#ffd54a', strong: '#ffffff', accent: '#ff3b3b', good: '#3dd6ff', warn: '#ffd54a', danger: '#ff8a00', crit: '#ff1744' },
+        vars: { bg: '#101018', panel: '#1b1b2a', panel2: '#161622', border: '#ff3b3b', track: '#2a2a3c', text: '#ffffff', dim: '#ffd54a', strong: '#ffffff', accent: '#ff3b3b', good: '#3dd6ff', warn: '#ffd54a', danger: '#ff8a00', crit: '#ff3b5c' },
         look: { ...FLAT_LOOK, radius: 0, bw: 3, bg: 'repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,0.05) 0deg 2deg, transparent 2deg 6deg)', post: '!', logo: '⚡ ', headWeight: 400, headStyle: 'italic', headSpacing: '0.08em' },
         meter: { kind: 'slant', n: 18 },
         labels: { ...PLAIN_LABELS, used: 'Power used', free: 'Power left' },
     },
     sweet: {
         name: 'Sweet', tag: 'Hearts and pastels', group: 'styles', icon: '💗', font: 'candara', headFont: 'inkfree',
-        vars: { bg: '#fff0f6', panel: '#ffffff', panel2: '#fff7fb', border: '#ffb6d5', track: '#ffe0ee', text: '#6b3a55', dim: '#a0678a', strong: '#4a2040', accent: '#ff5fa2', good: '#ff5fa2', warn: '#ffa94d', danger: '#ff7aa2', crit: '#e8336d' },
+        vars: { bg: '#fff0f6', panel: '#ffffff', panel2: '#fff7fb', border: '#ffb6d5', track: '#ffe0ee', text: '#6b3a55', dim: '#8a5a78', strong: '#4a2040', accent: '#ff5fa2', good: '#d6246e', warn: '#b45309', danger: '#c2255c', crit: '#a4133c', head: '#b3236a' },
         look: { ...FLAT_LOOK, radius: 20, ...emojiBg('💗', '✨', 100, 0.2), pre: '♡ ', post: ' ♡', logo: '💗 ', caps: false, headWeight: 400, headSpacing: '0.04em' },
         meter: { kind: 'heart', n: 10 },
         labels: { context: 'Context', limits: 'Limits', used: 'Used', free: 'Left' },
     },
     bloom: {
         name: 'Bloom', tag: 'Garden and eco', group: 'styles', icon: '🌿', font: 'constantia', headFont: 'constantia',
-        vars: { bg: '#f1f0e4', panel: '#fbfaf2', panel2: '#f6f5e8', border: '#c5d1ae', track: '#dfe6cf', text: '#34453a', dim: '#6b7f62', strong: '#233328', accent: '#5f8f4e', good: '#5f9a4e', warn: '#e0a83a', danger: '#d9776b', crit: '#c0453a' },
+        vars: { bg: '#f1f0e4', panel: '#fbfaf2', panel2: '#f6f5e8', border: '#c5d1ae', track: '#dfe6cf', text: '#34453a', dim: '#5a6d52', strong: '#233328', accent: '#5f8f4e', good: '#3f7a34', warn: '#8c6210', danger: '#b0493c', crit: '#c0453a', head: '#3f6b33' },
         look: { ...FLAT_LOOK, radius: 16, ...emojiBg('🍃', '🌼', 104, 0.22), pre: '❦ ', post: ' ❦', logo: '🌿 ', caps: false, headWeight: 700, headStyle: 'italic', headSpacing: '0.04em' },
         meter: { kind: 'leaf', n: 12 },
         labels: { context: 'Context', limits: 'Limits', used: 'Used', free: 'Fresh' },
@@ -97,7 +97,7 @@ const THEMES = {
     },
     lab: {
         name: 'Lab Notebook', tag: 'Scientific method', group: 'styles', icon: '⚗', font: 'cambria', headFont: 'cambria',
-        vars: { bg: '#f7f9fc', panel: '#ffffff', panel2: '#ffffff', border: '#9db4d6', track: '#e4ebf5', text: '#1d2b44', dim: '#4d6288', strong: '#0f1b30', accent: '#1f5fbf', good: '#1f8a5b', warn: '#c77a00', danger: '#c8432f', crit: '#a1211a' },
+        vars: { bg: '#f7f9fc', panel: '#ffffff', panel2: '#ffffff', border: '#9db4d6', track: '#e4ebf5', text: '#1d2b44', dim: '#4d6288', strong: '#0f1b30', accent: '#1f5fbf', good: '#1b7f55', warn: '#a56500', danger: '#c8432f', crit: '#a1211a' },
         look: { ...FLAT_LOOK, radius: 2, ...gridBg('rgba(31,95,191,0.10)', 16), logo: '⚗ ', caps: false, headWeight: 700, headSpacing: '0.02em' },
         meter: { kind: 'smooth', n: 0, ticks: true },
         labels: { context: 'Fig. 1 — Context', limits: 'Fig. 2 — Limits', used: 'Used', free: 'Free' },
@@ -105,7 +105,7 @@ const THEMES = {
 
     /* ---------- Simple ---------- */
     midnight: { name: 'Midnight', tag: 'Plain dark', group: 'simple', icon: '', font: 'system', headFont: 'system', look: FLAT_LOOK, meter: SMOOTH, labels: PLAIN_LABELS, vars: { bg: '#14161c', panel: '#1c1f27', panel2: '#181b22', border: '#2b3040', track: '#2b3040', text: '#e6e9f0', dim: '#aab1c3', strong: '#ffffff', accent: '#7aa2f7', good: '#4ade80', warn: '#fbbf24', danger: '#f87171', crit: '#ff4d4d' } },
-    light: { name: 'Daylight', tag: 'Plain light', group: 'simple', icon: '', font: 'system', headFont: 'system', look: FLAT_LOOK, meter: SMOOTH, labels: PLAIN_LABELS, vars: { bg: '#f5f6f8', panel: '#ffffff', panel2: '#ffffff', border: '#d9dde5', track: '#e3e6ec', text: '#1f2430', dim: '#5b6475', strong: '#111827', accent: '#2563eb', good: '#16a34a', warn: '#d97706', danger: '#dc2626', crit: '#b91c1c' } },
+    light: { name: 'Daylight', tag: 'Plain light', group: 'simple', icon: '', font: 'system', headFont: 'system', look: FLAT_LOOK, meter: SMOOTH, labels: PLAIN_LABELS, vars: { bg: '#f5f6f8', panel: '#ffffff', panel2: '#ffffff', border: '#d9dde5', track: '#e3e6ec', text: '#1f2430', dim: '#5b6475', strong: '#111827', accent: '#2563eb', good: '#12853c', warn: '#b45309', danger: '#dc2626', crit: '#b91c1c' } },
     contrast: { name: 'High contrast', tag: 'Easiest to read', group: 'simple', icon: '', font: 'system', headFont: 'system', look: FLAT_LOOK, meter: SMOOTH, labels: PLAIN_LABELS, vars: { bg: '#000000', panel: '#000000', panel2: '#000000', border: '#ffffff', track: '#333333', text: '#ffffff', dim: '#dddddd', strong: '#ffffff', accent: '#ffff00', good: '#00ff00', warn: '#ffff00', danger: '#ff8c00', crit: '#ff0000' } },
 };
 const DEFAULT_THEME = 'midnight';
@@ -168,9 +168,10 @@ function applyAppearance(cfg) {
     for (const [key, value] of Object.entries(theme.vars)) {
         root.style.setProperty('--' + key, value);
     }
-    if (cfg.accent && /^#[0-9a-fA-F]{6}$/.test(cfg.accent)) {
-        root.style.setProperty('--accent', cfg.accent);
-    }
+    // Headings use the theme's heading color (a darker accent on light themes); your own accent wins
+    const ownAccent = cfg.accent && /^#[0-9a-fA-F]{6}$/.test(cfg.accent) ? cfg.accent : null;
+    if (ownAccent) root.style.setProperty('--accent', ownAccent);
+    root.style.setProperty('--head', ownAccent || theme.vars.head || theme.vars.accent);
 
     const look = theme.look;
     root.style.setProperty('--radius', look.radius + 'px');
@@ -205,7 +206,7 @@ function themeCardHtml(id, selected, sample) {
     const t = THEMES[id];
     const v = t.vars;
     const esc = (x) => String(x).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    const vars = Object.entries(v).map(([k, val]) => `--${k}:${val}`).join(';');
+    const vars = Object.entries(v).map(([k, val]) => `--${k}:${val}`).join(';') + `;--head:${v.head || v.accent}`;
     const heading = `${t.look.pre}${t.labels.context}${t.look.post}`;
     const style = `${vars};--c:${v.good};--clip:none;--head-weight:${t.look.headWeight};` +
         `background-color:${v.bg};background-image:${t.look.bg};background-size:${t.look.bgSize};` +

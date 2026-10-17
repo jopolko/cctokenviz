@@ -93,10 +93,8 @@ header h1::before {
     font-style: var(--head-style);
     letter-spacing: var(--head-spacing);
     text-transform: var(--title-case);
-    color: var(--accent);
-    padding-bottom: 5px;
-    margin-bottom: 10px;
-    border-bottom: 2px solid var(--accent);
+    color: var(--head, var(--accent));
+    margin-bottom: 8px;
 }
 
 .section-title::before { content: var(--title-pre); }
@@ -657,7 +655,7 @@ footer {
     font-size: 0.95em;
     font-weight: var(--head-weight);
     margin-bottom: 7px;
-    color: var(--accent);
+    color: var(--head, var(--accent));
     white-space: nowrap;
 }
 
