@@ -136,7 +136,7 @@ function limitsSection() {
             <h2 class="section-title">Limits</h2>
             <label><input type="checkbox" id="poll" ${cfg.pollLimits ? 'checked' : ''} ${hasCli ? '' : 'disabled'}> Check my 5-hour and weekly limits automatically</label>
             <div class="hint">${hasCli ? '<span class="ok">Claude Code found.</span>' : '<span class="bad">Claude Code (the claude command) was not found, so this is unavailable.</span>'}
-                Each check runs one tiny request under your own Claude login: about 40,000 mostly cached tokens, roughly $0.002 at API prices. It slowly draws on your plan limits (or bills your API key, if the claude command uses one), and HeadRoom never sees or stores your login.
+                Each check runs one tiny request under your own Claude login: under 1,000 tokens, roughly $0.0002 at API prices. It slowly draws on your plan limits (or bills your API key, if the claude command uses one), and HeadRoom never sees or stores your login.
                 It only checks while a session is active, and stops once a limit is used up.</div>
             <div class="row"><span>Frequency</span><select id="pollMin" ${cfg.pollLimits ? '' : 'disabled'}>${opts}</select></div>
             <div class="hint">Off by default. Without it, limits update only when a terminal session reports them (see the README) and the ↻ Refresh button does nothing.</div>

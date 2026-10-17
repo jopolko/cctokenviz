@@ -203,7 +203,41 @@ type rateLimitEvent struct {
 	} `json:"rate_limit_info"`
 }
 
+// Claude Code sends its whole system prompt and tool list with every request, about 39,000
+// tokens even for a one-word reply. The probe only wants the rate_limit_event, so it swaps the
+// system prompt for one line and turns off tools, skills, MCP servers and settings files. That
+// cuts a poll to under 1,000 tokens and still returns both windows. It deliberately does not use
+// --bare, which would stop the CLI from reading your subscription login.
+var slimProbeArgs = []string{
+	"-p", "reply with: ok",
+	"--model", "haiku",
+	"--output-format", "stream-json", "--verbose",
+	"--no-session-persistence",
+	"--system-prompt", "Reply with the single word ok.",
+	"--tools", "",
+	"--disable-slash-commands",
+	"--strict-mcp-config",
+	"--setting-sources", "",
+}
+
+// The plain form, for a claude version that doesn't know the options above
+var plainProbeArgs = []string{
+	"-p", "reply with: ok",
+	"--model", "haiku",
+	"--output-format", "stream-json", "--verbose",
+	"--no-session-persistence",
+}
+
 func runHeadlessProbe() (Limits, error) {
+	limits, err := runProbe(slimProbeArgs)
+	if err == nil {
+		return limits, nil
+	}
+	pollLog("slim probe failed (" + err.Error() + "), trying the plain one")
+	return runProbe(plainProbeArgs)
+}
+
+func runProbe(args []string) (Limits, error) {
 	var out Limits
 	claude := findClaude()
 	if claude == "" {
@@ -213,10 +247,7 @@ func runHeadlessProbe() (Limits, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), pollTimeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, claude, "-p", "reply with: ok",
-		"--model", "haiku",
-		"--output-format", "stream-json", "--verbose",
-		"--no-session-persistence")
+	cmd := exec.CommandContext(ctx, claude, args...)
 	cmd.Dir = os.TempDir() // keep it out of any project
 	hideWindow(cmd)
 

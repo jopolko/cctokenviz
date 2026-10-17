@@ -207,19 +207,21 @@ The script writes `~/.headroom/status-<session_id>.json`.
 Turn on "Check my 5-hour and weekly limits automatically" in the setup wizard or settings (`"pollLimits": true`). While one of your sessions has been active in the last 30 minutes, HeadRoom runs one headless Claude Code call:
 
 ```
-claude -p "reply with: ok" --model haiku --output-format stream-json --verbose --no-session-persistence
+claude -p "reply with: ok" --model haiku --output-format stream-json --verbose --no-session-persistence \
+       --system-prompt "Reply with the single word ok." --tools "" --disable-slash-commands \
+       --strict-mcp-config --setting-sources ""
 ```
 
 Claude Code emits a `rate_limit_event` with both windows, which HeadRoom reads.
 
 #### What polling costs
 
-Polling is a slow drip, not a one-off. Each poll is a real Haiku request: Claude Code sends its normal system prompt and tool definitions even for a one-word reply, so one poll is about 40,000 input tokens (mostly cache reads) and a handful of output tokens. At the default of one poll every 10 minutes while you're working, that's about 6 polls and 240,000 mostly cached tokens an hour. HeadRoom never charges anything itself; what you pay depends on what the `claude` command is signed in to:
+Polling is a slow drip, not a one-off, but a small one. A plain headless call would send Claude Code's whole system prompt and tool list, about 39,000 tokens, just to say "ok". HeadRoom's poll replaces the system prompt with one line and turns off tools, skills, MCP servers and settings files, which brings a poll down to **under 1,000 tokens**: I measured 887, against 39,214 for the plain call, and it still returns both the 5-hour and weekly windows. (It does not use `--bare`, which would stop the CLI from reading your subscription login. If your `claude` is too old to know these options, HeadRoom falls back to the plain call.) At the default of one poll every 10 minutes while you're working, that's about 6 polls and roughly 5,000 tokens an hour. HeadRoom never charges anything itself; what you pay depends on what the `claude` command is signed in to:
 
 | `claude` is signed in with | What a poll costs |
 |----------------------------|-------------------|
-| **A Pro or Max subscription** | No money. Each poll takes a small slice of your 5-hour and weekly limits, so HeadRoom's own checking slowly uses some of the quota it is showing you. I couldn't measure the share, because the usage figure only moves in whole percents; expect it to be small, but it is not zero. |
-| **An Anthropic API key** (an `ANTHROPIC_API_KEY` set, or a Console login) | Real money: roughly $0.002 per poll at API list prices, about 1.3 cents an hour at the default. The key's credit balance goes down a little while you work. |
+| **A Pro or Max subscription** | No money. Each poll takes a tiny slice of your 5-hour and weekly limits, so HeadRoom's own checking uses a little of the quota it is showing you. I couldn't measure the share, because the usage figure only moves in whole percents; at under 1,000 tokens a poll it should be hard to notice, but it is not zero. |
+| **An Anthropic API key** (an `ANTHROPIC_API_KEY` set, or a Console login) | Real money, but very little: roughly $0.0002 per poll at API list prices, about a tenth of a cent an hour at the default. |
 | **A subscription with extra usage switched on** | Free until the 5-hour limit is used up. At 100%, a poll goes through and is billed to extra usage. HeadRoom stops polling once it sees a limit at 100% and starts again after the reset, but it can only react after it has seen the 100%. |
 
 HeadRoom can't tell which of these applies to you. To keep the drip small, it only polls while one of your sessions has been active in the last 30 minutes, and you can lower the frequency or turn polling off in Settings. The status line export (option A, above) costs nothing, at the price of only updating from terminal sessions.
@@ -233,7 +235,7 @@ It's off by default because it spends a little of your plan. Review [Anthropic's
 
 **How often should it refresh?** Context changes by the second and is free, so it updates every 2 seconds. Plan limits change slowly: a 5-hour window moves roughly 1% every 3 minutes at full burn, so frequent polling buys little.
 
-- **Default: every 10 minutes while you're active** (about 6 probes an hour, roughly 240k mostly cached tokens, about a cent an hour at API list prices). That's fresh enough to plan a compact or a break.
+- **Default: every 10 minutes while you're active** (about 6 polls an hour, roughly 5,000 tokens, about a tenth of a cent an hour at API list prices). That's fresh enough to plan a compact or a break.
 - **Faster when it matters:** above 85% on any limit it polls twice as often, down to a floor of 5 minutes, since that's when a fresher number changes what you do.
 - **Exact when you need it:** the **Refresh** button checks right now. Use it before a big decision rather than polling harder all day.
 - **Tune it:** `pollMinutes` in the config (default 10, minimum 5). Set `pollLimits` to false to turn polling off entirely.
