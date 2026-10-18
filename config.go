@@ -13,9 +13,9 @@ import (
 // settings panel edit it; it is re-read on every refresh, so hand edits apply live too.
 type Config struct {
 	// What to show
-	Projects      []string `json:"projects"`      // only these project folders; empty shows all
-	ActiveMinutes int      `json:"activeMinutes"` // how recently a session must have changed to be listed
-	ContextTokens int      `json:"contextTokens"` // context window for sessions that haven't reported one
+	Projects       []string `json:"projects"`       // only these project folders; empty shows all
+	ActiveMinutes  int      `json:"activeMinutes"`  // how recently a session must have changed to be listed
+	ContextTokens  int      `json:"contextTokens"`  // context window for sessions that haven't reported one
 	ProjectFolders []string `json:"projectFolders"` // folders you added: a folder of projects, or a single project
 	// Per-project window override (0 or missing = detect). Used when a session has not
 	// exported its own size.
@@ -28,6 +28,9 @@ type Config struct {
 	PollMinutes int  `json:"pollMinutes"` // gap between automatic polls (default 10, minimum 5)
 
 	// API spend panel
+	// Rows
+	PerSession bool `json:"perSession"` // show every session as its own row (default: one row per project)
+
 	ShowUsage   bool `json:"showUsage"`   // show the API spend panel (off by default)
 	UsageFolded bool `json:"usageFolded"` // the panel is folded to its header (expanded by default)
 

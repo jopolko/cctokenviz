@@ -82,3 +82,18 @@ func TestAddSignalDoesNotFlipOnOneStrayFile(t *testing.T) {
 		t.Fatalf("sustained work in a new project did not take over: %q", got)
 	}
 }
+
+func TestFoldByProjectKeepsMostRecentlyActive(t *testing.T) {
+	in := []SessionInfo{
+		{ID: "old", ProjectName: "lookout", ActivityAt: 100, Percentage: 14, Title: "resume"},
+		{ID: "new", ProjectName: "Lookout", ActivityAt: 200, Percentage: 18},
+		{ID: "x", ProjectName: "other", ActivityAt: 50},
+	}
+	out := foldByProject(in)
+	if len(out) != 2 {
+		t.Fatalf("want 2 rows, got %d", len(out))
+	}
+	if out[0].ID != "new" || len(out[0].Others) != 1 || out[0].Others[0].Percentage != 14 {
+		t.Fatalf("wrong fold: %+v", out[0])
+	}
+}

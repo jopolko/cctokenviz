@@ -9,6 +9,7 @@ export namespace main {
 	    hiddenProjects: string[];
 	    pollLimits: boolean;
 	    pollMinutes: number;
+	    perSession: boolean;
 	    showUsage: boolean;
 	    usageFolded: boolean;
 	    theme: string;
@@ -32,6 +33,7 @@ export namespace main {
 	        this.hiddenProjects = source["hiddenProjects"];
 	        this.pollLimits = source["pollLimits"];
 	        this.pollMinutes = source["pollMinutes"];
+	        this.perSession = source["perSession"];
 	        this.showUsage = source["showUsage"];
 	        this.usageFolded = source["usageFolded"];
 	        this.theme = source["theme"];
@@ -92,6 +94,22 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class OtherSession {
+	    title: string;
+	    percentage: number;
+	    idle: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new OtherSession(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.title = source["title"];
+	        this.percentage = source["percentage"];
+	        this.idle = source["idle"];
+	    }
+	}
 	export class SessionInfo {
 	    id: string;
 	    projectName: string;
@@ -103,6 +121,8 @@ export namespace main {
 	    lastUpdated: string;
 	    idle: boolean;
 	    idleSeconds: number;
+	    activityAt: number;
+	    others: OtherSession[];
 	
 	    static createFrom(source: any = {}) {
 	        return new SessionInfo(source);
@@ -120,7 +140,27 @@ export namespace main {
 	        this.lastUpdated = source["lastUpdated"];
 	        this.idle = source["idle"];
 	        this.idleSeconds = source["idleSeconds"];
+	        this.activityAt = source["activityAt"];
+	        this.others = this.convertValues(source["others"], OtherSession);
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	export class UsageSummary {
 	    label: string;

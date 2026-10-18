@@ -149,6 +149,8 @@ function projectsSection() {
             <label><input type="radio" name="pscope" value="all" ${all ? 'checked' : ''}> Show every active session</label>
             <label><input type="radio" name="pscope" value="some" ${all ? '' : 'checked'}> Only these projects</label>
             ${names.length ? `<div class="hint" style="margin:6px 0 0 24px"><a href="#" data-action="projects-all">Select all</a> · <a href="#" data-action="projects-none">Deselect all</a></div>` : ''}
+            <label style="margin-top:6px"><input type="checkbox" id="perSession" ${cfg.perSession ? 'checked' : ''}> Show every session as its own row</label>
+            <div class="hint" style="margin:2px 0 0 24px">Off: one row per project, the session you used most recently, with a small +N for others on that project.</div>
             <div class="checklist">${list}</div>${CTX_LIST}
             <div class="hint">Projects are found from your Claude Code sessions and from any folder you add. The box on the right is that project's context window: left empty it is detected from the session (shown in grey); type a size like 200k, 1M or 750k to override. Tick “hide” to never show a project. The ✕ on a row only hides that session until it has new activity.</div>
             ${folders ? `<div class="checklist" style="max-height:90px">${folders}</div>` : ''}
@@ -365,6 +367,9 @@ function setupOverlayEvents() {
             if (t.checked && !cfg.pollMinutes) cfg.pollMinutes = 10;
             persist();
             rerender();
+        } else if (t.id === 'perSession') {
+            cfg.perSession = t.checked;
+            persist();
         } else if (t.id === 'showUsage') {
             cfg.showUsage = t.checked;
             appCfg.showUsage = t.checked;

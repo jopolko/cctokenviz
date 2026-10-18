@@ -32,7 +32,16 @@ type SessionInfo struct {
 	Percentage  int    `json:"percentage"`
 	LastUpdated string `json:"lastUpdated"`
 	Idle        bool   `json:"idle"`        // no activity for a while: the last known context is shown
-	IdleSeconds int64  `json:"idleSeconds"` // how long since the log last changed
+	IdleSeconds int64  `json:"idleSeconds"` // how long since the conversation last moved
+	ActivityAt  int64  `json:"activityAt"`  // unix time of the last real message (not bookkeeping writes)
+	Others      []OtherSession `json:"others"` // other sessions on the same project, folded into this row
+}
+
+// OtherSession is a session folded into another session's row because they share a project
+type OtherSession struct {
+	Title      string `json:"title"`
+	Percentage int    `json:"percentage"`
+	Idle       bool   `json:"idle"`
 }
 
 // Monitor handles scanning and parsing Claude session files
@@ -42,8 +51,9 @@ type Monitor struct {
 
 // Message structures for parsing JSONL
 type AssistantMessage struct {
-	Type    string `json:"type"`
-	Cwd     string `json:"cwd"`
+	Type      string `json:"type"`
+	Timestamp string `json:"timestamp"`
+	Cwd       string `json:"cwd"`
 	AiTitle string `json:"aiTitle"`
 	Message struct {
 		Usage   *Usage          `json:"usage"`
@@ -179,22 +189,33 @@ func (m *Monitor) GetActiveSessions() []SessionInfo {
 		if info == nil {
 			continue
 		}
-		if isDismissed(info.ID, sf.modTime.Unix()) {
+		// Judge a session by its last real message, not by the log's modification time
+		activity := info.ActivityAt
+		if activity == 0 {
+			activity = sf.modTime.Unix()
+		}
+		if isDismissed(info.ID, activity) {
 			if sf.idle {
 				delete(tracked, info.ID)
 				changed = true
 			}
 			continue
 		}
-		if len(sessions) >= MaxProjects || !cfg.allows(info.ProjectName) {
+		if !cfg.allows(info.ProjectName) {
 			continue
 		}
-		info.LastUpdated = sf.modTime.Format("15:04:05")
-		info.Idle = sf.idle
-		if sf.idle {
-			info.IdleSeconds = int64(time.Since(sf.modTime).Seconds())
+		info.LastUpdated = time.Unix(activity, 0).Format("15:04:05")
+		info.Idle = sf.idle || activity < cutoff.Unix()
+		if info.Idle {
+			info.IdleSeconds = time.Now().Unix() - activity
 		}
 		sessions = append(sessions, *info)
+	}
+	if !cfg.PerSession {
+		sessions = foldByProject(sessions)
+	}
+	if len(sessions) > MaxProjects {
+		sessions = sessions[:MaxProjects]
 	}
 
 	if changed {
@@ -213,6 +234,7 @@ type sessionState struct {
 	cwd           string
 	projectFolder string
 	title         string
+	lastActivity  time.Time // last real user or assistant message; bookkeeping entries don't count
 	signals       []string // recent project signals, newest last (see addSignal)
 	lastCwdName   string   // the project the working folder last pointed at
 }
@@ -294,6 +316,15 @@ func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 				continue
 			}
 
+			// Real activity is a user or assistant message. Claude Code also appends bookkeeping
+			// (titles, queue entries, hook summaries, background-task notices) to logs of
+			// sessions nobody is using; those must not make a session look active.
+			if (msg.Type == "assistant" || msg.Type == "user") && !bytes.Contains(msg.Message.Content, []byte("<task-notification>")) {
+				if t, err := time.Parse(time.RFC3339Nano, msg.Timestamp); err == nil && t.After(st.lastActivity) {
+					st.lastActivity = t
+				}
+			}
+
 			// Capture cwd from the first message that has it
 			if st.cwd == "" && msg.Cwd != "" {
 				st.cwd = msg.Cwd
@@ -322,7 +353,7 @@ func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 		}
 	}
 
-	lastUsage, cwd, projectFolder, title := st.lastUsage, st.cwd, st.projectFolder, st.title
+	lastUsage, cwd, projectFolder, title, lastActivity := st.lastUsage, st.cwd, st.projectFolder, st.title, st.lastActivity
 
 	if lastUsage == nil {
 		return nil
@@ -376,9 +407,43 @@ func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 		UsedTokens:  totalUsed,
 		FreeTokens:  freeTokens,
 		Percentage:  percentage,
+		ActivityAt:  activityUnix(lastActivity),
 	}
 }
 
+
+func activityUnix(t time.Time) int64 {
+	if t.IsZero() {
+		return 0
+	}
+	return t.Unix()
+}
+
+// foldByProject keeps one row per project: the session whose conversation moved most recently.
+// The others are listed on that row (shown as a "+N" tag) instead of getting rows of their own,
+// since two sessions on one project look like duplicates. Order of first appearance is kept.
+func foldByProject(sessions []SessionInfo) []SessionInfo {
+	best := map[string]int{} // project -> index in out
+	var out []SessionInfo
+	for _, s := range sessions {
+		key := strings.ToLower(s.ProjectName)
+		i, seen := best[key]
+		if !seen {
+			best[key] = len(out)
+			out = append(out, s)
+			continue
+		}
+		keep, other := out[i], s
+		if s.ActivityAt > keep.ActivityAt || (s.ActivityAt == keep.ActivityAt && keep.Idle && !s.Idle) {
+			keep, other = s, out[i]
+			keep.Others = append(keep.Others, out[i].Others...)
+			other.Others = nil
+		}
+		keep.Others = append(keep.Others, OtherSession{Title: other.Title, Percentage: other.Percentage, Idle: other.Idle})
+		out[i] = keep
+	}
+	return out
+}
 
 // KnownProjects returns the project names found in sessions from the last two weeks,
 // for the project picker. It parses at most the three newest logs per folder.

@@ -21,6 +21,14 @@ function escapeHtml(text) {
     return String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// "+N" after a project name: other sessions on the same project, folded into this row
+function othersTag(session) {
+    const others = session.others || [];
+    if (!others.length) return '';
+    const tip = 'Also on this project: ' + others.map(o => `${o.percentage}%${o.title ? ' ' + o.title : ''}${o.idle ? ' (idle)' : ''}`).join('; ');
+    return `<span class="others" title="${escapeHtml(tip)}">+${others.length}</span>`;
+}
+
 // Render a single session
 function renderSession(session) {
     const stateClass = getStateClass(session.percentage);
@@ -30,7 +38,7 @@ function renderSession(session) {
         <div class="session ${stateClass}${session.idle ? ' idle' : ''}" data-id="${id}">
             <div class="session-header">
                 <span class="grip" title="Drag to reorder">⋮⋮</span>
-                <span class="project-name" title="${escapeHtml(session.title || session.projectPath)}">${escapeHtml(session.projectName)}${session.title ? '<small class="session-title"><span class="title-text">' + escapeHtml(session.title) + '</span></small>' : ''}</span>
+                <span class="project-name" title="${escapeHtml(session.title || session.projectPath)}">${escapeHtml(session.projectName)}${othersTag(session)}${session.title ? '<small class="session-title"><span class="title-text">' + escapeHtml(session.title) + '</span></small>' : ''}</span>
                 <span class="pct-wrap">
                     <span class="percentage">${session.percentage}%</span>
                     ${session.idle ? `<small class="idle-tag" title="No activity since the last reading">idle ${formatDuration(session.idleSeconds)}</small>` : ''}
@@ -243,7 +251,7 @@ async function updateSessions() {
     try {
         const sessions = await window.go.main.App.GetSessions();
         const list = sessions || [];
-        const signature = list.map(x => `${x.id}|${x.projectName}|${x.title}|${x.idle ? 'idle' : 'live'}`).join('\n');
+        const signature = list.map(x => `${x.id}|${x.projectName}|${x.title}|${x.idle ? 'idle' : 'live'}|${(x.others || []).length}`).join('\n');
 
         if (list.length && signature === lastSessionsHtml && container.querySelectorAll('.session').length === list.length) {
             // Same rows, same names: refresh only the numbers and meters
