@@ -59,6 +59,8 @@ header h1 {
     flex: 1;
     white-space: nowrap; /* a long name or logo must not wrap under itself */
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 header h1::before {
@@ -70,8 +72,7 @@ header h1::before {
     font-size: 0.85em;
     color: var(--dim);
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    flex-shrink: 0; /* the count matters more than the end of the title */
 }
 
 .icon-btn {
