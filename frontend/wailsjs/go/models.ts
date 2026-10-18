@@ -9,7 +9,8 @@ export namespace main {
 	    hiddenProjects: string[];
 	    pollLimits: boolean;
 	    pollMinutes: number;
-	    usageOpen: boolean;
+	    showUsage: boolean;
+	    usageFolded: boolean;
 	    theme: string;
 	    accent: string;
 	    font: string;
@@ -31,7 +32,8 @@ export namespace main {
 	        this.hiddenProjects = source["hiddenProjects"];
 	        this.pollLimits = source["pollLimits"];
 	        this.pollMinutes = source["pollMinutes"];
-	        this.usageOpen = source["usageOpen"];
+	        this.showUsage = source["showUsage"];
+	        this.usageFolded = source["usageFolded"];
 	        this.theme = source["theme"];
 	        this.accent = source["accent"];
 	        this.font = source["font"];

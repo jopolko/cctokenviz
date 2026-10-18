@@ -5,7 +5,7 @@
     const now = Math.floor(Date.now() / 1000);
     const cfg = {
         projects: [], activeMinutes: 30, contextTokens: 200000, projectFolders: [], projectContext: null,
-        hiddenProjects: [], pollLimits: true, pollMinutes: 10, usageOpen: q.get('spend') === '1',
+        hiddenProjects: [], pollLimits: true, pollMinutes: 10, showUsage: q.get('spend') === '1', usageFolded: false,
         theme: q.get('theme') || 'linux', accent: '', font: '', fontSize: 0, setupDone: true, fixedSize: true,
     };
     const s = (id, name, title, pct, idle) => ({

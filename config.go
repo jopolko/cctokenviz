@@ -28,7 +28,8 @@ type Config struct {
 	PollMinutes int  `json:"pollMinutes"` // gap between automatic polls (default 10, minimum 5)
 
 	// API spend panel
-	UsageOpen bool `json:"usageOpen"` // the API spend panel is expanded (collapsed by default)
+	ShowUsage   bool `json:"showUsage"`   // show the API spend panel (off by default)
+	UsageFolded bool `json:"usageFolded"` // the panel is folded to its header (expanded by default)
 
 	// Look
 	Theme     string `json:"theme"`

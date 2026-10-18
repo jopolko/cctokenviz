@@ -146,10 +146,10 @@ function formatMoney(x) {
 
 // API spend panel: collapsed by default; the choice is remembered across launches
 async function toggleUsage() {
-    appCfg.usageOpen = !appCfg.usageOpen;
+    appCfg.usageFolded = !appCfg.usageFolded;
     try {
         const cfg = await window.go.main.App.GetSettings();
-        cfg.usageOpen = appCfg.usageOpen;
+        cfg.usageFolded = appCfg.usageFolded;
         await window.go.main.App.SaveSettings(cfg);
     } catch (error) {
         console.error('Error saving spend panel state:', error);
@@ -157,10 +157,16 @@ async function toggleUsage() {
     updateUsage();
 }
 
-// Tokens and estimated cost from the session logs. Only read while the panel is expanded.
+// Tokens and estimated cost from the session logs. Shown only if turned on in Settings, and
+// read only while the panel is expanded. Information only: it is never a charge.
 async function updateUsage() {
     const panel = document.getElementById('usage');
-    const open = !!appCfg.usageOpen;
+    if (!appCfg.showUsage) {
+        if (!panel.hidden) { panel.hidden = true; panel.innerHTML = ''; panel.dataset.open = ''; scheduleFit(); }
+        return;
+    }
+    panel.hidden = false;
+    const open = !appCfg.usageFolded;
     const head = `<button class="usage-toggle" aria-expanded="${open}" onclick="toggleUsage()"><span class="section-title">API spend</span><span class="chev">${open ? '▾' : '▸'}</span></button>`;
     if (!open) {
         if (panel.dataset.open !== '0') { panel.innerHTML = head; panel.dataset.open = '0'; scheduleFit(); }
@@ -176,7 +182,7 @@ async function updateUsage() {
             </div>
             <div class="usage-sub">cache saved ${formatMoney(p.cacheSaved)} (${formatBigTokens(p.cacheSavedTok)} tok)</div>`).join('');
         const html = `${head}${rows}
-            <div class="limits-asof"><span>Estimated at API prices. On a subscription this is notional, not a bill.</span></div>`;
+            <div class="limits-asof"><span>For information only, not a charge. Estimated at API prices.</span></div>`;
         const changed = panel.dataset.open !== '1' || panel.innerHTML.length !== html.length;
         panel.innerHTML = html;
         panel.dataset.open = '1';

@@ -154,7 +154,8 @@ Settings are stored in `~/.cctokenviz.json`, which you never need to edit by han
   "contextTokens": 1000000,
   "projectContext": { "my-app": 1000000 },
   "hiddenProjects": ["scratch"],
-  "usageOpen": false,
+  "showUsage": false,
+  "usageFolded": false,
   "pollLimits": false,
   "pollMinutes": 10,
   "theme": "midnight",
@@ -170,7 +171,8 @@ Settings are stored in `~/.cctokenviz.json`, which you never need to edit by han
 |-----|---------|---------|
 | `projects` | all | Only show sessions in these project folders (the first folder under a `projects` directory, taken from the session's working directory and the files and commands Claude is working on, latest wins) |
 | `hiddenProjects` | none | Projects that are never shown, even with new activity. Tick "hide" next to a project in Settings. (The ✕ on a row only hides that session until it has new activity.) |
-| `usageOpen` | false | Whether the API spend panel is expanded. Click its header to toggle; the choice is remembered |
+| `showUsage` | false | Show the API spend panel (Settings → API spend). Information only, never a charge |
+| `usageFolded` | false | Whether the API spend panel is folded to its header. Click the header to toggle; the choice is remembered |
 | `activeMinutes` | 60 | How long a session can go without activity before its row is marked idle (it stays listed) |
 | `contextTokens` | 200000 | Fallback context window, for projects with no detected size and no override (use 1000000 for 1M-context models) |
 | `projectFolders` | none | Folders you added in Settings: a single project, or a folder that holds several. Projects are also found from your Claude Code sessions, from any `projects` directory they use, and by the nearest enclosing folder with a `.git`, `go.mod`, `package.json` etc. |
@@ -183,7 +185,7 @@ Settings are stored in `~/.cctokenviz.json`, which you never need to edit by han
 
 ## API spend (optional)
 
-Under the limits there is a collapsed **API spend** panel. Click its header to expand it; CCTokenViz remembers your choice. It adds up the token usage recorded in your Claude Code session logs (including sub-agents) for **today** and the **last 7 days**, and shows:
+Turn on **Settings → API spend** to add a panel under the limits. It is off by default, and you can fold it to its header with a click; CCTokenViz remembers that. **It is information only, not a charge:** it lets you compare your usage with what the same work would cost on the pay-as-you-go or enterprise API. It adds up the token usage recorded in your Claude Code session logs (including sub-agents) for **today** and the **last 7 days**, and shows:
 
 - total tokens, and the **estimated cost** at public API prices (input, output, cache reads and cache writes priced separately),
 - how much **prompt caching saved**: cache-read tokens priced at the normal input rate, minus what they actually cost.
