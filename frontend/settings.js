@@ -68,6 +68,7 @@ function closeOverlay() {
     overlay().hidden = true;
     overlay().innerHTML = '';
     overlay().style.top = '';
+    themesOpen = false;
     wizardMode = false;
     window.go.main.App.SetSettingsOpen(false).catch(() => {});
     appCfg = { ...cfg };
@@ -80,7 +81,21 @@ function closeOverlay() {
 
 /* ---------- Sections (shared by the wizard and the settings panel) ---------- */
 
+// The theme picker is long, so it starts folded to one line naming the current theme
+let themesOpen = false;
+
 function lookSection() {
+    const current = THEMES[cfg.theme] || THEMES[DEFAULT_THEME];
+    const head = `<button class="theme-toggle" data-action="themes-toggle" aria-expanded="${themesOpen}">
+                <span>${current.icon ? current.icon + ' ' : ''}<b>${current.name}</b> <small>${current.tag}</small></span>
+                <span class="chev">${themesOpen ? 'Hide ▾' : 'Change ▸'}</span></button>`;
+    if (!themesOpen) {
+        return `
+        <div class="section">
+            <h2 class="section-title">Theme</h2>
+            ${head}
+        </div>`;
+    }
     const card = ([id]) => themeCardHtml(id, (cfg.theme || DEFAULT_THEME) === id);
     const group = (name) => Object.entries(THEMES).filter(([, t]) => t.group === name).map(card).join('');
     const cards = THEME_GROUPS.map(([id, label]) => `<div class="group-label">${label}</div><div class="theme-grid">${group(id)}</div>`).join('');
@@ -91,6 +106,7 @@ function lookSection() {
     return `
         <div class="section">
             <h2 class="section-title">Theme</h2>
+            ${head}
             ${cards}
             <div class="row"><span>Accent</span>
                 <input type="color" id="accent" value="${accent}">
@@ -234,7 +250,7 @@ const WIZARD_STEPS = [
         <h2>Welcome to CCTokenViz</h2>
         <p class="lead">CCTokenViz shows how much room you have left in Claude Code: the context window of each project you have open, and your 5-hour and weekly limits.</p>
         <p class="lead">This takes about a minute. Everything stays on your computer, and you can change any of it later from the gear at the top right.</p>`,
-    () => `<h2>Pick a look</h2><p class="lead">Choose a theme, then adjust the accent color and font if you like.</p>${lookSection()}`,
+    () => `<h2>Pick a look</h2><p class="lead">Open the list to browse the styles, or skip this and change it later from Settings. The default is Midnight, a plain dark theme.</p>${lookSection()}`,
     () => `<h2>Which projects?</h2><p class="lead">CCTokenViz finds your sessions on its own. Limit it to the projects you care about, or show everything.</p>${projectsSection()}`,
     () => `<h2>Context size</h2><p class="lead">How big is your model's context window?</p>${contextSection()}`,
     () => `<h2>Keeping limits current</h2><p class="lead">Your 5-hour and weekly limits only come from Claude Code itself. Choose whether CCTokenViz may ask for them in the background.</p><p class="lead"><b>Recommended if you want live 5-hour and weekly numbers.</b> Each check costs under 1,000 tokens. It stays off until you tick the box.</p>${limitsSection()}`,
@@ -306,6 +322,7 @@ function setupOverlayEvents() {
                 await window.go.main.App.SaveSettings(cfg);
                 await refreshProjects();
                 break;
+            case 'themes-toggle': e.preventDefault(); themesOpen = !themesOpen; rerender(); break;
             case 'projects-all': e.preventDefault(); cfg.projects = projectNames(); persist(); rerender(); break;
             case 'projects-none': e.preventDefault(); cfg.projects = []; persist(); rerender(); break;
             case 'next': wizardStep++; renderWizard(); break;

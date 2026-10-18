@@ -740,6 +740,10 @@ footer {
 .bad { color: var(--warn); }
 
 .proj-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.theme-toggle { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; margin: 2px 0 8px; background: var(--panel2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; font: inherit; cursor: pointer; text-align: left; }
+.theme-toggle small { color: var(--dim); margin-left: 4px; }
+.theme-toggle .chev { color: var(--accent); white-space: nowrap; font-size: 0.85em; }
+.theme-toggle:hover { border-color: var(--accent); }
 .hide-box { font-size: 11px; color: var(--dim); white-space: nowrap; }
 .proj-row select { font-size: 11px; padding: 1px 4px; background: transparent; color: inherit; border: 1px solid var(--border); border-radius: 4px; }
 

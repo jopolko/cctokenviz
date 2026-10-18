@@ -31,10 +31,14 @@
     window.go = { main: { App: {
         GetSettings: ok(cfg), SaveSettings: ok(), GetSessions: ok(sessions), GetLimits: ok(limits), GetUsage: ok(usage),
         RefreshLimits: ok(limits), SetOrder: ok(), DismissSession: ok(), KnownProjects: ok([]), DetectedContext: ok({}),
-        HasClaudeCLI: ok(true), AddProjectFolder: ok(''),
+        HasClaudeCLI: ok(true), ExpandForPanel: ok({ w: 240, h: 600, x: 0, y: 0 }), SetSettingsOpen: ok(), AddProjectFolder: ok(''),
     } } };
     // ?spend=1 clicks the on-demand "Check API cost" button, as a user would
     if (q.get('spend') === '1') document.addEventListener('DOMContentLoaded', () => setTimeout(() => window.checkUsage && window.checkUsage(), 400));
+    // ?settings=1 opens Settings (?themes=1 with the theme list expanded)
+    if (q.get('settings') === '1') document.addEventListener('DOMContentLoaded', () => setTimeout(() => {
+        window.openSettings().then(() => { if (q.get('themes') === '1') document.querySelector('[data-action=themes-toggle]').click(); });
+    }, 500));
     window.runtime = { WindowGetSize: ok({ w: 240, h: 600 }), WindowSetSize: ok(), WindowGetPosition: ok({ x: 0, y: 0 }),
         WindowSetPosition: ok(), WindowCenter: ok() };
 })();
