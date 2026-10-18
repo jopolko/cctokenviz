@@ -50,7 +50,11 @@ func (m *Monitor) polledLimits() Limits {
 	return out
 }
 
-// anySessionActive reports whether any session log changed within the given window
+// anySessionActive reports whether any session had a real message (from you or from Claude)
+// within the given window. A log's modification time is only a cheap first filter: Claude Code
+// also writes titles, hook summaries and background-task notices to logs of sessions nobody is
+// using, and those must not make an idle machine look busy, or checks would keep spending tokens
+// overnight.
 func (m *Monitor) anySessionActive(within time.Duration) bool {
 	cutoff := time.Now().Add(-within)
 	dirs, err := os.ReadDir(m.claudeDir)
@@ -69,7 +73,12 @@ func (m *Monitor) anySessionActive(within time.Duration) bool {
 			if !strings.HasSuffix(f.Name(), ".jsonl") {
 				continue
 			}
-			if info, err := f.Info(); err == nil && info.ModTime().After(cutoff) {
+			info, err := f.Info()
+			if err != nil || !info.ModTime().After(cutoff) {
+				continue
+			}
+			if si := m.parseSession(filepath.Join(m.claudeDir, d.Name(), f.Name()), d.Name()); si != nil &&
+				si.ActivityAt > 0 && time.Unix(si.ActivityAt, 0).After(cutoff) {
 				return true
 			}
 		}

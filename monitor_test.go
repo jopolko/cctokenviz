@@ -3,7 +3,9 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 )
 
 func assistantLine(cwd string, input, cacheRead int) string {
@@ -95,5 +97,34 @@ func TestFoldByProjectKeepsMostRecentlyActive(t *testing.T) {
 	}
 	if out[0].ID != "new" || len(out[0].Others) != 1 || out[0].Others[0].Percentage != 14 {
 		t.Fatalf("wrong fold: %+v", out[0])
+	}
+}
+
+func TestAnySessionActiveIgnoresBookkeepingWrites(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("USERPROFILE", home)
+	t.Setenv("HOME", home)
+	claude := filepath.Join(home, ".claude", "projects", "p")
+	os.MkdirAll(claude, 0o755)
+
+	fresh := time.Now().UTC().Format(time.RFC3339Nano)
+	stale := time.Now().Add(-5 * time.Hour).UTC().Format(time.RFC3339Nano)
+	assistant := func(ts string) string {
+		return `{"type":"assistant","timestamp":"` + ts + `","cwd":"` + strings.ReplaceAll(home, `\`, `/`) + `","message":{"id":"m","model":"x","usage":{"input_tokens":1,"output_tokens":1,"cache_read_input_tokens":0,"cache_creation_input_tokens":0}}}` + "\n"
+	}
+	bookkeeping := `{"type":"custom-title","title":"x"}` + "\n" + `{"type":"system","subtype":"stop_hook_summary","timestamp":"` + fresh + `"}` + "\n" +
+		`{"type":"user","timestamp":"` + fresh + `","message":{"content":"<task-notification>done</task-notification>"}}` + "\n"
+	m := &Monitor{claudeDir: filepath.Join(home, ".claude", "projects")}
+
+	// Log modified just now, but the last real message was hours ago and the new lines are bookkeeping
+	os.WriteFile(filepath.Join(claude, "idle.jsonl"), []byte(assistant(stale)+bookkeeping), 0o644)
+	if m.anySessionActive(30 * time.Minute) {
+		t.Fatal("bookkeeping writes made an idle session look active")
+	}
+
+	// A real, recent message counts
+	os.WriteFile(filepath.Join(claude, "busy.jsonl"), []byte(assistant(fresh)), 0o644)
+	if !m.anySessionActive(30 * time.Minute) {
+		t.Fatal("a recent real message should count as active")
 	}
 }

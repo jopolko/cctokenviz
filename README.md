@@ -254,7 +254,7 @@ The script writes `~/.cctokenviz/status-<session_id>.json`. (Before the rename t
 
 ### Limits, option B: headless polling (opt-in)
 
-Turn on "Check my 5-hour and weekly limits automatically" in the setup wizard or settings (`"pollLimits": true`). While one of your sessions has been active in the last 30 minutes, CCTokenViz runs one headless Claude Code call:
+Turn on "Check my 5-hour and weekly limits automatically" in the setup wizard or settings (`"pollLimits": true`). While one of your sessions has had a real message (from you or from Claude) in the last 30 minutes, CCTokenViz runs one headless Claude Code call:
 
 ```
 claude -p "reply with: ok" --model haiku --output-format stream-json --verbose --no-session-persistence \
@@ -274,10 +274,10 @@ Polling is a slow drip, not a one-off, but a small one. A plain headless call wo
 | **An Anthropic API key** (an `ANTHROPIC_API_KEY` set, or a Console login) | Real money, but very little: roughly $0.0002 per poll at API list prices, about a tenth of a cent an hour at the default. |
 | **A subscription with extra usage switched on** | Free until the 5-hour limit is used up. At 100%, a poll goes through and is billed to extra usage. CCTokenViz stops polling once it sees a limit at 100% and starts again after the reset, but it can only react after it has seen the 100%. |
 
-CCTokenViz can't tell which of these applies to you. To keep the drip small, it only polls while one of your sessions has been active in the last 30 minutes, and you can lower the frequency or turn polling off in Settings. The status line export (option A, above) costs nothing, at the price of only updating from terminal sessions.
+CCTokenViz can't tell which of these applies to you. To keep the drip small, it only polls while one of your sessions has had a real message in the last 30 minutes, and you can lower the frequency or turn polling off in Settings. The status line export (option A, above) costs nothing, at the price of only updating from terminal sessions.
 
 - It uses the official `claude` CLI under your own login, on your machine. CCTokenViz never reads or stores your credentials.
-- It never runs while you're idle, so it won't start a new 5-hour window by itself.
+- It never runs while you're idle, so it won't start a new 5-hour window by itself. "Idle" means no message in 30 minutes: the bookkeeping Claude Code writes to logs of open but unused sessions (titles, hooks, background-task notices) does not count, so an idle overnight costs no tokens.
 - It leaves no session log (`--no-session-persistence`) and runs from a temp folder, so it doesn't appear as a session.
 - When several sources report, CCTokenViz shows the latest window and the highest percentage, since a status line file can hold numbers from before its last refresh.
 
