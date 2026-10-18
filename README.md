@@ -56,6 +56,12 @@ Without structure, AI-assisted development often becomes chaotic: context gets l
 
 Works with the Claude Code terminal and the Claude desktop app (Code tab); both write the same session logs.
 
+## Requirements
+
+- **Windows 10 or 11.** The release is a single portable `.exe` with nothing to install. It needs the WebView2 runtime, which Windows 10 and 11 ship with. macOS and Linux build from source (Go 1.21+ and the Wails CLI) and are untested.
+- **Claude Code, in the terminal or the Claude desktop app (Code tab).** Either one is enough; both write the same session logs, which is all the context meter reads. CCTokenViz itself does not need the `claude` command.
+- **For the 5-hour and weekly limits** (Pro and Max plans): the status line export works for terminal sessions only, because the desktop app does not run a status line. Automatic limit checking runs the official `claude` command, so the Claude Code CLI must be installed and signed in; it works for desktop-app users too.
+
 ## Installation
 
 > **Note**: The original app was only tested on macOS. The limits, labels, dismiss, reordering and settings features were developed and tested on Windows 11 against the Claude desktop app and the terminal CLI; they are untested on macOS and Linux. Linux requires building from source on a Linux machine—contributions welcome!
