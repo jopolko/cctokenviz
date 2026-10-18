@@ -9,7 +9,7 @@ A lightweight desktop app that shows how much room you have left in Claude Code:
 Forked from [gosparq/claudewatch](https://github.com/gosparq/claudewatch) (MIT). Not affiliated with Anthropic.
 
 <p align="center">
-  <img src="docs/screenshot.png" alt="CCTokenViz in the Terminal theme: context per project, 5-hour and weekly limits, and the on-demand "Check API cost" button at the bottom" width="224">
+  <img src="docs/screenshot.png" alt="CCTokenViz in the Terminal theme: context per project, 5-hour and weekly limits, and the Check API cost button at the bottom" width="224">
 </p>
 
 ## Why?
@@ -40,18 +40,19 @@ Without structure, AI-assisted development often becomes chaotic: context gets l
 
 ## Features
 
-- 🖥️ **Floating window** - Always on top, stays visible while you work
-- 📊 **Real-time monitoring** - Updates every 2 seconds
-- 🌍 **Cross-platform** - Works on macOS, Windows, and Linux
-- 🚀 **Lightweight** - ~10MB binary, minimal resource usage
-- 📁 **Multi-project** - Monitors all active Claude Code sessions automatically
-- 🏷️ **Project names** - Labels sessions by the project folder under `~/projects` they're working in, with the session title underneath
-- ✕ **Dismiss** - Hide a session until it has new activity
+- 🖥️ **Floating window** - Always on top, stays visible while you work; its height fits what it shows
+- 📊 **Real-time monitoring** - Updates every 2 seconds, from local files only
+- 📁 **One row per project** - Monitors all active Claude Code sessions automatically. Two sessions on the same project fold into one row (the one you used most recently) with a small **+N** tag; a setting shows every session separately
+- 🏷️ **Project names** - Labels each row with the project the session is working in, with the session title underneath
+- 💤 **Idle sessions** - A session with no real conversation for a while stays listed, dimmed, with its last reading
+- ✕ **Hide a session** - Hide one row until that session has new activity; or **hide a project for good** from Settings
+- 📈 **Limits** - 5-hour and weekly usage with reset countdowns, for Pro/Max plans, with a **Refresh** button. A window that just reset shows as "reset" until a fresh reading arrives (see [Limits](#limits-where-the-numbers-come-from))
 - 💲 **API cost** - A "Check API cost" button at the bottom, on demand: tokens, estimated cost at API prices and what prompt caching saved, for today and the last 7 days. Free (it reads your local logs) and information only (see [API cost](#api-cost-on-demand))
-- 📈 **Limits** - 5-hour and weekly usage with reset countdowns, for Pro/Max plans (see [Limits](#limits-where-the-numbers-come-from))
+- 📐 **Context windows** - Detected per project (200k or 1M), or set your own size per project or as a default
 - ↕️ **Your order** - Drag the ⋮⋮ grip on a row to reorder; the order stays put
 - 🎨 **Themes** - Ten full styles (Linux terminal, sci-fi, Bitcoin, AI, cowboy, anime, kawaii, garden, celestial, lab notebook) each with its own meter, fonts, headings and wording, three plain themes, an accent color picker, and a font and size selector
 - 🧭 **Setup wizard** - A first-run walkthrough, and a gear icon for changing anything afterwards
+- 🔁 **Upgrades from HeadRoom** - This app was called HeadRoom; your settings and state move over automatically (see [Upgrading from HeadRoom](#upgrading-from-headroom))
 
 Works with the Claude Code terminal and the Claude desktop app (Code tab); both write the same session logs.
 
@@ -97,24 +98,26 @@ make install-mac
 
 1. **Launch the app** - Double-click `CCTokenViz.app` (macOS) or `CCTokenViz.exe` (Windows). The first launch opens a short setup wizard; CCTokenViz is a single executable and needs nothing installed beyond what Windows already has (the WebView2 runtime that Windows 10/11 ship). On Windows, add a Start Menu shortcut and pin it to the taskbar for one-click launch.
 2. **Window auto-positions** - Opens in the top-right corner, always on top (drag to reposition).
-3. **Work normally** - Open projects in Claude Code, in the terminal or the Claude desktop app. Each active session shows up as a row on its own; there is nothing to register.
+3. **Work normally** - Open projects in Claude Code, in the terminal or the Claude desktop app. Each active project shows up as a row; there is nothing to register.
 4. **Watch the colors** - Each bar changes color as it fills (green, yellow, orange, red, and pulsing red near the top), so you can see at a glance when a session is filling up and save your work before Claude compacts it.
 
 ### How projects show up
 
 CCTokenViz doesn't need to be pointed at your project folders. Claude Code (terminal and desktop app) records every session in `~/.claude/projects/`, and CCTokenViz lists every session it has seen active. Open a project in Claude and its row appears within a couple of seconds.
 
+**What counts as activity.** A session is active when its conversation moves: a message from you or from Claude. Claude Code also writes bookkeeping to session logs (titles, hook summaries, background-task notices), sometimes for sessions nobody is using; those writes are ignored, so they never make a session look live or bring back one you hid.
+
 **Idle sessions keep their last reading.** After `activeMinutes` (default 60) without activity, a session's row stays, dimmed and marked `idle 2h 10m`, showing the last known context. Nothing is polled for an idle session (its log isn't changing, so there is nothing to read), and the row goes back to normal the moment you resume that session. It stays until you remove it with the ✕, even across restarts.
 
-**Row names.** Each row is labelled with the project folder the session is working in, with the session's title underneath. The project is the first folder under a directory named `projects` in the session's working directory (`C:\Users\me\projects\my-app\src` gives `my-app`), and it follows the session if it moves between projects. If the working directory isn't under a `projects` folder, the row uses that folder's own name.
+**Row names.** Each row is labelled with the project the session is working on, with the session's title underneath. The project is worked out, in order, from folders you added in Settings, the first folder under a directory named `projects` (`C:\Users\me\projects\my-app\src` gives `my-app`), or the nearest enclosing folder with a `.git`, `go.mod`, `package.json` etc. It follows the session if it moves between projects, using the most common project among the last several files and folders it touched, so a session that glances at another project doesn't flip its row. If nothing matches, the row uses the working folder's own name.
 
-**Showing only some projects.** By default every active session is listed. To limit it, open Settings (the gear at the top right) and choose "Only these projects", or set `projects` in `~/.cctokenviz.json`. Names are matched against the row names above, ignoring case.
+**One row per project.** If several sessions are working on the same project (for example a resumed session beside the original), CCTokenViz shows the one whose conversation moved most recently and adds a small **+N** after the name; hover it to see the others' context. To see every session as its own row, tick "Show every session as its own row" in Settings (`perSession` in the config).
+
+**Showing only some projects.** By default every active project is listed. To limit it, open Settings (the gear at the top right) and choose "Only these projects", or set `projects` in `~/.cctokenviz.json`. Names are matched against the row names above, ignoring case. To remove one project for good, tick **hide** next to it in Settings (`hiddenProjects`).
 
 **Order.** Rows stay where you put them. Drag the ⋮⋮ grip on a row to move it up or down; the order is remembered. A new session is added at the bottom.
 
-**Hiding a session.** Click the **✕** on a row to remove it. It stays gone until that session has new activity, then comes back on its own, so reopening a project in Claude and working in it brings its row back. A brand-new session in the same project always appears as a new row.
-
-Several rows with the same project name are separate sessions (each conversation is its own log); the title under the name tells them apart.
+**Hiding a session.** Click the **✕** on a row to hide that session. It stays hidden until it has new real activity (a message from you or Claude), then comes back on its own, so reopening a project in Claude and working in it brings its row back. If a session keeps returning because it is genuinely active, use **hide** on its project in Settings instead.
 
 ### What it monitors
 
@@ -141,7 +144,24 @@ Open Settings from the gear at the top right any time. **Theme** has ten styles 
 
 The plain themes are Midnight, Daylight and High contrast. They are original designs and don't use any brand's characters or logos.
 
-You can override the accent color and the font (the fonts are the ones that ship with Windows, so nothing is bundled) and set the text size. **Projects**, **Context window** and **Limits** are covered below. Changes save as you make them, and "Run setup again" replays the wizard.
+Every option in Settings:
+
+| Section | Option | What it does |
+|---------|--------|--------------|
+| **Theme** | Style / plain theme | The look, shown as live miniatures |
+| | Accent color, "Use theme's" | Override the highlight color, or go back to the theme's |
+| | Font, Text size | Fonts that ship with Windows (nothing is bundled); 11-17 px |
+| **Projects** | Show every active session / Only these projects | Show all, or pick projects; Select all / Deselect all |
+| | Show every session as its own row | Turn off the one-row-per-project folding |
+| | hide (per project) | Never show that project, however active |
+| | Context box (per project) | Override that project's context window: leave empty to detect, or type 200k, 1M, 750k |
+| | Add a folder… / ✕ | Point at a single project or a folder of projects (e.g. outside `~/projects`) |
+| **Context window** | Default | Window size used when a project's can't be detected |
+| **Limits** | Check my 5-hour and weekly limits automatically, Frequency | Opt in to background limit checks (about 1K tokens each; see [Limits](#limits-where-the-numbers-come-from)) |
+| **Window** | Keep my window size | Stop the window fitting its height to its content |
+| (bottom) | Run setup again | Replays the wizard |
+
+Changes save as you make them. There is no Settings option for API cost: it is a button in the main window.
 
 Settings are stored in `~/.cctokenviz.json`, which you never need to edit by hand but can. It is re-read on every refresh, so edits apply immediately:
 
@@ -150,7 +170,9 @@ Settings are stored in `~/.cctokenviz.json`, which you never need to edit by han
   "projects": ["my-app", "my-api"],
   "activeMinutes": 30,
   "contextTokens": 1000000,
+  "projectFolders": ["D:\\work"],
   "projectContext": { "my-app": 1000000 },
+  "perSession": false,
   "hiddenProjects": ["scratch"],
   "pollLimits": false,
   "pollMinutes": 10,
@@ -166,6 +188,7 @@ Settings are stored in `~/.cctokenviz.json`, which you never need to edit by han
 | Key | Default | Meaning |
 |-----|---------|---------|
 | `projects` | all | Only show sessions in these project folders (the first folder under a `projects` directory, taken from the session's working directory and the files and commands Claude is working on, latest wins) |
+| `perSession` | false | Show every session as its own row instead of one row per project (the most recently active, with a +N tag) |
 | `hiddenProjects` | none | Projects that are never shown, even with new activity. Tick "hide" next to a project in Settings. (The ✕ on a row only hides that session until it has new activity.) |
 | `activeMinutes` | 60 | How long a session can go without activity before its row is marked idle (it stays listed) |
 | `contextTokens` | 200000 | Fallback context window, for projects with no detected size and no override (use 1000000 for 1M-context models) |
@@ -207,7 +230,7 @@ Claude Code only reports your 5-hour and weekly plan usage (Pro/Max plans) to it
   ```
 - Or, if you already have a status line script, copy the `export_for_cctokenviz` function from that file into it and call it with the parsed JSON.
 
-The script writes `~/.cctokenviz/status-<session_id>.json`.
+The script writes `~/.cctokenviz/status-<session_id>.json`. (Before the rename to CCTokenViz it wrote to `~/.headroom/`; if you copied the old script, change that path.)
 
 **Limitations:** the Claude desktop app doesn't run the status line, so only terminal sessions export. And the limit numbers inside the file only change after a response, so they can lag behind the real values. "Last reported X ago" shows how old the reading is.
 
@@ -246,8 +269,13 @@ It's off by default because it spends a little of your plan. Review [Anthropic's
 
 - **Default: every 10 minutes while you're active** (about 6 polls an hour, roughly 5,000 tokens, about a tenth of a cent an hour at API list prices). That's fresh enough to plan a compact or a break.
 - **Faster when it matters:** above 85% on any limit it polls twice as often, down to a floor of 5 minutes, since that's when a fresher number changes what you do.
-- **Exact when you need it:** the **Refresh** button checks right now. Use it before a big decision rather than polling harder all day.
+- **Exact when you need it:** the **Refresh** button checks right now (it needs automatic checks turned on in Settings). Use it before a big decision rather than polling harder all day.
+- **After a reset:** when a window's reset time passes it shows as **reset** (weekly also shows the next reset; the 5-hour window "starts with your next message") instead of disappearing, and a check follows within about 2 minutes while you are active. A window that reset more than a day ago, with no reading since, is dropped.
 - **Tune it:** `pollMinutes` in the config (default 10, minimum 5). Set `pollLimits` to false to turn polling off entirely.
+
+## Upgrading from HeadRoom
+
+This app was called HeadRoom. On first launch it moves `~/.headroom.json` to `~/.cctokenviz.json` and `~/.headroom/` to `~/.cctokenviz/` (merging into the new folder if it already exists), so your settings, row order and hidden sessions carry over. If you use the status line export, change the path in your script from `.headroom` to `.cctokenviz`, or copy the new `scripts/cctokenviz-statusline.py`.
 
 ## Project Structure
 
@@ -255,17 +283,27 @@ It's off by default because it spends a little of your plan. Review [Anthropic's
 cctokenviz/
 ├── main.go           # Wails entry point
 ├── app.go            # App bindings and the limits poller
-├── monitor.go        # JSONL parsing logic
+├── monitor.go        # Session log parsing, activity, one row per project
+├── projects.go       # Which project a path belongs to
 ├── config.go         # ~/.cctokenviz.json
-├── limits.go         # Plan limits from status line exports
+├── limits.go         # Plan limits from status line exports, reset handling
 ├── poll.go           # Opt-in headless limit refresh
+├── usage.go          # API cost: tokens and estimated price from local logs
 ├── order.go          # Remembers the order rows are dragged into
-├── dismiss.go        # Per-session dismiss
-├── scripts/          # Status line script that feeds CCTokenViz
+├── dismiss.go        # Per-session hide
+├── tracked.go        # Remembers sessions seen active, so idle ones stay listed
+├── migrate.go        # Moves ~/.headroom* to ~/.cctokenviz*
+├── scripts/
+│   ├── cctokenviz-statusline.py  # Status line script that feeds CCTokenViz
+│   ├── relaunch.ps1              # Stop, rebuild and restart (development)
+│   └── screenshots.py            # Regenerates docs/ screenshots from demo data
+├── docs/             # Screenshot and its demo-data stub
 ├── frontend/
 │   ├── index.html    # UI structure
 │   ├── style.css     # Styling
-│   └── main.js       # Update logic
+│   ├── themes.js     # The ten styles and three plain themes
+│   ├── main.js       # Rows, limits and API cost
+│   └── settings.js   # Settings panel and setup wizard
 ├── wails.json        # Wails config
 ├── go.mod            # Go dependencies
 └── Makefile          # Build commands
@@ -280,17 +318,29 @@ make dev
 # The app will open and refresh when you edit files
 ```
 
+On Windows, `powershell -File scripts/relaunch.ps1` stops the running copy (a running exe blocks the build), rebuilds `build\bin\CCTokenViz.exe` and starts it, so a pinned taskbar icon always opens the latest build. `go test ./...` runs the tests.
+
 ## Troubleshooting
 
 ### "No active Claude sessions"
 - A session only appears once CCTokenViz has seen it active (a change in its log while CCTokenViz is running, or within `activeMinutes` of launching it)
-- If you set `projects` in `~/.cctokenviz.json`, only those project names are shown
+- If you set `projects` in `~/.cctokenviz.json`, only those project names are shown; check `hiddenProjects` too
 - A session you hid with ✕ stays hidden until it has new activity (reset by deleting `~/.cctokenviz/dismissed.json`)
 - Check that Claude Code is storing sessions in `~/.claude/projects/`
+
+### A project keeps coming back after I hide it
+The ✕ hides one session until it has real new activity. If the session is still open and working, it returns. Tick **hide** next to the project in Settings to remove it for good.
+
+### Two rows for one project
+By default sessions on the same project fold into one row with a +N tag. If you see two rows, either "Show every session as its own row" is on, or the sessions were judged to be on different projects (check the names).
+
+### Limits show "reset" or are missing
+"Reset" means that plan window just reset and no fresh reading has arrived yet. Turn on automatic checks in Settings, press Refresh, or send a message in a terminal session with the status line export. See [Limits](#limits-where-the-numbers-come-from).
 
 ### Build errors
 - Run `wails doctor` to diagnose missing dependencies
 - Ensure Go and Wails are in your PATH
+- "Access denied" when building on Windows: close the running `CCTokenViz.exe` first (or use `scripts/relaunch.ps1`)
 
 ## License
 
