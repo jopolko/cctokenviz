@@ -235,7 +235,7 @@ const WIZARD_STEPS = [
     () => `<h2>Pick a look</h2><p class="lead">Choose a theme, then adjust the accent color and font if you like.</p>${lookSection()}`,
     () => `<h2>Which projects?</h2><p class="lead">CCTokenViz finds your sessions on its own. Limit it to the projects you care about, or show everything.</p>${projectsSection()}`,
     () => `<h2>Context size</h2><p class="lead">How big is your model's context window?</p>${contextSection()}`,
-    () => `<h2>Keeping limits current</h2><p class="lead">Your 5-hour and weekly limits only come from Claude Code itself. Choose whether CCTokenViz may ask for them in the background.</p>${limitsSection()}`,
+    () => `<h2>Keeping limits current</h2><p class="lead">Your 5-hour and weekly limits only come from Claude Code itself. Choose whether CCTokenViz may ask for them in the background.</p><p class="lead"><b>Recommended if you want live 5-hour and weekly numbers.</b> Each check costs under 1,000 tokens. It stays off until you tick the box.</p>${limitsSection()}`,
     () => `
         <h2>You're set</h2>
         <p class="lead">Your sessions will show up under <b>Context</b>, and your limits under <b>Limits</b>. Drag the ⋮⋮ grip on a row to reorder it, and click ✕ to hide a session.</p>
