@@ -80,6 +80,11 @@ func (a *App) RefreshLimits() Limits {
 	return a.monitor.GetLimits()
 }
 
+// GetUsage returns token and estimated cost totals for today and the last 7 days
+func (a *App) GetUsage() UsageReport {
+	return a.monitor.GetUsage()
+}
+
 // GetSettings returns the saved settings
 func (a *App) GetSettings() Config {
 	return loadConfig()

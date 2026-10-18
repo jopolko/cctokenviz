@@ -173,6 +173,15 @@ function windowSection() {
         </div>`;
 }
 
+function usageSection() {
+    return `
+        <div class="section">
+            <h2 class="section-title">Spend</h2>
+            <label><input type="checkbox" id="showUsage" ${cfg.showUsage ? 'checked' : ''}> Show tokens and estimated cost</label>
+            <div class="hint">Adds up the usage in your Claude Code session logs for today and the last 7 days, priced at public API rates, plus what prompt caching saved. It only reads files already on your computer. On a Pro or Max plan the dollar figure is what the same usage would cost on the API, not what you pay.</div>
+        </div>`;
+}
+
 function limitsSection() {
     const minutes = cfg.pollMinutes || 10;
     const opts = [5, 10, 15, 30].map(m => `<option value="${m}" ${minutes === m ? 'selected' : ''}>every ${m} minutes</option>`).join('');
@@ -203,7 +212,7 @@ function renderSettings() {
     overlay().innerHTML = `
         <h2>Settings</h2>
         <p class="lead">Changes save as you make them.</p>
-        ${lookSection()}${projectsSection()}${contextSection()}${limitsSection()}${windowSection()}
+        ${lookSection()}${projectsSection()}${contextSection()}${limitsSection()}${usageSection()}${windowSection()}
         <div class="nav">
             <button class="btn" data-action="rerun">Run setup again</button>
             <span class="spacer"></span>
@@ -349,6 +358,11 @@ function setupOverlayEvents() {
             if (t.checked && !cfg.pollMinutes) cfg.pollMinutes = 10;
             persist();
             rerender();
+        } else if (t.id === 'showUsage') {
+            cfg.showUsage = t.checked;
+            appCfg.showUsage = t.checked;
+            persist();
+            updateUsage();
         } else if (t.id === 'fixedSize') {
             cfg.fixedSize = t.checked;
             persist();

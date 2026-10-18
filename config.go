@@ -25,6 +25,9 @@ type Config struct {
 	PollLimits  bool `json:"pollLimits"`  // opt in to the background headless call that refreshes limits
 	PollMinutes int  `json:"pollMinutes"` // gap between automatic polls (default 10, minimum 5)
 
+	// Spend
+	ShowUsage bool `json:"showUsage"` // show tokens and estimated cost from the session logs
+
 	// Look
 	Theme     string `json:"theme"`
 	Accent    string `json:"accent"` // optional #rrggbb override for headings and highlights

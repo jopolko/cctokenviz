@@ -14,6 +14,8 @@ export function GetSessions():Promise<Array<main.SessionInfo>>;
 
 export function GetSettings():Promise<main.Config>;
 
+export function GetUsage():Promise<main.UsageReport>;
+
 export function HasClaudeCLI():Promise<boolean>;
 
 export function KnownProjects():Promise<Array<string>>;

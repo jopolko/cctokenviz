@@ -133,6 +133,42 @@ async function updateLimits() {
     }
 }
 
+// Format a token count for the spend panel: 1.2M, 340k, 900
+function formatBigTokens(n) {
+    if (n >= 1e6) return (n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + 'M';
+    if (n >= 1e3) return Math.round(n / 1e3) + 'k';
+    return String(n);
+}
+
+function formatMoney(x) {
+    return '$' + (x >= 100 ? x.toFixed(0) : x.toFixed(2));
+}
+
+// Spend panel: tokens and estimated cost from the session logs (opt-in in Settings)
+async function updateUsage() {
+    const panel = document.getElementById('usage');
+    if (!appCfg.showUsage) { if (!panel.hidden) { panel.hidden = true; scheduleFit(); } return; }
+    try {
+        const u = await window.go.main.App.GetUsage();
+        const before = panel.innerHTML.length;
+        const rows = (u.periods || []).map(p => `
+            <div class="usage-row" title="Fresh input ${formatBigTokens(p.inputTokens)}, output ${formatBigTokens(p.outputTokens)}, cache read ${formatBigTokens(p.cacheRead)}, cache write ${formatBigTokens(p.cacheWrite)}">
+                <span class="limit-label">${p.label}</span>
+                <span>${formatBigTokens(p.totalTokens)} tok</span>
+                <span class="percentage">${u.approx ? '~' : ''}${formatMoney(p.cost)}</span>
+            </div>
+            <div class="usage-sub">cache saved ${formatMoney(p.cacheSaved)} (${formatBigTokens(p.cacheSavedTok)} tok)</div>`).join('');
+        panel.innerHTML = `
+            <h2 class="section-title">Spend</h2>
+            ${rows}
+            <div class="limits-asof"><span>Estimated at API prices. On a subscription this is notional, not a bill.</span></div>`;
+        panel.hidden = false;
+        if (panel.innerHTML.length !== before) scheduleFit();
+    } catch (error) {
+        console.error('Error fetching usage:', error);
+    }
+}
+
 // Render empty state
 function renderEmpty() {
     return `
@@ -310,7 +346,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     updateSessions();
     updateLimits();
+    updateUsage();
 
     setInterval(updateSessions, UPDATE_INTERVAL);
     setInterval(updateLimits, UPDATE_INTERVAL);
+    setInterval(updateUsage, 10000);
 });

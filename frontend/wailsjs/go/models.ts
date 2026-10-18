@@ -8,6 +8,7 @@ export namespace main {
 	    projectContext: Record<string, number>;
 	    pollLimits: boolean;
 	    pollMinutes: number;
+	    showUsage: boolean;
 	    theme: string;
 	    accent: string;
 	    font: string;
@@ -28,6 +29,7 @@ export namespace main {
 	        this.projectContext = source["projectContext"];
 	        this.pollLimits = source["pollLimits"];
 	        this.pollMinutes = source["pollMinutes"];
+	        this.showUsage = source["showUsage"];
 	        this.theme = source["theme"];
 	        this.accent = source["accent"];
 	        this.font = source["font"];
@@ -115,6 +117,66 @@ export namespace main {
 	        this.idle = source["idle"];
 	        this.idleSeconds = source["idleSeconds"];
 	    }
+	}
+	export class UsageSummary {
+	    label: string;
+	    inputTokens: number;
+	    outputTokens: number;
+	    cacheRead: number;
+	    cacheWrite: number;
+	    totalTokens: number;
+	    cost: number;
+	    cacheSaved: number;
+	    cacheSavedTok: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new UsageSummary(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.label = source["label"];
+	        this.inputTokens = source["inputTokens"];
+	        this.outputTokens = source["outputTokens"];
+	        this.cacheRead = source["cacheRead"];
+	        this.cacheWrite = source["cacheWrite"];
+	        this.totalTokens = source["totalTokens"];
+	        this.cost = source["cost"];
+	        this.cacheSaved = source["cacheSaved"];
+	        this.cacheSavedTok = source["cacheSavedTok"];
+	    }
+	}
+	export class UsageReport {
+	    periods: UsageSummary[];
+	    approx: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new UsageReport(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.periods = this.convertValues(source["periods"], UsageSummary);
+	        this.approx = source["approx"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 
 }

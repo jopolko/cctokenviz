@@ -743,3 +743,9 @@ footer {
 /* Links take the theme's readable heading color, never the browser's default blue */
 a, a:visited { color: var(--head, var(--accent)); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 a:hover, a:focus-visible { color: var(--strong); }
+
+/* Spend panel */
+.usage { margin-top: 10px; gap: 4px; }
+.usage[hidden] { display: none; }
+.usage-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 0.95em; }
+.usage-sub { font-size: 0.8em; color: var(--dim); margin-bottom: 4px; }

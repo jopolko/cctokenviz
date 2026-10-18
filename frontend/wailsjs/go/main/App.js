@@ -26,6 +26,10 @@ export function GetSettings() {
   return window['go']['main']['App']['GetSettings']();
 }
 
+export function GetUsage() {
+  return window['go']['main']['App']['GetUsage']();
+}
+
 export function HasClaudeCLI() {
   return window['go']['main']['App']['HasClaudeCLI']();
 }
