@@ -734,6 +734,7 @@ footer {
 .bad { color: var(--warn); }
 
 .proj-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.hide-box { font-size: 11px; color: var(--dim); white-space: nowrap; }
 .proj-row select { font-size: 11px; padding: 1px 4px; background: transparent; color: inherit; border: 1px solid var(--border); border-radius: 4px; }
 
 .ctx-input { width: 84px; font: inherit; font-size: 11px; padding: 1px 5px; background: transparent; color: inherit; border: 1px solid var(--border); border-radius: 4px; }
@@ -746,6 +747,9 @@ a:hover, a:focus-visible { color: var(--strong); }
 
 /* Spend panel */
 .usage { margin-top: 10px; gap: 4px; }
-.usage[hidden] { display: none; }
+.usage-toggle { display: flex; justify-content: space-between; align-items: center; width: 100%; background: none; border: none; padding: 0; color: inherit; font: inherit; cursor: pointer; }
+.usage-toggle .section-title { margin: 0; }
+.usage-toggle .chev { color: var(--dim); }
+.usage-toggle:hover .chev { color: var(--strong); }
 .usage-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 0.95em; }
 .usage-sub { font-size: 0.8em; color: var(--dim); margin-bottom: 4px; }

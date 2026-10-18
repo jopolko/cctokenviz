@@ -144,13 +144,30 @@ function formatMoney(x) {
     return '$' + (x >= 100 ? x.toFixed(0) : x.toFixed(2));
 }
 
-// Spend panel: tokens and estimated cost from the session logs (opt-in in Settings)
+// API spend panel: collapsed by default; the choice is remembered across launches
+async function toggleUsage() {
+    appCfg.usageOpen = !appCfg.usageOpen;
+    try {
+        const cfg = await window.go.main.App.GetSettings();
+        cfg.usageOpen = appCfg.usageOpen;
+        await window.go.main.App.SaveSettings(cfg);
+    } catch (error) {
+        console.error('Error saving spend panel state:', error);
+    }
+    updateUsage();
+}
+
+// Tokens and estimated cost from the session logs. Only read while the panel is expanded.
 async function updateUsage() {
     const panel = document.getElementById('usage');
-    if (!appCfg.showUsage) { if (!panel.hidden) { panel.hidden = true; scheduleFit(); } return; }
+    const open = !!appCfg.usageOpen;
+    const head = `<button class="usage-toggle" aria-expanded="${open}" onclick="toggleUsage()"><span class="section-title">API spend</span><span class="chev">${open ? '▾' : '▸'}</span></button>`;
+    if (!open) {
+        if (panel.dataset.open !== '0') { panel.innerHTML = head; panel.dataset.open = '0'; scheduleFit(); }
+        return;
+    }
     try {
         const u = await window.go.main.App.GetUsage();
-        const before = panel.innerHTML.length;
         const rows = (u.periods || []).map(p => `
             <div class="usage-row" title="Fresh input ${formatBigTokens(p.inputTokens)}, output ${formatBigTokens(p.outputTokens)}, cache read ${formatBigTokens(p.cacheRead)}, cache write ${formatBigTokens(p.cacheWrite)}">
                 <span class="limit-label">${p.label}</span>
@@ -158,12 +175,12 @@ async function updateUsage() {
                 <span class="percentage">${u.approx ? '~' : ''}${formatMoney(p.cost)}</span>
             </div>
             <div class="usage-sub">cache saved ${formatMoney(p.cacheSaved)} (${formatBigTokens(p.cacheSavedTok)} tok)</div>`).join('');
-        panel.innerHTML = `
-            <h2 class="section-title">Spend</h2>
-            ${rows}
+        const html = `${head}${rows}
             <div class="limits-asof"><span>Estimated at API prices. On a subscription this is notional, not a bill.</span></div>`;
-        panel.hidden = false;
-        if (panel.innerHTML.length !== before) scheduleFit();
+        const changed = panel.dataset.open !== '1' || panel.innerHTML.length !== html.length;
+        panel.innerHTML = html;
+        panel.dataset.open = '1';
+        if (changed) scheduleFit();
     } catch (error) {
         console.error('Error fetching usage:', error);
     }

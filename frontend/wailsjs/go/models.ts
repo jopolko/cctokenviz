@@ -6,9 +6,10 @@ export namespace main {
 	    contextTokens: number;
 	    projectFolders: string[];
 	    projectContext: Record<string, number>;
+	    hiddenProjects: string[];
 	    pollLimits: boolean;
 	    pollMinutes: number;
-	    showUsage: boolean;
+	    usageOpen: boolean;
 	    theme: string;
 	    accent: string;
 	    font: string;
@@ -27,9 +28,10 @@ export namespace main {
 	        this.contextTokens = source["contextTokens"];
 	        this.projectFolders = source["projectFolders"];
 	        this.projectContext = source["projectContext"];
+	        this.hiddenProjects = source["hiddenProjects"];
 	        this.pollLimits = source["pollLimits"];
 	        this.pollMinutes = source["pollMinutes"];
-	        this.showUsage = source["showUsage"];
+	        this.usageOpen = source["usageOpen"];
 	        this.theme = source["theme"];
 	        this.accent = source["accent"];
 	        this.font = source["font"];

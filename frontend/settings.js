@@ -133,7 +133,9 @@ function projectsSection() {
             const set = (cfg.projectContext || {})[n] || 0;
             const found = detectedCtx[n.toLowerCase()] || 0;
             const hint = found ? `Auto · ${formatTokens(found)}` : 'Auto';
+            const hidden = (cfg.hiddenProjects || []).some(h => h.toLowerCase() === n.toLowerCase());
             return `<div class="proj-row"><label><input type="checkbox" data-project="${escapeHtml(n)}" ${cfg.projects.includes(n) ? 'checked' : ''} ${all ? 'disabled' : ''}> ${escapeHtml(n)}</label>
+                <label class="hide-box" title="Never show this project, even when it has new activity"><input type="checkbox" data-hide="${escapeHtml(n)}" ${hidden ? 'checked' : ''}> hide</label>
                 <input class="ctx-input" list="ctxsizes" data-pctx="${escapeHtml(n)}" value="${formatTokens(set)}" placeholder="${hint}" title="Context window for this project. Leave empty to detect it; or type a size such as 200k, 1M or 750k"></div>`;
         }).join('')
         : '<div class="hint" style="margin-left:0">No projects found yet. Open one in Claude Code, or add a folder below.</div>';
@@ -148,7 +150,7 @@ function projectsSection() {
             <label><input type="radio" name="pscope" value="some" ${all ? '' : 'checked'}> Only these projects</label>
             ${names.length ? `<div class="hint" style="margin:6px 0 0 24px"><a href="#" data-action="projects-all">Select all</a> · <a href="#" data-action="projects-none">Deselect all</a></div>` : ''}
             <div class="checklist">${list}</div>${CTX_LIST}
-            <div class="hint">Projects are found from your Claude Code sessions and from any folder you add. The box on the right is that project's context window: left empty it is detected from the session (shown in grey); type a size like 200k, 1M or 750k to override. Click the ✕ on a row to hide a session until it has new activity.</div>
+            <div class="hint">Projects are found from your Claude Code sessions and from any folder you add. The box on the right is that project's context window: left empty it is detected from the session (shown in grey); type a size like 200k, 1M or 750k to override. Tick “hide” to never show a project. The ✕ on a row only hides that session until it has new activity.</div>
             ${folders ? `<div class="checklist" style="max-height:90px">${folders}</div>` : ''}
             <div class="hint" style="margin:6px 0 0 24px"><a href="#" data-action="folder-add">Add a folder…</a> a single project, or a folder that holds several</div>
         </div>`;
@@ -170,15 +172,6 @@ function windowSection() {
             <h2 class="section-title">Window</h2>
             <label><input type="checkbox" id="fixedSize" ${cfg.fixedSize ? 'checked' : ''}> Keep my window size</label>
             <div class="hint">By default HeadRoom fits its height to what it is showing, so there's no empty space. Tick this to size it yourself.</div>
-        </div>`;
-}
-
-function usageSection() {
-    return `
-        <div class="section">
-            <h2 class="section-title">Spend</h2>
-            <label><input type="checkbox" id="showUsage" ${cfg.showUsage ? 'checked' : ''}> Show tokens and estimated cost</label>
-            <div class="hint">Adds up the usage in your Claude Code session logs for today and the last 7 days, priced at public API rates, plus what prompt caching saved. It only reads files already on your computer. On a Pro or Max plan the dollar figure is what the same usage would cost on the API, not what you pay.</div>
         </div>`;
 }
 
@@ -212,7 +205,7 @@ function renderSettings() {
     overlay().innerHTML = `
         <h2>Settings</h2>
         <p class="lead">Changes save as you make them.</p>
-        ${lookSection()}${projectsSection()}${contextSection()}${limitsSection()}${usageSection()}${windowSection()}
+        ${lookSection()}${projectsSection()}${contextSection()}${limitsSection()}${windowSection()}
         <div class="nav">
             <button class="btn" data-action="rerun">Run setup again</button>
             <span class="spacer"></span>
@@ -334,6 +327,11 @@ function setupOverlayEvents() {
             else if (!cfg.projects.length) cfg.projects = knownProjects.slice(0, 1);
             persist();
             rerender();
+        } else if (t.dataset && t.dataset.hide !== undefined) {
+            const name = t.dataset.hide;
+            const rest = (cfg.hiddenProjects || []).filter(h => h.toLowerCase() !== name.toLowerCase());
+            cfg.hiddenProjects = t.checked ? [...rest, name] : rest;
+            persist();
         } else if (t.dataset && t.dataset.project !== undefined) {
             const name = t.dataset.project;
             cfg.projects = t.checked ? [...new Set([...cfg.projects, name])] : cfg.projects.filter(p => p !== name);
@@ -358,11 +356,6 @@ function setupOverlayEvents() {
             if (t.checked && !cfg.pollMinutes) cfg.pollMinutes = 10;
             persist();
             rerender();
-        } else if (t.id === 'showUsage') {
-            cfg.showUsage = t.checked;
-            appCfg.showUsage = t.checked;
-            persist();
-            updateUsage();
         } else if (t.id === 'fixedSize') {
             cfg.fixedSize = t.checked;
             persist();

@@ -20,13 +20,15 @@ type Config struct {
 	// Per-project window override (0 or missing = detect). Used when a session has not
 	// exported its own size.
 	ProjectContext map[string]int `json:"projectContext"`
+	// Projects never shown, however active (unlike the X on a row, which only hides a session until it has new activity)
+	HiddenProjects []string `json:"hiddenProjects"`
 
 	// Plan limits
 	PollLimits  bool `json:"pollLimits"`  // opt in to the background headless call that refreshes limits
 	PollMinutes int  `json:"pollMinutes"` // gap between automatic polls (default 10, minimum 5)
 
-	// Spend
-	ShowUsage bool `json:"showUsage"` // show tokens and estimated cost from the session logs
+	// API spend panel
+	UsageOpen bool `json:"usageOpen"` // the API spend panel is expanded (collapsed by default)
 
 	// Look
 	Theme     string `json:"theme"`
@@ -81,6 +83,11 @@ func saveConfig(cfg Config) error {
 }
 
 func (c Config) allows(project string) bool {
+	for _, h := range c.HiddenProjects {
+		if strings.EqualFold(h, project) {
+			return false
+		}
+	}
 	if len(c.Projects) == 0 {
 		return true
 	}
