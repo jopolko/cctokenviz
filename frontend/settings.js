@@ -7,7 +7,6 @@ let detectedCtx = {};
 let hasCli = false;
 let wizardStep = 0;
 let wizardMode = false;
-let savedSize = null;
 let saveTimer = null;
 
 const overlay = () => document.getElementById('overlay');
@@ -27,22 +26,16 @@ function persist() {
 // screen) while one is open, then put the window back exactly as it was.
 async function growWindow() {
     try {
-        // The window drops down from where it is, anchored at the gear, and stays on screen
-        const prev = await window.go.main.App.ExpandForPanel(380, 640);
-        savedSize = { size: { w: prev.w, h: prev.h }, pos: { x: prev.x, y: prev.y } };
-    } catch (error) {
-        savedSize = null;
-    }
+        // The window drops down from where it is, anchored at the gear, and stays on screen.
+        // The app remembers the original size and position.
+        await window.go.main.App.ExpandForPanel(380, 640);
+    } catch (error) { /* leave the window as it is */ }
 }
 
-function restoreWindow() {
+async function restoreWindow() {
     try {
-        if (savedSize) {
-            window.runtime.WindowSetSize(savedSize.size.w, savedSize.size.h);
-            window.runtime.WindowSetPosition(savedSize.pos.x, savedSize.pos.y);
-        }
+        await window.go.main.App.RestoreFromPanel();
     } catch (error) { /* window stays as is */ }
-    savedSize = null;
 }
 
 async function loadState() {
@@ -62,7 +55,7 @@ async function refreshProjects() {
     rerender();
 }
 
-function closeOverlay() {
+async function closeOverlay() {
     clearTimeout(saveTimer);
     window.go.main.App.SaveSettings(cfg).catch(() => {});
     overlay().hidden = true;
@@ -72,7 +65,7 @@ function closeOverlay() {
     wizardMode = false;
     window.go.main.App.SetSettingsOpen(false).catch(() => {});
     appCfg = { ...cfg };
-    restoreWindow();
+    await restoreWindow(); // size back first, so the auto-fit that follows starts from it
     scheduleFit();
     lastSessionsHtml = null;
     updateSessions();
@@ -238,7 +231,7 @@ function renderSettings() {
         <div class="nav">
             <button class="btn" data-action="rerun">Run setup again</button>
             <span class="spacer"></span>
-            <button class="btn primary" data-action="close">Done</button>
+            <button class="btn primary" data-action="close">Save</button>
         </div>`;
     overlay().scrollTop = top;
 }

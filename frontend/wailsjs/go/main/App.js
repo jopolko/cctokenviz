@@ -46,6 +46,10 @@ export function RefreshLimits() {
   return window['go']['main']['App']['RefreshLimits']();
 }
 
+export function RestoreFromPanel() {
+  return window['go']['main']['App']['RestoreFromPanel']();
+}
+
 export function SaveSettings(arg1) {
   return window['go']['main']['App']['SaveSettings'](arg1);
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -14,6 +15,9 @@ type App struct {
 	ctx      context.Context
 	monitor  *Monitor
 	stopChan chan struct{}
+
+	panelMu   sync.Mutex
+	panelPrev *WindowRect // the window as it was before a panel grew it; nil when no panel is open
 
 	settingsOpen atomic.Bool  // the Settings panel is showing, so the window's X should close it, not the app
 	closeAskedAt atomic.Int64 // unix nanos of the last close we turned into "close Settings"
@@ -80,9 +84,15 @@ const taskbarAllowance = 56
 // left just enough, and is shortened only if it still does not fit. It returns the window's
 // previous size and position so the caller can restore them.
 func (a *App) ExpandForPanel(minW, minH int) WindowRect {
+	a.panelMu.Lock()
+	defer a.panelMu.Unlock()
+	if a.panelPrev != nil { // already grown (e.g. Settings, then "Run setup again"): keep the original
+		return *a.panelPrev
+	}
 	w, h := wailsRuntime.WindowGetSize(a.ctx)
 	x, y := wailsRuntime.WindowGetPosition(a.ctx)
 	prev := WindowRect{W: w, H: h, X: x, Y: y}
+	a.panelPrev = &prev
 
 	newW, newH := max(w, minW), max(h, minH)
 	newX, newY := x+w-newW, y // keep the right edge, so the gear stays where it was
@@ -105,6 +115,32 @@ func (a *App) ExpandForPanel(minW, minH int) WindowRect {
 	wailsRuntime.WindowSetSize(a.ctx, newW, newH)
 	wailsRuntime.WindowSetPosition(a.ctx, newX, newY)
 	return prev
+}
+
+// RestoreFromPanel puts the window back to the size and position it had before ExpandForPanel,
+// kept on screen. The original is remembered here, in one place, rather than by the page.
+func (a *App) RestoreFromPanel() {
+	a.panelMu.Lock()
+	defer a.panelMu.Unlock()
+	prev := a.panelPrev
+	if prev == nil {
+		return
+	}
+	a.panelPrev = nil
+	x, y := prev.X, prev.Y
+	if screens, err := wailsRuntime.ScreenGetAll(a.ctx); err == nil && len(screens) > 0 {
+		scr := screens[0]
+		for _, s := range screens {
+			if s.IsCurrent {
+				scr = s
+				break
+			}
+		}
+		x = max(0, min(x, scr.Size.Width-prev.W))
+		y = max(0, min(y, scr.Size.Height-taskbarAllowance-prev.H))
+	}
+	wailsRuntime.WindowSetSize(a.ctx, prev.W, prev.H)
+	wailsRuntime.WindowSetPosition(a.ctx, x, y)
 }
 
 // SetSettingsOpen is told by the frontend when the Settings panel opens or closes
