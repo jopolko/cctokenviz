@@ -177,18 +177,19 @@ function windowSection() {
         </div>`;
 }
 
-function limitsSection() {
+// The full explanation is for the setup wizard; Settings gets a one-line version
+function limitsSection(brief) {
     const minutes = cfg.pollMinutes || 10;
     const opts = [5, 10, 15, 30].map(m => `<option value="${m}" ${minutes === m ? 'selected' : ''}>every ${m} minutes</option>`).join('');
     return `
         <div class="section">
             <h2 class="section-title">Limits</h2>
             <label><input type="checkbox" id="poll" ${cfg.pollLimits ? 'checked' : ''} ${hasCli ? '' : 'disabled'}> Check my 5-hour and weekly limits automatically</label>
-            <div class="hint">${hasCli ? '<span class="ok">Claude Code found.</span>' : '<span class="bad">Claude Code (the claude command) was not found, so this is unavailable.</span>'}
+            ${brief ? `<div class="hint">${hasCli ? '<span class="ok">Claude Code found.</span>' : '<span class="bad">Claude Code not found, so this is unavailable.</span>'} Each check uses about 1K tokens of your plan. Off by default.</div>` : `<div class="hint">${hasCli ? '<span class="ok">Claude Code found.</span>' : '<span class="bad">Claude Code (the claude command) was not found, so this is unavailable.</span>'}
                 Each check runs one tiny request under your own Claude login: under 1,000 tokens, roughly $0.0002 at API prices. It slowly draws on your plan limits (or bills your API key, if the claude command uses one), and CCTokenViz never sees or stores your login.
-                It only checks while a session is active, and stops once a limit is used up.</div>
+                It only checks while a session is active, and stops once a limit is used up.</div>`}
             <div class="row"><span>Frequency</span><select id="pollMin" ${cfg.pollLimits ? '' : 'disabled'}>${opts}</select></div>
-            <div class="hint">Off by default. Without it, limits update only when a terminal session reports them (see the README) and the ↻ Refresh button does nothing.</div>
+            ${brief ? '' : '<div class="hint">Off by default. Without it, limits update only when a terminal session reports them (see the README) and the ↻ Refresh button does nothing.</div>'}
         </div>`;
 }
 
@@ -207,7 +208,7 @@ function renderSettings() {
     overlay().innerHTML = `
         <h2>Settings</h2>
         <p class="lead">Changes save as you make them.</p>
-        ${lookSection()}${projectsSection()}${contextSection()}${limitsSection()}${windowSection()}
+        ${lookSection()}${projectsSection()}${contextSection()}${limitsSection(true)}${windowSection()}
         <div class="nav">
             <button class="btn" data-action="rerun">Run setup again</button>
             <span class="spacer"></span>
