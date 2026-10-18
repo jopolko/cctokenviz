@@ -44,6 +44,7 @@ export namespace main {
 	    label: string;
 	    percentage: number;
 	    resetsAt: number;
+	    expired: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new LimitInfo(source);
@@ -54,6 +55,7 @@ export namespace main {
 	        this.label = source["label"];
 	        this.percentage = source["percentage"];
 	        this.resetsAt = source["resetsAt"];
+	        this.expired = source["expired"];
 	    }
 	}
 	export class Limits {

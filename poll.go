@@ -43,7 +43,7 @@ func (m *Monitor) polledLimits() Limits {
 	out := Limits{AsOf: polled.limits.AsOf}
 	now := time.Now().Unix()
 	for _, w := range polled.limits.Windows {
-		if w.ResetsAt > now {
+		if w.ResetsAt > now-int64(expiredKeep.Seconds()) {
 			out.Windows = append(out.Windows, w)
 		}
 	}
@@ -90,6 +90,13 @@ func (m *Monitor) MaybePollLimits() {
 
 	// pollInterval reads the merged limits, which takes the same lock, so call it before locking
 	interval := m.pollInterval()
+	// A window that just reset has no number to show, so look again sooner (but not in a loop)
+	for _, w := range m.GetLimits().Windows {
+		if w.Expired {
+			interval = 2 * time.Minute
+			break
+		}
+	}
 	polled.mu.Lock()
 	recentAttempt := time.Since(polled.lastAttempt) < interval
 	polled.mu.Unlock()

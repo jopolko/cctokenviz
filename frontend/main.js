@@ -101,6 +101,19 @@ function formatResetClock(epochSeconds) {
 
 // Render one limit: a usage bar, the countdown, and the clock time it resets
 function renderLimit(limit) {
+    if (limit.expired) {
+        // The window just reset and no new reading has arrived: say so rather than show a number
+        const next = limit.resetsAt ? `next reset in ${formatDuration(limit.resetsAt - Math.floor(Date.now() / 1000))}` : 'starts with your next message';
+        return `
+        <div class="limit state-good">
+            <div class="limit-header">
+                <span class="limit-label">${limit.label}</span>
+                <span class="percentage" title="Reset. Waiting for a fresh reading.">reset</span>
+            </div>
+            ${meterHtml(0)}
+            <div class="limit-reset"><span>${next}</span></div>
+        </div>`;
+    }
     const pct = Math.min(100, Math.round(limit.percentage));
     const remaining = limit.resetsAt - Math.floor(Date.now() / 1000);
 

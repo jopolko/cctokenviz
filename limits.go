@@ -34,8 +34,13 @@ type rateWindow struct {
 type LimitInfo struct {
 	Label      string  `json:"label"`
 	Percentage float64 `json:"percentage"`
-	ResetsAt   int64   `json:"resetsAt"` // unix seconds
+	ResetsAt   int64   `json:"resetsAt"` // unix seconds; 0 when unknown (a 5-hour window that has not started)
+	Expired    bool    `json:"expired"`  // the window just reset and no fresh reading has arrived yet
 }
+
+// An expired window stays on screen as "just reset" for this long; after that it is dropped,
+// since nothing is known about what happened since.
+const expiredKeep = 24 * time.Hour
 
 // Limits holds the account-wide plan limits; empty slices until a session has reported them
 type Limits struct {
@@ -142,7 +147,13 @@ func (m *Monitor) GetLimits() Limits {
 	if p := m.polledLimits(); len(p.Windows) > 0 {
 		sources = append(sources, p)
 	}
+	return mergeLimits(sources, time.Now().Unix())
+}
 
+// mergeLimits picks the best reading per window. A window whose reset time has passed is shown
+// as just reset (no percentage, Expired set) until a newer reading replaces it; before this, it
+// vanished from the app the moment the plan reset.
+func mergeLimits(sources []Limits, now int64) Limits {
 	var out Limits
 	for _, label := range []string{"5-hour", "Weekly"} {
 		var best *LimitInfo
@@ -160,10 +171,20 @@ func (m *Monitor) GetLimits() Limits {
 			}
 		}
 		if best != nil {
-			if best.Percentage >= 100 {
+			w := *best
+			if w.ResetsAt <= now {
+				w = LimitInfo{Label: label, Expired: true}
+				if label == "Weekly" { // the week is fixed, so the next reset is known
+					w.ResetsAt = best.ResetsAt
+					for w.ResetsAt <= now {
+						w.ResetsAt += 7 * 86400
+					}
+				}
+			}
+			if w.Percentage >= 100 {
 				out.Paused = true
 			}
-			out.Windows = append(out.Windows, *best)
+			out.Windows = append(out.Windows, w)
 			if bestAsOf > out.AsOf {
 				out.AsOf = bestAsOf
 			}
@@ -201,8 +222,8 @@ func (m *Monitor) statusFileSources() []Limits {
 
 		src := Limits{AsOf: info.ModTime().Unix()}
 		add := func(label string, w *rateWindow) {
-			// Claude Code drops a window once it resets; do the same for stale files
-			if w != nil && w.ResetsAt > now {
+			// Keep a window that reset recently so it can show as "just reset"; mergeLimits decides
+			if w != nil && w.ResetsAt > now-int64(expiredKeep.Seconds()) {
 				src.Windows = append(src.Windows, LimitInfo{Label: label, Percentage: w.UsedPercentage, ResetsAt: w.ResetsAt})
 			}
 		}
