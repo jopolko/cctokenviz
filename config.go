@@ -16,6 +16,9 @@ type Config struct {
 	Projects      []string `json:"projects"`      // only these project folders; empty shows all
 	ActiveMinutes int      `json:"activeMinutes"` // how recently a session must have changed to be listed
 	ContextTokens int      `json:"contextTokens"` // context window for sessions that haven't reported one
+	// Per-project window override (0 or missing = detect). Used when a session has not
+	// exported its own size.
+	ProjectContext map[string]int `json:"projectContext"`
 
 	// Plan limits
 	PollLimits  bool `json:"pollLimits"`  // opt in to the background headless call that refreshes limits
@@ -82,6 +85,16 @@ func (c Config) allows(project string) bool {
 	return false
 }
 
+// contextFor returns the override set for a project, or 0
+func (c Config) contextFor(project string) int {
+	for k, v := range c.ProjectContext {
+		if strings.EqualFold(k, project) {
+			return v
+		}
+	}
+	return 0
+}
+
 // projectFromCwd returns the first folder under a "projects" directory,
 // e.g. C:\Users\me\projects\my-app\src -> "my-app". Empty if cwd is not inside one.
 func projectFromCwd(cwd string) string {
@@ -89,6 +102,18 @@ func projectFromCwd(cwd string) string {
 	for i, p := range parts {
 		if strings.EqualFold(p, "projects") && i+1 < len(parts) && parts[i+1] != "" {
 			return parts[i+1]
+		}
+	}
+	return ""
+}
+
+// projectsRoot returns the "projects" directory that cwd sits in, or "".
+func projectsRoot(cwd string) string {
+	norm := strings.ReplaceAll(cwd, "\\", "/")
+	parts := strings.Split(norm, "/")
+	for i, p := range parts {
+		if strings.EqualFold(p, "projects") && i+1 < len(parts) && parts[i+1] != "" {
+			return filepath.FromSlash(strings.Join(parts[:i+1], "/"))
 		}
 	}
 	return ""

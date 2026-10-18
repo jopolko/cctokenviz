@@ -732,3 +732,6 @@ footer {
 
 .ok { color: var(--good); }
 .bad { color: var(--warn); }
+
+.proj-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.proj-row select { font-size: 11px; padding: 1px 4px; background: transparent; color: inherit; border: 1px solid var(--border); border-radius: 4px; }

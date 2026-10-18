@@ -91,11 +91,20 @@ function lookSection() {
         </div>`;
 }
 
+function projectNames() {
+    return [...new Set([...knownProjects, ...cfg.projects])].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+}
+
 function projectsSection() {
     const all = !cfg.projects.length;
-    const names = [...new Set([...knownProjects, ...cfg.projects])].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    const names = projectNames();
     const list = names.length
-        ? names.map(n => `<label><input type="checkbox" data-project="${escapeHtml(n)}" ${cfg.projects.includes(n) ? 'checked' : ''} ${all ? 'disabled' : ''}> ${escapeHtml(n)}</label>`).join('')
+        ? names.map(n => {
+            const v = (cfg.projectContext || {})[n] || 0;
+            const opt = (val, label) => `<option value="${val}" ${v === val ? 'selected' : ''}>${label}</option>`;
+            return `<div class="proj-row"><label><input type="checkbox" data-project="${escapeHtml(n)}" ${cfg.projects.includes(n) ? 'checked' : ''} ${all ? 'disabled' : ''}> ${escapeHtml(n)}</label>
+                <select data-pctx="${escapeHtml(n)}" title="Context window for this project">${opt(0, 'Auto')}${opt(200000, '200k')}${opt(1000000, '1M')}</select></div>`;
+        }).join('')
         : '<div class="hint" style="margin-left:0">No projects found yet. Open one in Claude Code and it will show up here.</div>';
 
     return `
@@ -103,8 +112,9 @@ function projectsSection() {
             <h2 class="section-title">Projects</h2>
             <label><input type="radio" name="pscope" value="all" ${all ? 'checked' : ''}> Show every active session</label>
             <label><input type="radio" name="pscope" value="some" ${all ? '' : 'checked'}> Only these projects</label>
+            ${names.length ? `<div class="hint" style="margin:6px 0 0 24px"><a href="#" data-action="projects-all">Select all</a> · <a href="#" data-action="projects-none">Deselect all</a></div>` : ''}
             <div class="checklist">${list}</div>
-            <div class="hint">Projects appear automatically as you open them in Claude Code, in the terminal or the desktop app. Click the ✕ on a row to hide a session until it has new activity.</div>
+            <div class="hint">Each project's context window is detected from its sessions (Auto); set 200k or 1M on the right to force it. Projects appear automatically as you open them in Claude Code, in the terminal or the desktop app. Click the ✕ on a row to hide a session until it has new activity.</div>
         </div>`;
 }
 
@@ -115,7 +125,7 @@ function contextSection() {
             <h2 class="section-title">Context window</h2>
             <label><input type="radio" name="ctx" value="200000" ${size === 200000 ? 'checked' : ''}> 200k tokens</label>
             <label><input type="radio" name="ctx" value="1000000" ${size === 1000000 ? 'checked' : ''}> 1M tokens (extended context)</label>
-            <div class="hint">Used for the percentage when a session doesn't report its own size. Pick the window your model has.</div>
+            <div class="hint">Fallback for projects that can't be detected and have no override above.</div>
         </div>`;
 }
 
@@ -231,6 +241,8 @@ function setupOverlayEvents() {
         if (!action) return;
         switch (action.dataset.action) {
             case 'accent-reset': cfg.accent = ''; applyAppearance(cfg); persist(); rerender(); break;
+            case 'projects-all': e.preventDefault(); cfg.projects = projectNames(); persist(); rerender(); break;
+            case 'projects-none': e.preventDefault(); cfg.projects = []; persist(); rerender(); break;
             case 'next': wizardStep++; renderWizard(); break;
             case 'back': wizardStep--; renderWizard(); break;
             case 'finish': cfg.setupDone = true; persist(); closeOverlay(); break;
@@ -269,6 +281,11 @@ function setupOverlayEvents() {
             persist();
             // An empty selection would silently mean "show everything", so reflect that
             if (!cfg.projects.length) rerender();
+        } else if (t.dataset && t.dataset.pctx !== undefined) {
+            cfg.projectContext = cfg.projectContext || {};
+            const v = parseInt(t.value, 10);
+            if (v) cfg.projectContext[t.dataset.pctx] = v; else delete cfg.projectContext[t.dataset.pctx];
+            persist();
         } else if (t.name === 'ctx') {
             cfg.contextTokens = parseInt(t.value, 10);
             persist();

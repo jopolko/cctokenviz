@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -14,6 +15,7 @@ import (
 
 type statusFile struct {
 	SessionID     string `json:"session_id"`
+	Cwd           string `json:"cwd"`
 	ContextWindow struct {
 		Size int `json:"context_window_size"`
 	} `json:"context_window"`
@@ -73,6 +75,47 @@ func contextSizeFor(sessionID string) int {
 		return 0
 	}
 	return s.ContextWindow.Size
+}
+
+var (
+	projSizeMu   sync.Mutex
+	projSizeAt   time.Time
+	projSizeMemo map[string]int
+)
+
+// contextSizeForProject returns the window size most recently reported by any session in the
+// project (matched case-insensitively), or 0 if no session there has reported one. Scans are
+// cached for a few seconds because every session row asks.
+func contextSizeForProject(project string) int {
+	projSizeMu.Lock()
+	defer projSizeMu.Unlock()
+	if projSizeMemo == nil || time.Since(projSizeAt) > 5*time.Second {
+		projSizeMemo = map[string]int{}
+		projSizeAt = time.Now()
+		if dir := statusDir(); dir != "" {
+			files, _ := filepath.Glob(filepath.Join(dir, "status-*.json"))
+			newest := map[string]time.Time{}
+			for _, f := range files {
+				info, err := os.Stat(f)
+				if err != nil {
+					continue
+				}
+				s := readStatus(f)
+				if s == nil || s.ContextWindow.Size <= 0 {
+					continue
+				}
+				name := strings.ToLower(projectFromCwd(s.Cwd))
+				if name == "" {
+					continue
+				}
+				if info.ModTime().After(newest[name]) {
+					newest[name] = info.ModTime()
+					projSizeMemo[name] = s.ContextWindow.Size
+				}
+			}
+		}
+	}
+	return projSizeMemo[strings.ToLower(project)]
 }
 
 // GetLimits merges every source: each session's status file plus the headless poll.

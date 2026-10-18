@@ -2,10 +2,12 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"sort"
 	"strings"
@@ -44,7 +46,8 @@ type AssistantMessage struct {
 	Cwd     string `json:"cwd"`
 	AiTitle string `json:"aiTitle"`
 	Message struct {
-		Usage *Usage `json:"usage"`
+		Usage   *Usage          `json:"usage"`
+		Content json.RawMessage `json:"content"`
 	} `json:"message"`
 }
 
@@ -215,6 +218,8 @@ type sessionState struct {
 var (
 	sessionCache   = map[string]*sessionState{}
 	sessionCacheMu sync.Mutex
+
+	projectRoots   = map[string]bool{} // "projects" folders seen in session logs
 )
 
 // parseSession returns context stats for a session file, reading only what is new since last time
@@ -286,13 +291,32 @@ func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 	// Calculate context usage (matches official Claude Code status bar hook)
 	totalUsed := lastUsage.InputTokens + lastUsage.CacheReadInputTokens + lastUsage.CacheCreationInputTokens
 
-	// Prefer the window size Claude Code reports for this session; fall back to the default
+	// Use the project's real window size. Order: what this session reported, a per-project
+	// override from Settings, what other sessions in the project reported, then the default.
+	// Usage beyond 200k proves the window is bigger than the default.
+	projectName := filepath.Base(cwd)
+	if projectName == "" || projectName == "." {
+		projectName = projectDir
+	}
+	if projectFolder != "" {
+		projectName = projectFolder
+	}
+
+	cfg := loadConfig()
 	maxTokens := MaxContextTokens
-	if cfg := loadConfig(); cfg.ContextTokens > 0 {
+	if cfg.ContextTokens > 0 {
 		maxTokens = cfg.ContextTokens
+	}
+	if size := cfg.contextFor(projectName); size > 0 {
+		maxTokens = size
+	} else if size := contextSizeForProject(projectName); size > 0 {
+		maxTokens = size
 	}
 	if size := contextSizeFor(strings.TrimSuffix(filepath.Base(filePath), ".jsonl")); size > 0 {
 		maxTokens = size
+	}
+	if totalUsed > maxTokens {
+		maxTokens = 1000000
 	}
 	percentage := (totalUsed * 100) / maxTokens
 	freeTokens := maxTokens - totalUsed
@@ -302,15 +326,6 @@ func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 	}
 	if percentage > 100 {
 		percentage = 100
-	}
-
-	// Use folder name from cwd if available, otherwise fall back to directory name
-	projectName := filepath.Base(cwd)
-	if projectName == "" || projectName == "." {
-		projectName = projectDir
-	}
-	if projectFolder != "" {
-		projectName = projectFolder
 	}
 
 	return &SessionInfo{
@@ -368,6 +383,69 @@ func (m *Monitor) KnownProjects() []string {
 			}
 		}
 	}
+	// Also offer every folder in the projects directory, even with no recent session
+	sessionCacheMu.Lock()
+	roots := make([]string, 0, len(projectRoots)+1)
+	for r := range projectRoots {
+		roots = append(roots, r)
+	}
+	sessionCacheMu.Unlock()
+	if home, err := os.UserHomeDir(); err == nil {
+		roots = append(roots, filepath.Join(home, "projects"))
+	}
+	for _, r := range roots {
+		entries, err := os.ReadDir(r)
+		if err != nil {
+			continue
+		}
+		for _, e := range entries {
+			if e.IsDir() && !strings.HasPrefix(e.Name(), ".") && !seen[e.Name()] {
+				seen[e.Name()] = true
+				names = append(names, e.Name())
+			}
+		}
+	}
 	sort.Slice(names, func(i, j int) bool { return strings.ToLower(names[i]) < strings.ToLower(names[j]) })
 	return names
+}
+
+var toolPathRe = regexp.MustCompile(`(?i)(?:^|[^A-Za-z0-9._-])projects[\\/]+([A-Za-z0-9._-]+)`)
+
+// projectFromToolUse returns the project folder named by the last file path or command in
+// an assistant message's tool calls, or "".
+func projectFromToolUse(content json.RawMessage) string {
+	if len(content) == 0 || content[0] != '[' || !bytes.Contains(content, []byte(`"tool_use"`)) {
+		return ""
+	}
+	var blocks []struct {
+		Type  string          `json:"type"`
+		Input json.RawMessage `json:"input"`
+	}
+	if json.Unmarshal(content, &blocks) != nil {
+		return ""
+	}
+	name := ""
+	for _, b := range blocks {
+		if b.Type != "tool_use" {
+			continue
+		}
+		// Decode the JSON string escapes so paths read normally
+		var in map[string]any
+		if json.Unmarshal(b.Input, &in) != nil {
+			continue
+		}
+		for _, key := range []string{"file_path", "path", "notebook_path", "command"} {
+			v, _ := in[key].(string)
+			for _, m := range toolPathRe.FindAllStringSubmatchIndex(v, -1) {
+				seg := v[m[2]:m[3]]
+				// Skip Claude's own ~/.claude/projects/<encoded-path> store
+				before := strings.ToLower(v[:m[0]+1])
+				if strings.HasPrefix(seg, "C--") || strings.HasSuffix(strings.TrimRight(before, `\/`), ".claude") {
+					continue
+				}
+				name = seg
+			}
+		}
+	}
+	return name
 }
