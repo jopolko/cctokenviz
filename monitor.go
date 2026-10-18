@@ -222,6 +222,12 @@ var (
 	projectRoots   = map[string]bool{} // "projects" folders seen in session logs
 )
 
+func resetSessionCache() {
+	sessionCacheMu.Lock()
+	sessionCache = map[string]*sessionState{}
+	sessionCacheMu.Unlock()
+}
+
 // parseSession returns context stats for a session file, reading only what is new since last time
 func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 	file, err := os.Open(filePath)
@@ -233,6 +239,8 @@ func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 	if err != nil {
 		return nil
 	}
+
+	folders := loadConfig().ProjectFolders
 
 	sessionCacheMu.Lock()
 	defer sessionCacheMu.Unlock()
@@ -269,8 +277,15 @@ func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 
 			// Sessions often start in a parent folder and move into a project,
 			// so the latest project folder seen wins
-			if name := projectFromCwd(msg.Cwd); name != "" {
+			if name := projectFromPath(msg.Cwd, folders); name != "" {
 				st.projectFolder = name
+			}
+			// A session's folder is not always where its work is (it may start in a parent
+			// folder), so the paths Claude is actually touching count too; the latest signal wins
+			if msg.Type == "assistant" {
+				if name := projectFromToolUse(msg.Message.Content, folders); name != "" {
+					st.projectFolder = name
+				}
 			}
 			if msg.AiTitle != "" {
 				st.title = msg.AiTitle
@@ -383,37 +398,28 @@ func (m *Monitor) KnownProjects() []string {
 			}
 		}
 	}
-	// Also offer every folder in the projects directory, even with no recent session
+	// Also offer project folders that have no recent session
 	sessionCacheMu.Lock()
-	roots := make([]string, 0, len(projectRoots)+1)
+	seenDirs := make([]string, 0, len(projectRoots))
 	for r := range projectRoots {
-		roots = append(roots, r)
+		seenDirs = append(seenDirs, r)
 	}
 	sessionCacheMu.Unlock()
-	if home, err := os.UserHomeDir(); err == nil {
-		roots = append(roots, filepath.Join(home, "projects"))
-	}
-	for _, r := range roots {
-		entries, err := os.ReadDir(r)
-		if err != nil {
-			continue
-		}
-		for _, e := range entries {
-			if e.IsDir() && !strings.HasPrefix(e.Name(), ".") && !seen[e.Name()] {
-				seen[e.Name()] = true
-				names = append(names, e.Name())
-			}
+	for _, n := range discoverableProjects(loadConfig().ProjectFolders, seenDirs) {
+		if !seen[n] {
+			seen[n] = true
+			names = append(names, n)
 		}
 	}
 	sort.Slice(names, func(i, j int) bool { return strings.ToLower(names[i]) < strings.ToLower(names[j]) })
 	return names
 }
 
-var toolPathRe = regexp.MustCompile(`(?i)(?:^|[^A-Za-z0-9._-])projects[\\/]+([A-Za-z0-9._-]+)`)
+var toolPathRe = regexp.MustCompile(`(?:[A-Za-z]:[\\/]|/[A-Za-z]/|/(?:home|Users|mnt|opt|srv|var|workspace|tmp)/)[^\s"'&|;<>()*?]+`)
 
-// projectFromToolUse returns the project folder named by the last file path or command in
-// an assistant message's tool calls, or "".
-func projectFromToolUse(content json.RawMessage) string {
+// projectFromToolUse returns the project named by the last file path or command in an
+// assistant message's tool calls, or "".
+func projectFromToolUse(content json.RawMessage, folders []string) string {
 	if len(content) == 0 || content[0] != '[' || !bytes.Contains(content, []byte(`"tool_use"`)) {
 		return ""
 	}
@@ -436,14 +442,14 @@ func projectFromToolUse(content json.RawMessage) string {
 		}
 		for _, key := range []string{"file_path", "path", "notebook_path", "command"} {
 			v, _ := in[key].(string)
-			for _, m := range toolPathRe.FindAllStringSubmatchIndex(v, -1) {
-				seg := v[m[2]:m[3]]
-				// Skip Claude's own ~/.claude/projects/<encoded-path> store
-				before := strings.ToLower(v[:m[0]+1])
-				if strings.HasPrefix(seg, "C--") || strings.HasSuffix(strings.TrimRight(before, `\/`), ".claude") {
-					continue
+			if key == "command" {
+				for _, m := range toolPathRe.FindAllString(v, -1) {
+					if n := projectFromPath(strings.TrimRight(m, ".,:"), folders); n != "" {
+						name = n
+					}
 				}
-				name = seg
+			} else if n := projectFromPath(v, folders); n != "" {
+				name = n
 			}
 		}
 	}

@@ -14,7 +14,7 @@ func TestProjectFromToolUse(t *testing.T) {
 		`"plain string"`: "",
 	}
 	for in, want := range cases {
-		if got := projectFromToolUse(json.RawMessage(in)); got != want {
+		if got := projectFromToolUse(json.RawMessage(in), nil); got != want {
 			t.Errorf("%s: got %q want %q", in, got, want)
 		}
 	}

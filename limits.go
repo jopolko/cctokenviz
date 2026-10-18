@@ -95,6 +95,7 @@ func contextSizeForProject(project string) int {
 		if dir := statusDir(); dir != "" {
 			files, _ := filepath.Glob(filepath.Join(dir, "status-*.json"))
 			newest := map[string]time.Time{}
+			roots := loadConfig().ProjectFolders
 			for _, f := range files {
 				info, err := os.Stat(f)
 				if err != nil {
@@ -104,7 +105,7 @@ func contextSizeForProject(project string) int {
 				if s == nil || s.ContextWindow.Size <= 0 {
 					continue
 				}
-				name := strings.ToLower(projectFromCwd(s.Cwd))
+				name := strings.ToLower(projectFromPath(s.Cwd, roots))
 				if name == "" {
 					continue
 				}
@@ -116,6 +117,18 @@ func contextSizeForProject(project string) int {
 		}
 	}
 	return projSizeMemo[strings.ToLower(project)]
+}
+
+// detectedContextSizes returns the window size each project's sessions reported, by lowercase project name
+func detectedContextSizes() map[string]int {
+	contextSizeForProject("") // refresh the scan if it is stale
+	projSizeMu.Lock()
+	defer projSizeMu.Unlock()
+	out := make(map[string]int, len(projSizeMemo))
+	for k, v := range projSizeMemo {
+		out[k] = v
+	}
+	return out
 }
 
 // GetLimits merges every source: each session's status file plus the headless poll.

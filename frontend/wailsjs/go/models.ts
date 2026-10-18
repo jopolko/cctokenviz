@@ -4,6 +4,7 @@ export namespace main {
 	    projects: string[];
 	    activeMinutes: number;
 	    contextTokens: number;
+	    projectFolders: string[];
 	    projectContext: Record<string, number>;
 	    pollLimits: boolean;
 	    pollMinutes: number;
@@ -23,6 +24,7 @@ export namespace main {
 	        this.projects = source["projects"];
 	        this.activeMinutes = source["activeMinutes"];
 	        this.contextTokens = source["contextTokens"];
+	        this.projectFolders = source["projectFolders"];
 	        this.projectContext = source["projectContext"];
 	        this.pollLimits = source["pollLimits"];
 	        this.pollMinutes = source["pollMinutes"];

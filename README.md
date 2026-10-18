@@ -174,7 +174,8 @@ Settings are stored in `~/.headroom.json`, which you never need to edit by hand 
 | `projects` | all | Only show sessions in these project folders (the first folder under a `projects` directory, taken from the session's working directory and the files and commands Claude is working on, latest wins) |
 | `activeMinutes` | 60 | How long a session can go without activity before its row is marked idle (it stays listed) |
 | `contextTokens` | 200000 | Fallback context window, for projects with no detected size and no override (use 1000000 for 1M-context models) |
-| `projectContext` | detect | Per-project window override, e.g. `{"my-app": 1000000}`. Without one, a project's size comes from what its sessions report; usage beyond 200k bumps it to 1M |
+| `projectFolders` | none | Folders you added in Settings: a single project, or a folder that holds several. Projects are also found from your Claude Code sessions, from any `projects` directory they use, and by the nearest enclosing folder with a `.git`, `go.mod`, `package.json` etc. |
+| `projectContext` | detect | Per-project window override in tokens, e.g. `{"my-app": 750000}` (Settings accepts 200k, 1M, 750k, any size). Without one, a project's size comes from what its sessions report; usage beyond 200k bumps it to 1M |
 | `pollLimits` | false | Opt in to background limit refreshes, see [headless polling](#limits-option-b-headless-polling-opt-in) |
 | `pollMinutes` | 10 | Minutes between automatic polls (minimum 5; halved above 85% usage) |
 | `theme`, `accent`, `font`, `fontSize` | midnight, theme's, theme's, 13 | Appearance: a theme id: `linux`, `scifi`, `bitcoin`, `ai`, `cowboy`, `anime`, `sweet`, `bloom`, `celestial`, `lab`, `midnight`, `light` or `contrast`; `accent` is an optional `#rrggbb`; `font` empty or `theme` uses the theme's own |

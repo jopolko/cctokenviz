@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
@@ -102,6 +103,30 @@ func (a *App) HasClaudeCLI() bool {
 // KnownProjects lists project names seen in recent sessions, for the project picker
 func (a *App) KnownProjects() []string {
 	return a.monitor.KnownProjects()
+}
+
+// DetectedContext returns the context window size each project's sessions reported, keyed by lowercase project name
+func (a *App) DetectedContext() map[string]int {
+	return detectedContextSizes()
+}
+
+// AddProjectFolder opens a folder picker and remembers the choice. The folder can be a
+// single project or a folder that holds projects. It returns the chosen path, or "" if cancelled.
+func (a *App) AddProjectFolder() (string, error) {
+	dir, err := wailsRuntime.OpenDirectoryDialog(a.ctx, wailsRuntime.OpenDialogOptions{
+		Title: "Choose a project folder, or a folder that holds your projects",
+	})
+	if err != nil || dir == "" {
+		return "", err
+	}
+	cfg := loadConfig()
+	for _, f := range cfg.ProjectFolders {
+		if strings.EqualFold(f, dir) {
+			return dir, nil
+		}
+	}
+	cfg.ProjectFolders = append(cfg.ProjectFolders, dir)
+	return dir, saveConfig(cfg)
 }
 
 // DismissSession hides a session until it sees new activity

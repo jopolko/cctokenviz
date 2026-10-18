@@ -16,6 +16,7 @@ type Config struct {
 	Projects      []string `json:"projects"`      // only these project folders; empty shows all
 	ActiveMinutes int      `json:"activeMinutes"` // how recently a session must have changed to be listed
 	ContextTokens int      `json:"contextTokens"` // context window for sessions that haven't reported one
+	ProjectFolders []string `json:"projectFolders"` // folders you added: a folder of projects, or a single project
 	// Per-project window override (0 or missing = detect). Used when a session has not
 	// exported its own size.
 	ProjectContext map[string]int `json:"projectContext"`
@@ -66,6 +67,9 @@ func saveConfig(cfg Config) error {
 	if p == "" {
 		return os.ErrNotExist
 	}
+	if strings.Join(loadConfig().ProjectFolders, "|") != strings.Join(cfg.ProjectFolders, "|") {
+		resetSessionCache() // project names are worked out while reading logs
+	}
 	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return err
@@ -93,18 +97,6 @@ func (c Config) contextFor(project string) int {
 		}
 	}
 	return 0
-}
-
-// projectFromCwd returns the first folder under a "projects" directory,
-// e.g. C:\Users\me\projects\my-app\src -> "my-app". Empty if cwd is not inside one.
-func projectFromCwd(cwd string) string {
-	parts := strings.Split(strings.ReplaceAll(cwd, "\\", "/"), "/")
-	for i, p := range parts {
-		if strings.EqualFold(p, "projects") && i+1 < len(parts) && parts[i+1] != "" {
-			return parts[i+1]
-		}
-	}
-	return ""
 }
 
 // projectsRoot returns the "projects" directory that cwd sits in, or "".

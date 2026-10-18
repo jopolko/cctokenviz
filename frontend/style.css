@@ -735,3 +735,7 @@ footer {
 
 .proj-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .proj-row select { font-size: 11px; padding: 1px 4px; background: transparent; color: inherit; border: 1px solid var(--border); border-radius: 4px; }
+
+.ctx-input { width: 84px; font: inherit; font-size: 11px; padding: 1px 5px; background: transparent; color: inherit; border: 1px solid var(--border); border-radius: 4px; }
+.ctx-input::placeholder { opacity: .55; }
+.folder-path { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; opacity: .8; }

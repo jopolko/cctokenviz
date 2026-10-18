@@ -3,6 +3,7 @@
 
 let cfg = {};
 let knownProjects = [];
+let detectedCtx = {};
 let hasCli = false;
 let wizardStep = 0;
 let wizardMode = false;
@@ -50,7 +51,17 @@ async function loadState() {
     cfg = await window.go.main.App.GetSettings();
     cfg.projects = cfg.projects || [];
     try { knownProjects = (await window.go.main.App.KnownProjects()) || []; } catch (e) { knownProjects = []; }
+    try { detectedCtx = (await window.go.main.App.DetectedContext()) || {}; } catch (e) { detectedCtx = {}; }
+    cfg.projectFolders = cfg.projectFolders || [];
     try { hasCli = await window.go.main.App.HasClaudeCLI(); } catch (e) { hasCli = false; }
+}
+
+// Pick up folders added or removed, and projects found in them
+async function refreshProjects() {
+    const fresh = await window.go.main.App.GetSettings();
+    cfg.projectFolders = fresh.projectFolders || [];
+    try { knownProjects = (await window.go.main.App.KnownProjects()) || []; } catch (e) { /* keep the old list */ }
+    rerender();
 }
 
 function closeOverlay() {
@@ -95,17 +106,40 @@ function projectNames() {
     return [...new Set([...knownProjects, ...cfg.projects])].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 }
 
+// 1000000 -> "1M", 200000 -> "200k", 750000 -> "750k"
+function formatTokens(n) {
+    if (!n) return '';
+    if (n >= 1000000) return `${+(n / 1000000).toFixed(2)}M`;
+    return `${Math.round(n / 1000)}k`;
+}
+
+// "1m", "200k", "750,000" -> tokens; "" or "auto" -> 0; anything else -> null (invalid)
+function parseTokens(text) {
+    const t = String(text).trim().toLowerCase().replace(/,/g, '');
+    if (t === '' || t === 'auto') return 0;
+    const m = t.match(/^(\d+(?:\.\d+)?)\s*([km])?$/);
+    if (!m) return null;
+    const n = parseFloat(m[1]) * (m[2] === 'm' ? 1000000 : m[2] === 'k' ? 1000 : 1);
+    return n >= 1000 ? Math.round(n) : null;
+}
+
+const CTX_LIST = '<datalist id="ctxsizes"><option value="200k"><option value="500k"><option value="1M"></datalist>';
+
 function projectsSection() {
     const all = !cfg.projects.length;
     const names = projectNames();
     const list = names.length
         ? names.map(n => {
-            const v = (cfg.projectContext || {})[n] || 0;
-            const opt = (val, label) => `<option value="${val}" ${v === val ? 'selected' : ''}>${label}</option>`;
+            const set = (cfg.projectContext || {})[n] || 0;
+            const found = detectedCtx[n.toLowerCase()] || 0;
+            const hint = found ? `Auto · ${formatTokens(found)}` : 'Auto';
             return `<div class="proj-row"><label><input type="checkbox" data-project="${escapeHtml(n)}" ${cfg.projects.includes(n) ? 'checked' : ''} ${all ? 'disabled' : ''}> ${escapeHtml(n)}</label>
-                <select data-pctx="${escapeHtml(n)}" title="Context window for this project">${opt(0, 'Auto')}${opt(200000, '200k')}${opt(1000000, '1M')}</select></div>`;
+                <input class="ctx-input" list="ctxsizes" data-pctx="${escapeHtml(n)}" value="${formatTokens(set)}" placeholder="${hint}" title="Context window for this project. Leave empty to detect it; or type a size such as 200k, 1M or 750k"></div>`;
         }).join('')
-        : '<div class="hint" style="margin-left:0">No projects found yet. Open one in Claude Code and it will show up here.</div>';
+        : '<div class="hint" style="margin-left:0">No projects found yet. Open one in Claude Code, or add a folder below.</div>';
+
+    const folders = (cfg.projectFolders || []).map((f, i) =>
+        `<div class="proj-row"><span class="folder-path" title="${escapeHtml(f)}">${escapeHtml(f)}</span><a href="#" data-action="folder-remove" data-i="${i}" title="Stop looking here">✕</a></div>`).join('');
 
     return `
         <div class="section">
@@ -113,19 +147,20 @@ function projectsSection() {
             <label><input type="radio" name="pscope" value="all" ${all ? 'checked' : ''}> Show every active session</label>
             <label><input type="radio" name="pscope" value="some" ${all ? '' : 'checked'}> Only these projects</label>
             ${names.length ? `<div class="hint" style="margin:6px 0 0 24px"><a href="#" data-action="projects-all">Select all</a> · <a href="#" data-action="projects-none">Deselect all</a></div>` : ''}
-            <div class="checklist">${list}</div>
-            <div class="hint">Each project's context window is detected from its sessions (Auto); set 200k or 1M on the right to force it. Projects appear automatically as you open them in Claude Code, in the terminal or the desktop app. Click the ✕ on a row to hide a session until it has new activity.</div>
+            <div class="checklist">${list}</div>${CTX_LIST}
+            <div class="hint">Projects are found from your Claude Code sessions and from any folder you add. The box on the right is that project's context window: left empty it is detected from the session (shown in grey); type a size like 200k, 1M or 750k to override. Click the ✕ on a row to hide a session until it has new activity.</div>
+            ${folders ? `<div class="checklist" style="max-height:90px">${folders}</div>` : ''}
+            <div class="hint" style="margin:6px 0 0 24px"><a href="#" data-action="folder-add">Add a folder…</a> a single project, or a folder that holds several</div>
         </div>`;
 }
 
 function contextSection() {
-    const size = cfg.contextTokens || 200000;
     return `
         <div class="section">
             <h2 class="section-title">Context window</h2>
-            <label><input type="radio" name="ctx" value="200000" ${size === 200000 ? 'checked' : ''}> 200k tokens</label>
-            <label><input type="radio" name="ctx" value="1000000" ${size === 1000000 ? 'checked' : ''}> 1M tokens (extended context)</label>
-            <div class="hint">Fallback for projects that can't be detected and have no override above.</div>
+            <div class="row"><span>Default</span>
+                <input class="ctx-input" list="ctxsizes" id="ctxDefault" value="${formatTokens(cfg.contextTokens || 200000)}" title="Type a size such as 200k, 1M or 750k"></div>
+            <div class="hint">Used only when a project's size can't be detected and you haven't set one above. Type the window your model has: 200k, 1M, 750k.</div>
         </div>`;
 }
 
@@ -241,6 +276,21 @@ function setupOverlayEvents() {
         if (!action) return;
         switch (action.dataset.action) {
             case 'accent-reset': cfg.accent = ''; applyAppearance(cfg); persist(); rerender(); break;
+            case 'folder-add': {
+                e.preventDefault();
+                try {
+                    await window.go.main.App.SaveSettings(cfg);
+                    const dir = await window.go.main.App.AddProjectFolder();
+                    if (dir) await refreshProjects();
+                } catch (err) { console.error(err); }
+                break;
+            }
+            case 'folder-remove':
+                e.preventDefault();
+                cfg.projectFolders.splice(parseInt(action.dataset.i, 10), 1);
+                await window.go.main.App.SaveSettings(cfg);
+                await refreshProjects();
+                break;
             case 'projects-all': e.preventDefault(); cfg.projects = projectNames(); persist(); rerender(); break;
             case 'projects-none': e.preventDefault(); cfg.projects = []; persist(); rerender(); break;
             case 'next': wizardStep++; renderWizard(); break;
@@ -283,11 +333,16 @@ function setupOverlayEvents() {
             if (!cfg.projects.length) rerender();
         } else if (t.dataset && t.dataset.pctx !== undefined) {
             cfg.projectContext = cfg.projectContext || {};
-            const v = parseInt(t.value, 10);
+            const v = parseTokens(t.value);
+            if (v === null) { rerender(); return; } // not a size: put the old value back
             if (v) cfg.projectContext[t.dataset.pctx] = v; else delete cfg.projectContext[t.dataset.pctx];
+            t.value = formatTokens(v);
             persist();
-        } else if (t.name === 'ctx') {
-            cfg.contextTokens = parseInt(t.value, 10);
+        } else if (t.id === 'ctxDefault') {
+            const v = parseTokens(t.value);
+            if (v === null || v === 0) { rerender(); return; }
+            cfg.contextTokens = v;
+            t.value = formatTokens(v);
             persist();
         } else if (t.id === 'poll') {
             cfg.pollLimits = t.checked;
