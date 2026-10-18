@@ -16,10 +16,6 @@ Forked from [gosparq/claudewatch](https://github.com/gosparq/claudewatch) (MIT).
   <img src="docs/screenshot-sweet.png" alt="CCTokenViz in the Sweet theme, with the API spend panel expanded" width="224">
 </p>
 
-<p align="center"><img src="docs/themes.png" alt="Ten themes, each with its own meter, fonts, headings and wording" width="100%"></p>
-
-<p align="center"><sub>Ten themes, each with its own meter, fonts, headings and wording.</sub></p>
-
 ## Why?
 
 When working with AI coding assistants on complex tasks, context management becomes critical. Claude Code has a finite context window (200k tokens, or 1M on extended-context models), and when it fills up, Claude automatically compacts the conversation—often losing important details you wanted to preserve.
