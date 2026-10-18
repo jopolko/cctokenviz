@@ -308,6 +308,7 @@ cctokenviz/
 ├── scripts/
 │   ├── cctokenviz-statusline.py  # Status line script that feeds CCTokenViz
 │   ├── relaunch.ps1              # Stop, rebuild and restart (development)
+│   ├── make-icon.py              # Draws the app icon (build/appicon.png, build/windows/icon.ico)
 │   └── screenshots.py            # Regenerates docs/ screenshots from demo data
 ├── docs/             # Screenshot and its demo-data stub
 ├── frontend/

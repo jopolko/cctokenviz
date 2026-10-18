@@ -1,5 +1,5 @@
-# Build output
-build/
+# Build output (build/appicon.png and build/windows/ are the app icon and Windows resources: tracked)
+build/bin/
 dist/
 
 # Go
