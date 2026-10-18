@@ -14,8 +14,11 @@ import (
 // That JSON carries the plan rate limits and the real context window size.
 
 type statusFile struct {
-	SessionID     string `json:"session_id"`
-	Cwd           string `json:"cwd"`
+	SessionID string `json:"session_id"`
+	Cwd       string `json:"cwd"`
+	Model     struct {
+		ID string `json:"id"`
+	} `json:"model"`
 	ContextWindow struct {
 		Size int `json:"context_window_size"`
 	} `json:"context_window"`
@@ -45,7 +48,7 @@ const expiredKeep = 24 * time.Hour
 // Limits holds the account-wide plan limits; empty slices until a session has reported them
 type Limits struct {
 	Windows []LimitInfo `json:"windows"`
-	AsOf    int64       `json:"asOf"` // unix seconds when a session last reported these numbers
+	AsOf    int64       `json:"asOf"`   // unix seconds when a session last reported these numbers
 	Paused  bool        `json:"paused"` // a window is at 100%: polling stops so probes can't spend extra-usage credits
 }
 
@@ -83,9 +86,10 @@ func contextSizeFor(sessionID string) int {
 }
 
 var (
-	projSizeMu   sync.Mutex
-	projSizeAt   time.Time
-	projSizeMemo map[string]int
+	projSizeMu    sync.Mutex
+	projSizeAt    time.Time
+	projSizeMemo  map[string]int
+	modelSizeMemo map[string]int // model id -> window size most recently reported by a session on that model
 )
 
 // contextSizeForProject returns the window size most recently reported by any session in the
@@ -94,12 +98,33 @@ var (
 func contextSizeForProject(project string) int {
 	projSizeMu.Lock()
 	defer projSizeMu.Unlock()
+	refreshSizeMemos()
+	return projSizeMemo[strings.ToLower(project)]
+}
+
+// contextSizeForModel returns the window size most recently reported by a session running
+// this model, or 0. Terminal sessions report their real window; desktop sessions don't, so
+// this lets a desktop session borrow the size from a terminal session on the same model.
+func contextSizeForModel(model string) int {
+	if model == "" {
+		return 0
+	}
+	projSizeMu.Lock()
+	defer projSizeMu.Unlock()
+	refreshSizeMemos()
+	return modelSizeMemo[model]
+}
+
+// refreshSizeMemos rescans the status files when the last scan is stale. Caller holds projSizeMu.
+func refreshSizeMemos() {
 	if projSizeMemo == nil || time.Since(projSizeAt) > 5*time.Second {
 		projSizeMemo = map[string]int{}
+		modelSizeMemo = map[string]int{}
 		projSizeAt = time.Now()
 		if dir := statusDir(); dir != "" {
 			files, _ := filepath.Glob(filepath.Join(dir, "status-*.json"))
 			newest := map[string]time.Time{}
+			newestModel := map[string]time.Time{}
 			roots := loadConfig().ProjectFolders
 			for _, f := range files {
 				info, err := os.Stat(f)
@@ -109,6 +134,10 @@ func contextSizeForProject(project string) int {
 				s := readStatus(f)
 				if s == nil || s.ContextWindow.Size <= 0 {
 					continue
+				}
+				if s.Model.ID != "" && info.ModTime().After(newestModel[s.Model.ID]) {
+					newestModel[s.Model.ID] = info.ModTime()
+					modelSizeMemo[s.Model.ID] = s.ContextWindow.Size
 				}
 				name := strings.ToLower(projectFromPath(s.Cwd, roots))
 				if name == "" {
@@ -121,7 +150,6 @@ func contextSizeForProject(project string) int {
 			}
 		}
 	}
-	return projSizeMemo[strings.ToLower(project)]
 }
 
 // detectedContextSizes returns the window size each project's sessions reported, by lowercase project name

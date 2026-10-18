@@ -56,6 +56,7 @@ type AssistantMessage struct {
 	Cwd       string `json:"cwd"`
 	AiTitle string `json:"aiTitle"`
 	Message struct {
+		Model   string          `json:"model"`
 		Usage   *Usage          `json:"usage"`
 		Content json.RawMessage `json:"content"`
 	} `json:"message"`
@@ -235,6 +236,7 @@ type sessionState struct {
 	projectFolder string
 	title         string
 	lastActivity  time.Time // last real user or assistant message; bookkeeping entries don't count
+	model         string    // model of the latest assistant message
 	signals       []string // recent project signals, newest last (see addSignal)
 	lastCwdName   string   // the project the working folder last pointed at
 }
@@ -349,11 +351,14 @@ func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 
 			if msg.Type == "assistant" && msg.Message.Usage != nil {
 				st.lastUsage = msg.Message.Usage
+				if m := msg.Message.Model; m != "" && m != "<synthetic>" {
+					st.model = m // switching models in the app shows up on the next reply
+				}
 			}
 		}
 	}
 
-	lastUsage, cwd, projectFolder, title, lastActivity := st.lastUsage, st.cwd, st.projectFolder, st.title, st.lastActivity
+	lastUsage, cwd, projectFolder, title, lastActivity, model := st.lastUsage, st.cwd, st.projectFolder, st.title, st.lastActivity, st.model
 
 	if lastUsage == nil {
 		return nil
@@ -380,6 +385,8 @@ func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 	}
 	if size := cfg.contextFor(projectName); size > 0 {
 		maxTokens = size
+	} else if size := contextSizeForModel(model); size > 0 {
+		maxTokens = size // the window a session on this model reported; follows a model switch
 	} else if size := contextSizeForProject(projectName); size > 0 {
 		maxTokens = size
 	}

@@ -125,6 +125,18 @@ The app scans `~/.claude/projects/` for active sessions and takes the last assis
 
 **Why it may differ from Claude's own meter.** The count is the same one Claude Code's status line uses: input plus cache tokens of the latest response, not counting that response's output. CCTokenViz reads the log every 2 seconds, and in a long turn every tool call writes a new entry, so it can run ahead of the desktop app's context display, which appears to update less often. In one check the app was about four minutes behind, and the two also differed by about 1% for reasons I couldn't determine. Compare right after a turn finishes and they should agree within a percent or two.
 
+### Context window size
+
+The percentage is the tokens in use divided by the window, so the window size matters. CCTokenViz picks it in this order (first match wins):
+
+1. the size that session itself reported through the status line export (exact; terminal sessions only),
+2. the per-project size you typed in Settings,
+3. the window most recently reported by any session running the **same model**, so switching models in the desktop app follows the model: a desktop session on a model that a terminal session has reported at 1M is measured against 1M,
+4. the window most recently reported by any session in the same project,
+5. your default in Settings (200k out of the box).
+
+If usage goes past the chosen size, the window is taken to be 1M. The desktop app doesn't report its window, so (3) and (4) borrow from terminal sessions; with the status line export off, set a per-project size or the default yourself. The model is read from the latest reply in each log, so a model switch takes effect on the next reply.
+
 ## Settings
 
 Open Settings from the gear at the top right any time. **Theme** has ten styles and three plain themes. A style is a whole personality, not a palette: its own meter, fonts, background pattern, heading decoration, logo and wording, and the picker shows each one as a live miniature.
@@ -193,7 +205,7 @@ Settings are stored in `~/.cctokenviz.json`, which you never need to edit by han
 | `activeMinutes` | 60 | How long a session can go without activity before its row is marked idle (it stays listed) |
 | `contextTokens` | 200000 | Fallback context window, for projects with no detected size and no override (use 1000000 for 1M-context models) |
 | `projectFolders` | none | Folders you added in Settings: a single project, or a folder that holds several. Projects are also found from your Claude Code sessions, from any `projects` directory they use, and by the nearest enclosing folder with a `.git`, `go.mod`, `package.json` etc. |
-| `projectContext` | detect | Per-project window override in tokens, e.g. `{"my-app": 750000}` (Settings accepts 200k, 1M, 750k, any size). Without one, a project's size comes from what its sessions report; usage beyond 200k bumps it to 1M |
+| `projectContext` | detect | Per-project window override in tokens, e.g. `{"my-app": 750000}` (Settings accepts 200k, 1M, 750k, any size). Without one, the size is learned from what sessions report (see [Context window size](#context-window-size)); usage beyond 200k bumps it to 1M |
 | `pollLimits` | false | Opt in to background limit refreshes, see [headless polling](#limits-option-b-headless-polling-opt-in) |
 | `pollMinutes` | 10 | Minutes between automatic polls (minimum 5; halved above 85% usage) |
 | `theme`, `accent`, `font`, `fontSize` | midnight, theme's, theme's, 13 | Appearance: a theme id: `linux`, `scifi`, `bitcoin`, `ai`, `cowboy`, `anime`, `sweet`, `bloom`, `celestial`, `lab`, `midnight`, `light` or `contrast`; `accent` is an optional `#rrggbb`; `font` empty or `theme` uses the theme's own |
