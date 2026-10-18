@@ -160,7 +160,7 @@ func (m *Monitor) pollNow() {
 	polled.mu.Unlock()
 }
 
-// pollLog appends to ~/.headroom/poll.log (trimmed when large) so a quiet failure can be diagnosed
+// pollLog appends to ~/.cctokenviz/poll.log (trimmed when large) so a quiet failure can be diagnosed
 func pollLog(msg string) {
 	dir := statusDir()
 	if dir == "" {

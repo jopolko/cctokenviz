@@ -1,12 +1,12 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
-  "name": "HeadRoom",
-  "outputfilename": "HeadRoom",
+  "name": "CCTokenViz",
+  "outputfilename": "CCTokenViz",
   "frontend:install": "",
   "frontend:build": "",
   "frontend:dev:watcher": "",
   "frontend:dev:serverUrl": "",
   "author": {
-    "name": "HeadRoom Contributors"
+    "name": "CCTokenViz Contributors"
   }
 }

@@ -1,6 +1,6 @@
 .PHONY: dev build-mac build-windows build-linux build-all clean install-wails
 
-APP_NAME := headroom
+APP_NAME := cctokenviz
 BUILD_DIR := build/bin
 
 # Install Wails CLI (run once)
@@ -60,7 +60,7 @@ install-mac: build-mac
 
 # Help
 help:
-	@echo "HeadRoom - Build Commands"
+	@echo "CCTokenViz - Build Commands"
 	@echo ""
 	@echo "  make install-wails  - Install Wails CLI (run once)"
 	@echo "  make dev            - Run in development mode"

@@ -8,7 +8,7 @@ import (
 )
 
 // Rows keep the order you drag them into. The order is a list of session ids in
-// ~/.headroom/order.json; sessions not in the list go after the ones that are,
+// ~/.cctokenviz/order.json; sessions not in the list go after the ones that are,
 // newest activity first.
 
 var orderMu sync.Mutex

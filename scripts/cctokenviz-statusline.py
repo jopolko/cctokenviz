@@ -1,29 +1,29 @@
 #!/usr/bin/env python3
-"""Minimal Claude Code status line that also feeds HeadRoom.
+"""Minimal Claude Code status line that also feeds CCTokenViz.
 
 Claude Code pipes a JSON blob to the status line command on every refresh. This script
-saves that JSON to ~/.headroom/status-<session_id>.json, which is where HeadRoom
+saves that JSON to ~/.cctokenviz/status-<session_id>.json, which is where CCTokenViz
 reads plan limits (5-hour / weekly) and the real context window size from, then prints a
 short status line.
 
-Already have a status line script? Copy `export_for_headroom` into it and call it
+Already have a status line script? Copy `export_for_cctokenviz` into it and call it
 with the parsed JSON; nothing else is needed.
 
 Setup (~/.claude/settings.json):
-  "statusLine": {"type": "command", "command": "python /path/to/headroom-statusline.py"}
+  "statusLine": {"type": "command", "command": "python /path/to/cctokenviz-statusline.py"}
 """
 import json
 import os
 import sys
 
 
-def export_for_headroom(d):
-    """Write the raw status JSON where HeadRoom can read it. Never raises."""
+def export_for_cctokenviz(d):
+    """Write the raw status JSON where CCTokenViz can read it. Never raises."""
     try:
         sid = str(d.get("session_id") or "")
         if not sid or not all(c.isalnum() or c in "-_" for c in sid):
             return
-        out = os.path.join(os.path.expanduser("~"), ".headroom")
+        out = os.path.join(os.path.expanduser("~"), ".cctokenviz")
         os.makedirs(out, exist_ok=True)
         tmp = os.path.join(out, f"status-{sid}.json.tmp")
         with open(tmp, "w", encoding="utf-8") as f:
@@ -39,7 +39,7 @@ def main():
     except Exception:
         return  # never break the prompt on bad input
 
-    export_for_headroom(d)
+    export_for_cctokenviz(d)
 
     parts = [d.get("model", {}).get("display_name") or "Claude"]
     ctx = d.get("context_window", {}).get("used_percentage")

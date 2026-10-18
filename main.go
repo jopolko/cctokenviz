@@ -14,10 +14,11 @@ import (
 var assets embed.FS
 
 func main() {
+	migrateLegacyData()
 	app := NewApp()
 
 	err := wails.Run(&options.App{
-		Title:     "HeadRoom",
+		Title:     "CCTokenViz",
 		Width:     240,
 		Height:    620,
 		MinWidth:  200,

@@ -7,9 +7,9 @@ import (
 	"sync"
 )
 
-// A session that has been active while HeadRoom could see it is "tracked": it stays on the
+// A session that has been active while CCTokenViz could see it is "tracked": it stays on the
 // list, dimmed and marked idle, with its last known context, until you resume it (it goes back
-// to normal) or hide it with the X. The list is kept in ~/.headroom/tracked.json so it
+// to normal) or hide it with the X. The list is kept in ~/.cctokenviz/tracked.json so it
 // survives restarts. Idle sessions cost nothing to keep: their logs don't change, so
 // nothing is re-read.
 

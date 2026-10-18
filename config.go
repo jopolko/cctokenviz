@@ -9,7 +9,7 @@ import (
 	"sync"
 )
 
-// Config is the user's settings, stored in ~/.headroom.json. The setup wizard and the
+// Config is the user's settings, stored in ~/.cctokenviz.json. The setup wizard and the
 // settings panel edit it; it is re-read on every refresh, so hand edits apply live too.
 type Config struct {
 	// What to show
@@ -48,7 +48,7 @@ func configPath() string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, ".headroom.json")
+	return filepath.Join(home, ".cctokenviz.json")
 }
 
 func loadConfig() Config {

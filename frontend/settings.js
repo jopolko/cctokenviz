@@ -1,5 +1,5 @@
 // Setup wizard (first run) and settings panel. Both edit the same settings object and
-// save it to ~/.headroom.json as you go, so there is no "apply" button to forget.
+// save it to ~/.cctokenviz.json as you go, so there is no "apply" button to forget.
 
 let cfg = {};
 let knownProjects = [];
@@ -171,7 +171,7 @@ function windowSection() {
         <div class="section">
             <h2 class="section-title">Window</h2>
             <label><input type="checkbox" id="fixedSize" ${cfg.fixedSize ? 'checked' : ''}> Keep my window size</label>
-            <div class="hint">By default HeadRoom fits its height to what it is showing, so there's no empty space. Tick this to size it yourself.</div>
+            <div class="hint">By default CCTokenViz fits its height to what it is showing, so there's no empty space. Tick this to size it yourself.</div>
         </div>`;
 }
 
@@ -183,7 +183,7 @@ function limitsSection() {
             <h2 class="section-title">Limits</h2>
             <label><input type="checkbox" id="poll" ${cfg.pollLimits ? 'checked' : ''} ${hasCli ? '' : 'disabled'}> Check my 5-hour and weekly limits automatically</label>
             <div class="hint">${hasCli ? '<span class="ok">Claude Code found.</span>' : '<span class="bad">Claude Code (the claude command) was not found, so this is unavailable.</span>'}
-                Each check runs one tiny request under your own Claude login: under 1,000 tokens, roughly $0.0002 at API prices. It slowly draws on your plan limits (or bills your API key, if the claude command uses one), and HeadRoom never sees or stores your login.
+                Each check runs one tiny request under your own Claude login: under 1,000 tokens, roughly $0.0002 at API prices. It slowly draws on your plan limits (or bills your API key, if the claude command uses one), and CCTokenViz never sees or stores your login.
                 It only checks while a session is active, and stops once a limit is used up.</div>
             <div class="row"><span>Frequency</span><select id="pollMin" ${cfg.pollLimits ? '' : 'disabled'}>${opts}</select></div>
             <div class="hint">Off by default. Without it, limits update only when a terminal session reports them (see the README) and the ↻ Refresh button does nothing.</div>
@@ -218,13 +218,13 @@ function renderSettings() {
 
 const WIZARD_STEPS = [
     () => `
-        <h2>Welcome to HeadRoom</h2>
-        <p class="lead">HeadRoom shows how much room you have left in Claude Code: the context window of each project you have open, and your 5-hour and weekly limits.</p>
+        <h2>Welcome to CCTokenViz</h2>
+        <p class="lead">CCTokenViz shows how much room you have left in Claude Code: the context window of each project you have open, and your 5-hour and weekly limits.</p>
         <p class="lead">This takes about a minute. Everything stays on your computer, and you can change any of it later from the gear at the top right.</p>`,
     () => `<h2>Pick a look</h2><p class="lead">Choose a theme, then adjust the accent color and font if you like.</p>${lookSection()}`,
-    () => `<h2>Which projects?</h2><p class="lead">HeadRoom finds your sessions on its own. Limit it to the projects you care about, or show everything.</p>${projectsSection()}`,
+    () => `<h2>Which projects?</h2><p class="lead">CCTokenViz finds your sessions on its own. Limit it to the projects you care about, or show everything.</p>${projectsSection()}`,
     () => `<h2>Context size</h2><p class="lead">How big is your model's context window?</p>${contextSection()}`,
-    () => `<h2>Keeping limits current</h2><p class="lead">Your 5-hour and weekly limits only come from Claude Code itself. Choose whether HeadRoom may ask for them in the background.</p>${limitsSection()}`,
+    () => `<h2>Keeping limits current</h2><p class="lead">Your 5-hour and weekly limits only come from Claude Code itself. Choose whether CCTokenViz may ask for them in the background.</p>${limitsSection()}`,
     () => `
         <h2>You're set</h2>
         <p class="lead">Your sessions will show up under <b>Context</b>, and your limits under <b>Limits</b>. Drag the ⋮⋮ grip on a row to reorder it, and click ✕ to hide a session.</p>

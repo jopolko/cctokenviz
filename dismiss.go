@@ -9,7 +9,7 @@ import (
 )
 
 // Sessions you X out stay hidden until they see new activity.
-// Stored as session id -> unix time dismissed in ~/.headroom/dismissed.json.
+// Stored as session id -> unix time dismissed in ~/.cctokenviz/dismissed.json.
 
 var dismissMu sync.Mutex
 

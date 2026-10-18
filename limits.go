@@ -10,7 +10,7 @@ import (
 )
 
 // The Claude Code status line script drops its raw JSON into
-// ~/.headroom/status-<session_id>.json (see ~/.claude/statusline-command.py).
+// ~/.cctokenviz/status-<session_id>.json (see ~/.claude/statusline-command.py).
 // That JSON carries the plan rate limits and the real context window size.
 
 type statusFile struct {
@@ -49,7 +49,7 @@ func statusDir() string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, ".headroom")
+	return filepath.Join(home, ".cctokenviz")
 }
 
 func readStatus(path string) *statusFile {

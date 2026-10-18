@@ -1,19 +1,19 @@
-# HeadRoom
+# CCTokenViz
 
 A lightweight desktop app that shows how much room you have left in Claude Code: context window usage across all your active sessions, plus your 5-hour and weekly plan limits.
 
-**It replaces the status line for the desktop app.** In the Claude Code terminal, a `/statusline` can show context remaining, 5-hour usage and 7-day usage. The Claude desktop app has no status line, so those numbers aren't available there. HeadRoom puts them in a small always-on-top window, for the desktop app and the terminal alike.
+**It replaces the status line for the desktop app.** In the Claude Code terminal, a `/statusline` can show context remaining, 5-hour usage and 7-day usage. The Claude desktop app has no status line, so those numbers aren't available there. CCTokenViz puts them in a small always-on-top window, for the desktop app and the terminal alike.
 
-**[Download for Windows](https://github.com/jopolko/headroom/releases/latest)** (a single portable `.exe`, no installer needed)
+**[Download for Windows](https://github.com/jopolko/cctokenviz/releases/latest)** (a single portable `.exe`, no installer needed)
 
 Forked from [gosparq/claudewatch](https://github.com/gosparq/claudewatch) (MIT). Not affiliated with Anthropic.
 
 <p align="center">
-  <img src="docs/screenshot.png" alt="HeadRoom in the Terminal theme: context per project and 5-hour and weekly limits" width="224">
+  <img src="docs/screenshot.png" alt="CCTokenViz in the Terminal theme: context per project and 5-hour and weekly limits" width="224">
   &nbsp;&nbsp;
-  <img src="docs/screenshot-scifi.png" alt="HeadRoom in the Starship theme" width="224">
+  <img src="docs/screenshot-scifi.png" alt="CCTokenViz in the Starship theme" width="224">
   &nbsp;&nbsp;
-  <img src="docs/screenshot-sweet.png" alt="HeadRoom in the Sweet theme" width="224">
+  <img src="docs/screenshot-sweet.png" alt="CCTokenViz in the Sweet theme" width="224">
 </p>
 
 <p align="center"><img src="docs/themes.png" alt="Ten themes, each with its own meter, fonts, headings and wording" width="100%"></p>
@@ -24,7 +24,7 @@ Forked from [gosparq/claudewatch](https://github.com/gosparq/claudewatch) (MIT).
 
 When working with AI coding assistants on complex tasks, context management becomes critical. Claude Code has a finite context window (200k tokens, or 1M on extended-context models), and when it fills up, Claude automatically compacts the conversation—often losing important details you wanted to preserve.
 
-**HeadRoom** gives you visibility into your context usage across all active sessions, so you can intentionally save your work before Claude does it for you.
+**CCTokenViz** gives you visibility into your context usage across all active sessions, so you can intentionally save your work before Claude does it for you.
 
 When you get the warning, tell Claude:
 
@@ -68,7 +68,7 @@ Works with the Claude Code terminal and the Claude desktop app (Code tab); both 
 
 ### Pre-built Binaries
 
-Download the latest Windows build from the [Releases page](https://github.com/jopolko/headroom/releases/latest): unzip it and run `HeadRoom.exe`. Binaries are published as release downloads, not stored in the repository.
+Download the latest Windows build from the [Releases page](https://github.com/jopolko/cctokenviz/releases/latest): unzip it and run `CCTokenViz.exe`. Binaries are published as release downloads, not stored in the repository.
 
 ### Build from Source
 
@@ -81,7 +81,7 @@ Download the latest Windows build from the [Releases page](https://github.com/jo
 
 ```bash
 # Clone or download this project
-cd headroom
+cd cctokenviz
 
 # Development mode (hot reload)
 make dev
@@ -102,20 +102,20 @@ make install-mac
 
 ## Usage
 
-1. **Launch the app** - Double-click `HeadRoom.app` (macOS) or `HeadRoom.exe` (Windows). The first launch opens a short setup wizard; HeadRoom is a single executable and needs nothing installed beyond what Windows already has (the WebView2 runtime that Windows 10/11 ship). On Windows, add a Start Menu shortcut and pin it to the taskbar for one-click launch.
+1. **Launch the app** - Double-click `CCTokenViz.app` (macOS) or `CCTokenViz.exe` (Windows). The first launch opens a short setup wizard; CCTokenViz is a single executable and needs nothing installed beyond what Windows already has (the WebView2 runtime that Windows 10/11 ship). On Windows, add a Start Menu shortcut and pin it to the taskbar for one-click launch.
 2. **Window auto-positions** - Opens in the top-right corner, always on top (drag to reposition).
 3. **Work normally** - Open projects in Claude Code, in the terminal or the Claude desktop app. Each active session shows up as a row on its own; there is nothing to register.
 4. **Watch the colors** - Each bar changes color as it fills (green, yellow, orange, red, and pulsing red near the top), so you can see at a glance when a session is filling up and save your work before Claude compacts it.
 
 ### How projects show up
 
-HeadRoom doesn't need to be pointed at your project folders. Claude Code (terminal and desktop app) records every session in `~/.claude/projects/`, and HeadRoom lists every session it has seen active. Open a project in Claude and its row appears within a couple of seconds.
+CCTokenViz doesn't need to be pointed at your project folders. Claude Code (terminal and desktop app) records every session in `~/.claude/projects/`, and CCTokenViz lists every session it has seen active. Open a project in Claude and its row appears within a couple of seconds.
 
 **Idle sessions keep their last reading.** After `activeMinutes` (default 60) without activity, a session's row stays, dimmed and marked `idle 2h 10m`, showing the last known context. Nothing is polled for an idle session (its log isn't changing, so there is nothing to read), and the row goes back to normal the moment you resume that session. It stays until you remove it with the ✕, even across restarts.
 
 **Row names.** Each row is labelled with the project folder the session is working in, with the session's title underneath. The project is the first folder under a directory named `projects` in the session's working directory (`C:\Users\me\projects\my-app\src` gives `my-app`), and it follows the session if it moves between projects. If the working directory isn't under a `projects` folder, the row uses that folder's own name.
 
-**Showing only some projects.** By default every active session is listed. To limit it, open Settings (the gear at the top right) and choose "Only these projects", or set `projects` in `~/.headroom.json`. Names are matched against the row names above, ignoring case.
+**Showing only some projects.** By default every active session is listed. To limit it, open Settings (the gear at the top right) and choose "Only these projects", or set `projects` in `~/.cctokenviz.json`. Names are matched against the row names above, ignoring case.
 
 **Order.** Rows stay where you put them. Drag the ⋮⋮ grip on a row to move it up or down; the order is remembered. A new session is added at the bottom.
 
@@ -127,7 +127,7 @@ Several rows with the same project name are separate sessions (each conversation
 
 The app scans `~/.claude/projects/` for active sessions and takes the last assistant message's input and cache tokens as the current context size, shown as a percentage of the context window. It reads local files only.
 
-**Why it may differ from Claude's own meter.** The count is the same one Claude Code's status line uses: input plus cache tokens of the latest response, not counting that response's output. HeadRoom reads the log every 2 seconds, and in a long turn every tool call writes a new entry, so it can run ahead of the desktop app's context display, which appears to update less often. In one check the app was about four minutes behind, and the two also differed by about 1% for reasons I couldn't determine. Compare right after a turn finishes and they should agree within a percent or two.
+**Why it may differ from Claude's own meter.** The count is the same one Claude Code's status line uses: input plus cache tokens of the latest response, not counting that response's output. CCTokenViz reads the log every 2 seconds, and in a long turn every tool call writes a new entry, so it can run ahead of the desktop app's context display, which appears to update less often. In one check the app was about four minutes behind, and the two also differed by about 1% for reasons I couldn't determine. Compare right after a turn finishes and they should agree within a percent or two.
 
 ## Settings
 
@@ -150,7 +150,7 @@ The plain themes are Midnight, Daylight and High contrast. They are original des
 
 You can override the accent color and the font (the fonts are the ones that ship with Windows, so nothing is bundled) and set the text size. **Projects**, **Context window** and **Limits** are covered below. Changes save as you make them, and "Run setup again" replays the wizard.
 
-Settings are stored in `~/.headroom.json`, which you never need to edit by hand but can. It is re-read on every refresh, so edits apply immediately:
+Settings are stored in `~/.cctokenviz.json`, which you never need to edit by hand but can. It is re-read on every refresh, so edits apply immediately:
 
 ```json
 {
@@ -184,30 +184,30 @@ Settings are stored in `~/.headroom.json`, which you never need to edit by hand 
 
 ## Limits: where the numbers come from
 
-HeadRoom can use two sources for the limits. You only need one. Context bars need none of this; they read local session logs and cost nothing.
+CCTokenViz can use two sources for the limits. You only need one. Context bars need none of this; they read local session logs and cost nothing.
 
 | Source | Shows | Authentication | Cost |
 |--------|-------|----------------|------|
 | **Status line export** | 5-hour and weekly plan limits, plus each session's real context window size | None. Claude Code runs your status line script and hands it the data. | Free. No extra requests. |
-| **Headless polling** (opt-in) | 5-hour and weekly plan limits | Your own `claude` login, used by the official CLI on your machine. HeadRoom never reads or stores it. | A small real request per poll: it slowly draws on your plan, or bills your API key. See [What polling costs](#what-polling-costs). |
+| **Headless polling** (opt-in) | 5-hour and weekly plan limits | Your own `claude` login, used by the official CLI on your machine. CCTokenViz never reads or stores it. | A small real request per poll: it slowly draws on your plan, or bills your API key. See [What polling costs](#what-polling-costs). |
 
 ### Limits, option A: status line export
 
 Claude Code only reports your 5-hour and weekly plan usage (Pro/Max plans) to its **status line command**. Have yours save the JSON it receives:
 
-- Copy `scripts/headroom-statusline.py` somewhere and set it as your status line in `~/.claude/settings.json`:
+- Copy `scripts/cctokenviz-statusline.py` somewhere and set it as your status line in `~/.claude/settings.json`:
   ```json
-  "statusLine": { "type": "command", "command": "python /path/to/headroom-statusline.py" }
+  "statusLine": { "type": "command", "command": "python /path/to/cctokenviz-statusline.py" }
   ```
-- Or, if you already have a status line script, copy the `export_for_headroom` function from that file into it and call it with the parsed JSON.
+- Or, if you already have a status line script, copy the `export_for_cctokenviz` function from that file into it and call it with the parsed JSON.
 
-The script writes `~/.headroom/status-<session_id>.json`.
+The script writes `~/.cctokenviz/status-<session_id>.json`.
 
 **Limitations:** the Claude desktop app doesn't run the status line, so only terminal sessions export. And the limit numbers inside the file only change after a response, so they can lag behind the real values. "Last reported X ago" shows how old the reading is.
 
 ### Limits, option B: headless polling (opt-in)
 
-Turn on "Check my 5-hour and weekly limits automatically" in the setup wizard or settings (`"pollLimits": true`). While one of your sessions has been active in the last 30 minutes, HeadRoom runs one headless Claude Code call:
+Turn on "Check my 5-hour and weekly limits automatically" in the setup wizard or settings (`"pollLimits": true`). While one of your sessions has been active in the last 30 minutes, CCTokenViz runs one headless Claude Code call:
 
 ```
 claude -p "reply with: ok" --model haiku --output-format stream-json --verbose --no-session-persistence \
@@ -215,26 +215,26 @@ claude -p "reply with: ok" --model haiku --output-format stream-json --verbose -
        --strict-mcp-config --setting-sources ""
 ```
 
-Claude Code emits a `rate_limit_event` with both windows, which HeadRoom reads.
+Claude Code emits a `rate_limit_event` with both windows, which CCTokenViz reads.
 
 #### What polling costs
 
-Polling is a slow drip, not a one-off, but a small one. A plain headless call would send Claude Code's whole system prompt and tool list, about 39,000 tokens, just to say "ok". HeadRoom's poll replaces the system prompt with one line and turns off tools, skills, MCP servers and settings files, which brings a poll down to **under 1,000 tokens**: I measured 887, against 39,214 for the plain call, and it still returns both the 5-hour and weekly windows. (It does not use `--bare`, which would stop the CLI from reading your subscription login. If your `claude` is too old to know these options, HeadRoom falls back to the plain call.) At the default of one poll every 10 minutes while you're working, that's about 6 polls and roughly 5,000 tokens an hour. HeadRoom never charges anything itself; what you pay depends on what the `claude` command is signed in to:
+Polling is a slow drip, not a one-off, but a small one. A plain headless call would send Claude Code's whole system prompt and tool list, about 39,000 tokens, just to say "ok". CCTokenViz's poll replaces the system prompt with one line and turns off tools, skills, MCP servers and settings files, which brings a poll down to **under 1,000 tokens**: I measured 887, against 39,214 for the plain call, and it still returns both the 5-hour and weekly windows. (It does not use `--bare`, which would stop the CLI from reading your subscription login. If your `claude` is too old to know these options, CCTokenViz falls back to the plain call.) At the default of one poll every 10 minutes while you're working, that's about 6 polls and roughly 5,000 tokens an hour. CCTokenViz never charges anything itself; what you pay depends on what the `claude` command is signed in to:
 
 | `claude` is signed in with | What a poll costs |
 |----------------------------|-------------------|
-| **A Pro or Max subscription** | No money. Each poll takes a tiny slice of your 5-hour and weekly limits, so HeadRoom's own checking uses a little of the quota it is showing you. I couldn't measure the share, because the usage figure only moves in whole percents; at under 1,000 tokens a poll it should be hard to notice, but it is not zero. |
+| **A Pro or Max subscription** | No money. Each poll takes a tiny slice of your 5-hour and weekly limits, so CCTokenViz's own checking uses a little of the quota it is showing you. I couldn't measure the share, because the usage figure only moves in whole percents; at under 1,000 tokens a poll it should be hard to notice, but it is not zero. |
 | **An Anthropic API key** (an `ANTHROPIC_API_KEY` set, or a Console login) | Real money, but very little: roughly $0.0002 per poll at API list prices, about a tenth of a cent an hour at the default. |
-| **A subscription with extra usage switched on** | Free until the 5-hour limit is used up. At 100%, a poll goes through and is billed to extra usage. HeadRoom stops polling once it sees a limit at 100% and starts again after the reset, but it can only react after it has seen the 100%. |
+| **A subscription with extra usage switched on** | Free until the 5-hour limit is used up. At 100%, a poll goes through and is billed to extra usage. CCTokenViz stops polling once it sees a limit at 100% and starts again after the reset, but it can only react after it has seen the 100%. |
 
-HeadRoom can't tell which of these applies to you. To keep the drip small, it only polls while one of your sessions has been active in the last 30 minutes, and you can lower the frequency or turn polling off in Settings. The status line export (option A, above) costs nothing, at the price of only updating from terminal sessions.
+CCTokenViz can't tell which of these applies to you. To keep the drip small, it only polls while one of your sessions has been active in the last 30 minutes, and you can lower the frequency or turn polling off in Settings. The status line export (option A, above) costs nothing, at the price of only updating from terminal sessions.
 
-- It uses the official `claude` CLI under your own login, on your machine. HeadRoom never reads or stores your credentials.
+- It uses the official `claude` CLI under your own login, on your machine. CCTokenViz never reads or stores your credentials.
 - It never runs while you're idle, so it won't start a new 5-hour window by itself.
 - It leaves no session log (`--no-session-persistence`) and runs from a temp folder, so it doesn't appear as a session.
-- When several sources report, HeadRoom shows the latest window and the highest percentage, since a status line file can hold numbers from before its last refresh.
+- When several sources report, CCTokenViz shows the latest window and the highest percentage, since a status line file can hold numbers from before its last refresh.
 
-It's off by default because it spends a little of your plan. Review [Anthropic's terms](https://www.anthropic.com/legal) and decide for yourself; this project is not affiliated with Anthropic and can't speak for their policies. HeadRoom deliberately does **not** call undocumented usage endpoints with your OAuth token.
+It's off by default because it spends a little of your plan. Review [Anthropic's terms](https://www.anthropic.com/legal) and decide for yourself; this project is not affiliated with Anthropic and can't speak for their policies. CCTokenViz deliberately does **not** call undocumented usage endpoints with your OAuth token.
 
 **How often should it refresh?** Context changes by the second and is free, so it updates every 2 seconds. Plan limits change slowly: a 5-hour window moves roughly 1% every 3 minutes at full burn, so frequent polling buys little.
 
@@ -246,16 +246,16 @@ It's off by default because it spends a little of your plan. Review [Anthropic's
 ## Project Structure
 
 ```
-headroom/
+cctokenviz/
 ├── main.go           # Wails entry point
 ├── app.go            # App bindings and the limits poller
 ├── monitor.go        # JSONL parsing logic
-├── config.go         # ~/.headroom.json
+├── config.go         # ~/.cctokenviz.json
 ├── limits.go         # Plan limits from status line exports
 ├── poll.go           # Opt-in headless limit refresh
 ├── order.go          # Remembers the order rows are dragged into
 ├── dismiss.go        # Per-session dismiss
-├── scripts/          # Status line script that feeds HeadRoom
+├── scripts/          # Status line script that feeds CCTokenViz
 ├── frontend/
 │   ├── index.html    # UI structure
 │   ├── style.css     # Styling
@@ -277,9 +277,9 @@ make dev
 ## Troubleshooting
 
 ### "No active Claude sessions"
-- A session only appears once HeadRoom has seen it active (a change in its log while HeadRoom is running, or within `activeMinutes` of launching it)
-- If you set `projects` in `~/.headroom.json`, only those project names are shown
-- A session you hid with ✕ stays hidden until it has new activity (reset by deleting `~/.headroom/dismissed.json`)
+- A session only appears once CCTokenViz has seen it active (a change in its log while CCTokenViz is running, or within `activeMinutes` of launching it)
+- If you set `projects` in `~/.cctokenviz.json`, only those project names are shown
+- A session you hid with ✕ stays hidden until it has new activity (reset by deleting `~/.cctokenviz/dismissed.json`)
 - Check that Claude Code is storing sessions in `~/.claude/projects/`
 
 ### Build errors
