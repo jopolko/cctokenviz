@@ -70,6 +70,7 @@ function closeOverlay() {
     overlay().hidden = true;
     overlay().innerHTML = '';
     wizardMode = false;
+    window.go.main.App.SetSettingsOpen(false).catch(() => {});
     appCfg = { ...cfg };
     restoreWindow();
     scheduleFit();
@@ -201,6 +202,7 @@ async function openSettings() {
     await growWindow();
     renderSettings();
     overlay().hidden = false;
+    window.go.main.App.SetSettingsOpen(true).catch(() => {}); // so the window's X closes this panel, not the app
 }
 
 function renderSettings() {
@@ -377,3 +379,10 @@ function setupOverlayEvents() {
 }
 
 document.addEventListener('DOMContentLoaded', setupOverlayEvents);
+
+// The window's X while Settings is open comes back here as an event instead of quitting
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        window.runtime.EventsOn('settings:close', () => { if (!overlay().hidden && !wizardMode) closeOverlay(); });
+    } catch (error) { /* not running inside the app */ }
+});

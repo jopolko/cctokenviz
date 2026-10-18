@@ -49,3 +49,7 @@ export function SaveSettings(arg1) {
 export function SetOrder(arg1) {
   return window['go']['main']['App']['SetOrder'](arg1);
 }
+
+export function SetSettingsOpen(arg1) {
+  return window['go']['main']['App']['SetSettingsOpen'](arg1);
+}

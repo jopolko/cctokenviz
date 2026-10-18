@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
@@ -13,6 +14,9 @@ type App struct {
 	ctx      context.Context
 	monitor  *Monitor
 	stopChan chan struct{}
+
+	settingsOpen atomic.Bool  // the Settings panel is showing, so the window's X should close it, not the app
+	closeAskedAt atomic.Int64 // unix nanos of the last close we turned into "close Settings"
 }
 
 // NewApp creates a new App application struct
@@ -57,6 +61,27 @@ func (a *App) domReady(ctx context.Context) {
 	y := margin
 
 	wailsRuntime.WindowSetPosition(ctx, x, y)
+}
+
+// SetSettingsOpen is told by the frontend when the Settings panel opens or closes
+func (a *App) SetSettingsOpen(open bool) {
+	a.settingsOpen.Store(open)
+}
+
+// beforeClose runs when the window's X is clicked. While Settings is open it closes Settings
+// and keeps the app running. A second click within three seconds quits anyway, so a stuck
+// panel can never trap the window.
+func (a *App) beforeClose(ctx context.Context) (prevent bool) {
+	if !a.settingsOpen.Load() {
+		return false
+	}
+	now := time.Now().UnixNano()
+	if now-a.closeAskedAt.Load() < int64(3*time.Second) {
+		return false
+	}
+	a.closeAskedAt.Store(now)
+	wailsRuntime.EventsEmit(ctx, "settings:close")
+	return true
 }
 
 // shutdown is called when the app closes

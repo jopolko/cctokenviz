@@ -25,3 +25,5 @@ export function RefreshLimits():Promise<main.Limits>;
 export function SaveSettings(arg1:main.Config):Promise<void>;
 
 export function SetOrder(arg1:Array<string>):Promise<void>;
+
+export function SetSettingsOpen(arg1:boolean):Promise<void>;
