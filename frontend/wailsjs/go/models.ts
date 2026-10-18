@@ -10,8 +10,6 @@ export namespace main {
 	    pollLimits: boolean;
 	    pollMinutes: number;
 	    perSession: boolean;
-	    showUsage: boolean;
-	    usageFolded: boolean;
 	    theme: string;
 	    accent: string;
 	    font: string;
@@ -34,8 +32,6 @@ export namespace main {
 	        this.pollLimits = source["pollLimits"];
 	        this.pollMinutes = source["pollMinutes"];
 	        this.perSession = source["perSession"];
-	        this.showUsage = source["showUsage"];
-	        this.usageFolded = source["usageFolded"];
 	        this.theme = source["theme"];
 	        this.accent = source["accent"];
 	        this.font = source["font"];

@@ -152,36 +152,38 @@ function formatMoney(x) {
     return '$' + (x >= 100 ? x.toFixed(0) : x.toFixed(2));
 }
 
-// API spend panel: collapsed by default; the choice is remembered across launches
-async function toggleUsage() {
-    appCfg.usageFolded = !appCfg.usageFolded;
+// API cost, on demand. Nothing is read until the button is clicked, and results stay until
+// closed or refreshed. It only adds up the session logs on this computer: it spends no tokens
+// and is information only, never a charge.
+let usageResult = null;
+let usageBusy = false;
+
+async function checkUsage() {
+    if (usageBusy) return;
+    usageBusy = true;
+    renderUsage();
     try {
-        const cfg = await window.go.main.App.GetSettings();
-        cfg.usageFolded = appCfg.usageFolded;
-        await window.go.main.App.SaveSettings(cfg);
+        usageResult = await window.go.main.App.GetUsage();
     } catch (error) {
-        console.error('Error saving spend panel state:', error);
+        console.error('Error fetching usage:', error);
     }
-    updateUsage();
+    usageBusy = false;
+    renderUsage();
 }
 
-// Tokens and estimated cost from the session logs. Shown only if turned on in Settings, and
-// read only while the panel is expanded. Information only: it is never a charge.
-async function updateUsage() {
+function closeUsage() {
+    usageResult = null;
+    renderUsage();
+}
+
+function renderUsage() {
     const panel = document.getElementById('usage');
-    if (!appCfg.showUsage) {
-        if (!panel.hidden) { panel.hidden = true; panel.innerHTML = ''; panel.dataset.open = ''; scheduleFit(); }
-        return;
-    }
-    panel.hidden = false;
-    const open = !appCfg.usageFolded;
-    const head = `<button class="usage-toggle" aria-expanded="${open}" onclick="toggleUsage()"><span class="section-title">API spend</span><span class="chev">${open ? '▾' : '▸'}</span></button>`;
-    if (!open) {
-        if (panel.dataset.open !== '0') { panel.innerHTML = head; panel.dataset.open = '0'; scheduleFit(); }
-        return;
-    }
-    try {
-        const u = await window.go.main.App.GetUsage();
+    let html;
+    if (!usageResult) {
+        html = `<button class="usage-check" ${usageBusy ? 'disabled' : ''} onclick="checkUsage()" title="Adds up the token usage in your Claude Code logs for today and the last 7 days, priced at API rates. It reads files on this computer only: no tokens are spent and nothing is billed.">
+            <span>${usageBusy ? 'Checking…' : '$ Check API cost'}</span><small>${usageBusy ? '' : 'free'}</small></button>`;
+    } else {
+        const u = usageResult;
         const rows = (u.periods || []).map(p => `
             <div class="usage-row" title="Fresh input ${formatBigTokens(p.inputTokens)}, output ${formatBigTokens(p.outputTokens)}, cache read ${formatBigTokens(p.cacheRead)}, cache write ${formatBigTokens(p.cacheWrite)}">
                 <span class="limit-label">${p.label}</span>
@@ -189,15 +191,12 @@ async function updateUsage() {
                 <span class="percentage">${u.approx ? '~' : ''}${formatMoney(p.cost)}</span>
             </div>
             <div class="usage-sub">cache saved ${formatMoney(p.cacheSaved)} (${formatBigTokens(p.cacheSavedTok)} tok)</div>`).join('');
-        const html = `${head}${rows}
-            <div class="limits-asof"><span>For information only, not a charge. Estimated at API prices.</span></div>`;
-        const changed = panel.dataset.open !== '1' || panel.innerHTML.length !== html.length;
-        panel.innerHTML = html;
-        panel.dataset.open = '1';
-        if (changed) scheduleFit();
-    } catch (error) {
-        console.error('Error fetching usage:', error);
+        html = `<div class="usage-head"><span class="section-title">API cost</span>
+                <span><button class="refresh" onclick="checkUsage()" title="Check again">${usageBusy ? '…' : '↻'}</button> <button class="dismiss" onclick="closeUsage()" title="Close">✕</button></span></div>
+            ${rows}
+            <div class="limits-asof"><span>Information only, not a charge. Estimated at API prices.</span></div>`;
     }
+    if (panel.innerHTML.length !== html.length) { panel.innerHTML = html; scheduleFit(); } else { panel.innerHTML = html; }
 }
 
 // Render empty state
@@ -377,9 +376,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     updateSessions();
     updateLimits();
-    updateUsage();
+    renderUsage();
 
     setInterval(updateSessions, UPDATE_INTERVAL);
     setInterval(updateLimits, UPDATE_INTERVAL);
-    setInterval(updateUsage, 10000);
 });

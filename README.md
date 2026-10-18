@@ -9,7 +9,7 @@ A lightweight desktop app that shows how much room you have left in Claude Code:
 Forked from [gosparq/claudewatch](https://github.com/gosparq/claudewatch) (MIT). Not affiliated with Anthropic.
 
 <p align="center">
-  <img src="docs/screenshot.png" alt="CCTokenViz in the Terminal theme: context per project, 5-hour and weekly limits, and the optional API spend panel expanded" width="224">
+  <img src="docs/screenshot.png" alt="CCTokenViz in the Terminal theme: context per project, 5-hour and weekly limits, and the on-demand API cost shown" width="224">
 </p>
 
 ## Why?
@@ -47,7 +47,7 @@ Without structure, AI-assisted development often becomes chaotic: context gets l
 - 📁 **Multi-project** - Monitors all active Claude Code sessions automatically
 - 🏷️ **Project names** - Labels sessions by the project folder under `~/projects` they're working in, with the session title underneath
 - ✕ **Dismiss** - Hide a session until it has new activity
-- 💲 **API spend** - Optional panel, collapsed by default: tokens, estimated cost at API prices and what prompt caching saved, for today and the last 7 days (see [API spend](#api-spend-optional))
+- 💲 **API cost** - A "Check API cost" button at the bottom, on demand: tokens, estimated cost at API prices and what prompt caching saved, for today and the last 7 days. Free (it reads your local logs) and information only (see [API cost](#api-cost-on-demand))
 - 📈 **Limits** - 5-hour and weekly usage with reset countdowns, for Pro/Max plans (see [Limits](#limits-where-the-numbers-come-from))
 - ↕️ **Your order** - Drag the ⋮⋮ grip on a row to reorder; the order stays put
 - 🎨 **Themes** - Ten full styles (Linux terminal, sci-fi, Bitcoin, AI, cowboy, anime, kawaii, garden, celestial, lab notebook) each with its own meter, fonts, headings and wording, three plain themes, an accent color picker, and a font and size selector
@@ -152,8 +152,6 @@ Settings are stored in `~/.cctokenviz.json`, which you never need to edit by han
   "contextTokens": 1000000,
   "projectContext": { "my-app": 1000000 },
   "hiddenProjects": ["scratch"],
-  "showUsage": false,
-  "usageFolded": false,
   "pollLimits": false,
   "pollMinutes": 10,
   "theme": "midnight",
@@ -169,8 +167,6 @@ Settings are stored in `~/.cctokenviz.json`, which you never need to edit by han
 |-----|---------|---------|
 | `projects` | all | Only show sessions in these project folders (the first folder under a `projects` directory, taken from the session's working directory and the files and commands Claude is working on, latest wins) |
 | `hiddenProjects` | none | Projects that are never shown, even with new activity. Tick "hide" next to a project in Settings. (The ✕ on a row only hides that session until it has new activity.) |
-| `showUsage` | false | Show the API spend panel (Settings → API spend). Information only, never a charge |
-| `usageFolded` | false | Whether the API spend panel is folded to its header. Click the header to toggle; the choice is remembered |
 | `activeMinutes` | 60 | How long a session can go without activity before its row is marked idle (it stays listed) |
 | `contextTokens` | 200000 | Fallback context window, for projects with no detected size and no override (use 1000000 for 1M-context models) |
 | `projectFolders` | none | Folders you added in Settings: a single project, or a folder that holds several. Projects are also found from your Claude Code sessions, from any `projects` directory they use, and by the nearest enclosing folder with a `.git`, `go.mod`, `package.json` etc. |
@@ -181,14 +177,14 @@ Settings are stored in `~/.cctokenviz.json`, which you never need to edit by han
 | `setupDone` | false | Set once the wizard has been completed |
 | `fixedSize` | false | By default the window fits its height to what it is showing; set true to keep your own size |
 
-## API spend (optional)
+## API cost (on demand)
 
-Turn on **Settings → API spend** to add a panel under the limits. It is off by default, and you can fold it to its header with a click; CCTokenViz remembers that. **It is information only, not a charge:** it lets you compare your usage with what the same work would cost on the pay-as-you-go or enterprise API. It adds up the token usage recorded in your Claude Code session logs (including sub-agents) for **today** and the **last 7 days**, and shows:
+At the bottom of the window there is a **Check API cost** button. Nothing is read until you click it, and the result stays until you close it (✕) or check again (↻). **It is information only, not a charge, and it spends no tokens:** it just adds up the token usage already recorded in your Claude Code session logs on this computer (including sub-agents) for **today** and the **last 7 days**, so you can compare your usage with what the same work would cost on the pay-as-you-go or enterprise API. It shows:
 
 - total tokens, and the **estimated cost** at public API prices (input, output, cache reads and cache writes priced separately),
 - how much **prompt caching saved**: cache-read tokens priced at the normal input rate, minus what they actually cost.
 
-It only reads files already on your computer, and only while the panel is expanded. On a Pro or Max plan the dollar figure is what the same usage would cost on the API, not what you pay; it is an estimate, and a model it doesn't recognise is priced as a mid-tier model (marked with ~).
+It only reads files already on your computer. On a Pro or Max plan the dollar figure is what the same usage would cost on the API, not what you pay; it is an estimate, and a model it doesn't recognise is priced as a mid-tier model (marked with ~).
 
 To regenerate the screenshots above from the real frontend with demo data, run `python scripts/screenshots.py` (needs Edge or Chrome).
 

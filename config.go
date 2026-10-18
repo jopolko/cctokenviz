@@ -27,12 +27,8 @@ type Config struct {
 	PollLimits  bool `json:"pollLimits"`  // opt in to the background headless call that refreshes limits
 	PollMinutes int  `json:"pollMinutes"` // gap between automatic polls (default 10, minimum 5)
 
-	// API spend panel
 	// Rows
 	PerSession bool `json:"perSession"` // show every session as its own row (default: one row per project)
-
-	ShowUsage   bool `json:"showUsage"`   // show the API spend panel (off by default)
-	UsageFolded bool `json:"usageFolded"` // the panel is folded to its header (expanded by default)
 
 	// Look
 	Theme     string `json:"theme"`

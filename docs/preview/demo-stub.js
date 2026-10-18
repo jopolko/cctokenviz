@@ -5,7 +5,7 @@
     const now = Math.floor(Date.now() / 1000);
     const cfg = {
         projects: [], activeMinutes: 30, contextTokens: 200000, projectFolders: [], projectContext: null,
-        hiddenProjects: [], pollLimits: true, pollMinutes: 10, showUsage: q.get('spend') === '1', usageFolded: false,
+        hiddenProjects: [], pollLimits: true, pollMinutes: 10, 
         theme: q.get('theme') || 'linux', accent: '', font: '', fontSize: 0, setupDone: true, fixedSize: true,
     };
     const s = (id, name, title, pct, idle) => ({
@@ -33,6 +33,8 @@
         RefreshLimits: ok(limits), SetOrder: ok(), DismissSession: ok(), KnownProjects: ok([]), DetectedContext: ok({}),
         HasClaudeCLI: ok(true), AddProjectFolder: ok(''),
     } } };
+    // ?spend=1 clicks the on-demand "Check API cost" button, as a user would
+    if (q.get('spend') === '1') document.addEventListener('DOMContentLoaded', () => setTimeout(() => window.checkUsage && window.checkUsage(), 400));
     window.runtime = { WindowGetSize: ok({ w: 240, h: 600 }), WindowSetSize: ok(), WindowGetPosition: ok({ x: 0, y: 0 }),
         WindowSetPosition: ok(), WindowCenter: ok() };
 })();
