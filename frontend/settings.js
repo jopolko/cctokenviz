@@ -8,6 +8,16 @@ let hasCli = false;
 let wizardStep = 0;
 let wizardMode = false;
 let saveTimer = null;
+let savedNoteTimer = null;
+
+// A brief "Saved" so it is clear changes took effect, without a button to press
+function flashSaved() {
+    const note = document.getElementById('savedNote');
+    if (!note) return;
+    note.classList.add('on');
+    clearTimeout(savedNoteTimer);
+    savedNoteTimer = setTimeout(() => note.classList.remove('on'), 1500);
+}
 
 const overlay = () => document.getElementById('overlay');
 
@@ -16,6 +26,7 @@ function persist() {
     saveTimer = setTimeout(async () => {
         try {
             await window.go.main.App.SaveSettings(cfg);
+            flashSaved();
         } catch (error) {
             console.error('Error saving settings:', error);
         }
@@ -219,6 +230,7 @@ async function openSettings() {
     const header = document.querySelector('header');
     overlay().style.top = header ? header.getBoundingClientRect().bottom + 'px' : '';
     overlay().hidden = false;
+    overlay().scrollTop = 0; // always open at the top, not wherever it was left
     window.go.main.App.SetSettingsOpen(true).catch(() => {}); // so the window's X closes this panel, not the app
 }
 
@@ -226,12 +238,12 @@ function renderSettings() {
     const top = overlay().scrollTop;
     overlay().innerHTML = `
         <h2>Settings</h2>
-        <p class="lead">Changes save as you make them.</p>
+        <p class="lead">Changes apply and save as you make them.</p>
         ${lookSection()}${projectsSection()}${contextSection()}${limitsSection(true)}${windowSection()}
         <div class="nav">
             <button class="btn" data-action="rerun">Run setup again</button>
             <span class="spacer"></span>
-            <button class="btn primary" data-action="close">Save</button>
+            <button class="btn primary" data-action="close">Close</button>
         </div>`;
     overlay().scrollTop = top;
 }
@@ -260,6 +272,7 @@ async function openSetup() {
     await growWindow();
     renderWizard();
     overlay().hidden = false;
+    overlay().scrollTop = 0;
 }
 
 function renderWizard() {
