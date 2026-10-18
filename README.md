@@ -2,7 +2,7 @@
 
 A lightweight desktop app that shows how much room you have left in Claude Code: context window usage across all your active sessions, plus your 5-hour and weekly plan limits.
 
-**It replaces the status line for the desktop app.** In the Claude Code terminal, a `/statusline` can show context remaining, 5-hour usage and 7-day usage. The Claude desktop app has no status line, so those numbers aren't available there. CCTokenViz puts them in a small always-on-top window, for the desktop app and the terminal alike.
+**It replaces the status line for the desktop app.** In the Claude Code terminal, a `/statusline` can show context remaining, 5-hour usage and 7-day usage. The Claude desktop app has no status line; it shows context and plan usage only when you click its usage ring, one session at a time. CCTokenViz puts them in a small always-on-top window for every active project, for the desktop app and the terminal alike.
 
 **[Download for Windows](https://github.com/jopolko/cctokenviz/releases/latest)** (a single portable `.exe`, no installer needed)
 
@@ -14,13 +14,7 @@ Forked from [gosparq/claudewatch](https://github.com/gosparq/claudewatch) (MIT).
 
 ## Why?
 
-When working with AI coding assistants on complex tasks, context management becomes critical. Claude Code has a finite context window (200k tokens, or 1M on extended-context models), and when it fills up, Claude automatically compacts the conversation—often losing important details you wanted to preserve.
-
-**CCTokenViz** gives you visibility into your context usage across all active sessions, so you can intentionally save your work before Claude does it for you.
-
-When you get the warning, tell Claude:
-
-*Write everything we did so far to progress.md, ensure to note the approach we're taking, the steps we've done so far, and the current failure we're working on.*
+Claude Code in the desktop app has no status line. Its context and plan usage sit behind a click on the usage ring next to the model picker, one session at a time. CCTokenViz keeps them in view: context use for every active project, plus your 5-hour and weekly limits, in one small always-on-top window, for the desktop app and the terminal alike.
 
 ### The RPI Framework
 
