@@ -9,9 +9,7 @@ A lightweight desktop app that shows how much room you have left in Claude Code:
 Forked from [gosparq/claudewatch](https://github.com/gosparq/claudewatch) (MIT). Not affiliated with Anthropic.
 
 <p align="center">
-  <img src="docs/screenshot.png" alt="CCTokenViz in the Terminal theme: context per project and 5-hour and weekly limits" width="224">
-  &nbsp;&nbsp;
-  <img src="docs/screenshot-spend.png" alt="The Terminal theme with the optional API spend panel expanded: tokens, estimated cost and cache savings" width="224">
+  <img src="docs/screenshot.png" alt="CCTokenViz in the Terminal theme: context per project, 5-hour and weekly limits, and the optional API spend panel expanded" width="224">
   &nbsp;&nbsp;
   <img src="docs/screenshot-sweet.png" alt="CCTokenViz in the Sweet theme, with the API spend panel expanded" width="224">
 </p>

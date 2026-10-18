@@ -14,8 +14,7 @@ BROWSERS = [
 ]
 # (file, theme, spend panel open, window height)
 SHOTS = [
-    ("screenshot.png", "linux", False, 700),
-    ("screenshot-spend.png", "linux", True, 840),
+    ("screenshot.png", "linux", True, 840),
     ("screenshot-sweet.png", "sweet", True, 840),
 ]
 
