@@ -131,7 +131,7 @@ The app scans `~/.claude/projects/` for active sessions and takes the last assis
 
 ## Settings
 
-Open Settings from the gear at the top right any time. **Look** has ten styles and three plain themes. A style is a whole personality, not a palette: its own meter, fonts, background pattern, heading decoration, logo and wording, and the picker shows each one as a live miniature.
+Open Settings from the gear at the top right any time. **Theme** has ten styles and three plain themes. A style is a whole personality, not a palette: its own meter, fonts, background pattern, heading decoration, logo and wording, and the picker shows each one as a live miniature.
 
 | Style | Meter | Flavor |
 |-------|-------|--------|

@@ -90,7 +90,7 @@ function lookSection() {
 
     return `
         <div class="section">
-            <h2 class="section-title">Look</h2>
+            <h2 class="section-title">Theme</h2>
             ${cards}
             <div class="row"><span>Accent</span>
                 <input type="color" id="accent" value="${accent}">

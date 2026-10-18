@@ -739,3 +739,7 @@ footer {
 .ctx-input { width: 84px; font: inherit; font-size: 11px; padding: 1px 5px; background: transparent; color: inherit; border: 1px solid var(--border); border-radius: 4px; }
 .ctx-input::placeholder { opacity: .55; }
 .folder-path { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; opacity: .8; }
+
+/* Links take the theme's readable heading color, never the browser's default blue */
+a, a:visited { color: var(--head, var(--accent)); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+a:hover, a:focus-visible { color: var(--strong); }
