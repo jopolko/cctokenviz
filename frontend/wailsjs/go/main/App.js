@@ -14,6 +14,10 @@ export function DismissSession(arg1) {
   return window['go']['main']['App']['DismissSession'](arg1);
 }
 
+export function ExpandForPanel(arg1, arg2) {
+  return window['go']['main']['App']['ExpandForPanel'](arg1, arg2);
+}
+
 export function GetLimits() {
   return window['go']['main']['App']['GetLimits']();
 }

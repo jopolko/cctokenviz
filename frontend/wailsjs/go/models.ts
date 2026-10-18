@@ -220,6 +220,25 @@ export namespace main {
 		    return a;
 		}
 	}
+	
+	export class WindowRect {
+	    w: number;
+	    h: number;
+	    x: number;
+	    y: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new WindowRect(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.w = source["w"];
+	        this.h = source["h"];
+	        this.x = source["x"];
+	        this.y = source["y"];
+	    }
+	}
 
 }
 

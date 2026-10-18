@@ -63,6 +63,50 @@ func (a *App) domReady(ctx context.Context) {
 	wailsRuntime.WindowSetPosition(ctx, x, y)
 }
 
+// WindowRect is a window's size and position, in the units the Wails window calls use
+type WindowRect struct {
+	W int `json:"w"`
+	H int `json:"h"`
+	X int `json:"x"`
+	Y int `json:"y"`
+}
+
+// taskbarAllowance keeps a panel clear of the taskbar, which Wails' screen size includes
+const taskbarAllowance = 56
+
+// ExpandForPanel grows the window so Settings has room, as a drop-down under the gear: the
+// top edge stays put and the right edge stays put (the gear is at the top right), so the window
+// widens to the left and extends downward. If that would run off the screen it slides up or
+// left just enough, and is shortened only if it still does not fit. It returns the window's
+// previous size and position so the caller can restore them.
+func (a *App) ExpandForPanel(minW, minH int) WindowRect {
+	w, h := wailsRuntime.WindowGetSize(a.ctx)
+	x, y := wailsRuntime.WindowGetPosition(a.ctx)
+	prev := WindowRect{W: w, H: h, X: x, Y: y}
+
+	newW, newH := max(w, minW), max(h, minH)
+	newX, newY := x+w-newW, y // keep the right edge, so the gear stays where it was
+
+	if screens, err := wailsRuntime.ScreenGetAll(a.ctx); err == nil && len(screens) > 0 {
+		scr := screens[0]
+		for _, s := range screens {
+			if s.IsCurrent {
+				scr = s
+				break
+			}
+		}
+		maxH := scr.Size.Height - taskbarAllowance
+		newW = min(newW, scr.Size.Width)
+		newH = min(newH, maxH)
+		newX = max(0, min(newX, scr.Size.Width-newW))
+		newY = max(0, min(newY, maxH-newH))
+	}
+
+	wailsRuntime.WindowSetSize(a.ctx, newW, newH)
+	wailsRuntime.WindowSetPosition(a.ctx, newX, newY)
+	return prev
+}
+
 // SetSettingsOpen is told by the frontend when the Settings panel opens or closes
 func (a *App) SetSettingsOpen(open bool) {
 	a.settingsOpen.Store(open)

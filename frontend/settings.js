@@ -27,11 +27,9 @@ function persist() {
 // screen) while one is open, then put the window back exactly as it was.
 async function growWindow() {
     try {
-        const size = await window.runtime.WindowGetSize();
-        const pos = await window.runtime.WindowGetPosition();
-        savedSize = { size, pos };
-        window.runtime.WindowSetSize(Math.max(size.w, 380), Math.max(size.h, 640));
-        window.runtime.WindowCenter();
+        // The window drops down from where it is, anchored at the gear, and stays on screen
+        const prev = await window.go.main.App.ExpandForPanel(380, 640);
+        savedSize = { size: { w: prev.w, h: prev.h }, pos: { x: prev.x, y: prev.y } };
     } catch (error) {
         savedSize = null;
     }
@@ -69,6 +67,7 @@ function closeOverlay() {
     window.go.main.App.SaveSettings(cfg).catch(() => {});
     overlay().hidden = true;
     overlay().innerHTML = '';
+    overlay().style.top = '';
     wizardMode = false;
     window.go.main.App.SetSettingsOpen(false).catch(() => {});
     appCfg = { ...cfg };
@@ -196,11 +195,20 @@ function limitsSection(brief) {
 
 /* ---------- Settings panel ---------- */
 
+// The gear opens Settings, and closes it again when it is already open
+function toggleSettings() {
+    if (!overlay().hidden && !wizardMode) closeOverlay();
+    else openSettings();
+}
+
 async function openSettings() {
     await loadState();
     wizardMode = false;
     await growWindow();
     renderSettings();
+    // Settings sits under the header so the title and gear stay visible, like a drop-down
+    const header = document.querySelector('header');
+    overlay().style.top = header ? header.getBoundingClientRect().bottom + 'px' : '';
     overlay().hidden = false;
     window.go.main.App.SetSettingsOpen(true).catch(() => {}); // so the window's X closes this panel, not the app
 }
