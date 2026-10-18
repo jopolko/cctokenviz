@@ -15,8 +15,7 @@ BROWSERS = [
 # (file, theme, spend panel open, window height)
 SHOTS = [
     ("screenshot-daylight.png", "light", False, 700),
-    ("screenshot.png", "linux", False, 700),
-    ("screenshot-sweet.png", "sweet", False, 700),
+    ("screenshot-midnight.png", "midnight", False, 700),
 ]
 
 def main():
