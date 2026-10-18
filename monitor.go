@@ -213,6 +213,30 @@ type sessionState struct {
 	cwd           string
 	projectFolder string
 	title         string
+	signals       []string // recent project signals, newest last (see addSignal)
+	lastCwdName   string   // the project the working folder last pointed at
+}
+
+const signalWindow = 8
+
+// addSignal records that the session just pointed at a project (by moving into it or by
+// touching its files) and returns the project to show: the most common one among the last few
+// signals, the newest winning a tie. A session that works across two projects used to flip
+// its row between them with every file it touched, which made rows appear and disappear.
+func (st *sessionState) addSignal(name string) string {
+	st.signals = append(st.signals, name)
+	if len(st.signals) > signalWindow {
+		st.signals = st.signals[len(st.signals)-signalWindow:]
+	}
+	counts := map[string]int{}
+	best := ""
+	for _, s := range st.signals {
+		counts[s]++
+		if best == "" || counts[s] >= counts[best] {
+			best = s
+		}
+	}
+	return best
 }
 
 var (
@@ -277,14 +301,15 @@ func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 
 			// Sessions often start in a parent folder and move into a project,
 			// so the latest project folder seen wins
-			if name := projectFromPath(msg.Cwd, folders); name != "" {
-				st.projectFolder = name
+			if name := projectFromPath(msg.Cwd, folders); name != "" && name != st.lastCwdName {
+				st.lastCwdName = name // only a move into a project counts, not every line sitting in it
+				st.projectFolder = st.addSignal(name)
 			}
 			// A session's folder is not always where its work is (it may start in a parent
 			// folder), so the paths Claude is actually touching count too; the latest signal wins
 			if msg.Type == "assistant" {
 				if name := projectFromToolUse(msg.Message.Content, folders); name != "" {
-					st.projectFolder = name
+					st.projectFolder = st.addSignal(name)
 				}
 			}
 			if msg.AiTitle != "" {

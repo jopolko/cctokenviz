@@ -64,3 +64,21 @@ func TestParseSessionIncremental(t *testing.T) {
 		t.Fatalf("shrunk file not reparsed: %+v", info)
 	}
 }
+
+func TestAddSignalDoesNotFlipOnOneStrayFile(t *testing.T) {
+	st := &sessionState{}
+	for i := 0; i < 5; i++ {
+		st.addSignal("lookout")
+	}
+	if got := st.addSignal("joshuaopolko"); got != "lookout" {
+		t.Fatalf("one stray file flipped the project to %q", got)
+	}
+	// a real move wins once it has been going for a while
+	var got string
+	for i := 0; i < 6; i++ {
+		got = st.addSignal("joshuaopolko")
+	}
+	if got != "joshuaopolko" {
+		t.Fatalf("sustained work in a new project did not take over: %q", got)
+	}
+}
