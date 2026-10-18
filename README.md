@@ -10,8 +10,6 @@ Forked from [gosparq/claudewatch](https://github.com/gosparq/claudewatch) (MIT).
 
 <p align="center">
   <img src="docs/screenshot-daylight.png" alt="CCTokenViz in the default light theme, Daylight: context per project, 5-hour and weekly limits" width="224">
-  &nbsp;&nbsp;
-  <img src="docs/screenshot-midnight.png" alt="CCTokenViz in the default dark theme, Midnight" width="224">
 </p>
 
 ## Why?
