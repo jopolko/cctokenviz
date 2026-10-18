@@ -108,7 +108,26 @@ const THEMES = {
     light: { name: 'Daylight', tag: 'Plain light', group: 'simple', icon: '', font: 'system', headFont: 'system', look: FLAT_LOOK, meter: SMOOTH, labels: PLAIN_LABELS, vars: { bg: '#f5f6f8', panel: '#ffffff', panel2: '#ffffff', border: '#d9dde5', track: '#e3e6ec', text: '#1f2430', dim: '#5b6475', strong: '#111827', accent: '#2563eb', good: '#12853c', warn: '#b45309', danger: '#dc2626', crit: '#b91c1c' } },
     contrast: { name: 'High contrast', tag: 'Easiest to read', group: 'simple', icon: '', font: 'system', headFont: 'system', look: FLAT_LOOK, meter: SMOOTH, labels: PLAIN_LABELS, vars: { bg: '#000000', panel: '#000000', panel2: '#000000', border: '#ffffff', track: '#333333', text: '#ffffff', dim: '#dddddd', strong: '#ffffff', accent: '#ffff00', good: '#00ff00', warn: '#ffff00', danger: '#ff8c00', crit: '#ff0000' } },
 };
-const DEFAULT_THEME = 'midnight';
+// With no theme chosen, follow Windows: a dark theme in dark mode, a light one in light mode.
+// It updates live if the system setting changes.
+const SCHEME_QUERY = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+const pickDefaultTheme = () => (SCHEME_QUERY && SCHEME_QUERY.matches ? 'light' : 'midnight');
+let DEFAULT_THEME = pickDefaultTheme();
+if (SCHEME_QUERY && SCHEME_QUERY.addEventListener) {
+    SCHEME_QUERY.addEventListener('change', () => {
+        DEFAULT_THEME = pickDefaultTheme();
+        if (typeof appCfg !== 'undefined' && !appCfg.theme) applyAppearance(appCfg);
+    });
+}
+
+// Is the theme dark? Decides the native title bar and the browser's own controls (scrollbars,
+// dropdown lists, the color picker), so a dark theme never gets a white frame and a light one never
+// gets dark scrollbars.
+function themeIsDark(theme) {
+    const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(theme.vars.bg || '');
+    if (!m) return true;
+    return (0.2126 * parseInt(m[1], 16) + 0.7152 * parseInt(m[2], 16) + 0.0722 * parseInt(m[3], 16)) / 255 < 0.5;
+}
 const THEME_GROUPS = [['styles', 'Styles'], ['simple', 'Simple']];
 
 // Fonts that ship with Windows or Office; each stack falls back to something close, so a
@@ -165,6 +184,9 @@ function applyAppearance(cfg) {
     const root = document.documentElement;
     const theme = THEMES[cfg.theme] || THEMES[DEFAULT_THEME];
     CURRENT_THEME = theme;
+    const dark = themeIsDark(theme);
+    root.style.colorScheme = dark ? 'dark' : 'light';
+    try { dark ? window.runtime.WindowSetDarkTheme() : window.runtime.WindowSetLightTheme(); } catch (error) { /* not in the app */ }
     for (const [key, value] of Object.entries(theme.vars)) {
         root.style.setProperty('--' + key, value);
     }

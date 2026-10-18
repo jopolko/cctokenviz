@@ -87,7 +87,7 @@ let themesOpen = false;
 function lookSection() {
     const current = THEMES[cfg.theme] || THEMES[DEFAULT_THEME];
     const head = `<button class="theme-toggle" data-action="themes-toggle" aria-expanded="${themesOpen}">
-                <span>${current.icon ? current.icon + ' ' : ''}<b>${current.name}</b> <small>${current.tag}</small></span>
+                <span>${current.icon ? current.icon + ' ' : ''}<b>${current.name}</b> <small>${cfg.theme ? current.tag : 'follows Windows'}</small></span>
                 <span class="chev">${themesOpen ? 'Hide ▾' : 'Change ▸'}</span></button>`;
     if (!themesOpen) {
         return `
@@ -250,7 +250,7 @@ const WIZARD_STEPS = [
         <h2>Welcome to CCTokenViz</h2>
         <p class="lead">CCTokenViz shows how much room you have left in Claude Code: the context window of each project you have open, and your 5-hour and weekly limits.</p>
         <p class="lead">This takes about a minute. Everything stays on your computer, and you can change any of it later from the gear at the top right.</p>`,
-    () => `<h2>Pick a look</h2><p class="lead">Open the list to browse the styles, or skip this and change it later from Settings. The default is Midnight, a plain dark theme.</p>${lookSection()}`,
+    () => `<h2>Pick a look</h2><p class="lead">Open the list to browse the styles, or skip this and change it later from Settings. Until you pick one, it follows Windows: Midnight in dark mode, Daylight in light mode.</p>${lookSection()}`,
     () => `<h2>Which projects?</h2><p class="lead">CCTokenViz finds your sessions on its own. Limit it to the projects you care about, or show everything.</p>${projectsSection()}`,
     () => `<h2>Context size</h2><p class="lead">How big is your model's context window?</p>${contextSection()}`,
     () => `<h2>Keeping limits current</h2><p class="lead">Your 5-hour and weekly limits only come from Claude Code itself. Choose whether CCTokenViz may ask for them in the background.</p><p class="lead"><b>Recommended if you want live 5-hour and weekly numbers.</b> Each check costs under 1,000 tokens. It stays off until you tick the box.</p>${limitsSection()}`,

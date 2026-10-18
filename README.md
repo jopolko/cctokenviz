@@ -154,6 +154,8 @@ Open Settings from the gear at the top right any time. **Theme** has ten styles 
 | **Celestial** | Stars | `☾ Context ☽`, starfield, gold on indigo |
 | **Lab Notebook** (scientific) | Ruled gauge | `Fig. 1 — Context`, graph paper, serif |
 
+Until you pick a theme, CCTokenViz follows Windows: Midnight in dark mode, Daylight in light mode, switching live if you change the system setting. Picking a theme makes the window's title bar and the browser's own controls (scrollbars, dropdowns, the color picker) match it, so a dark theme never gets a white frame. The dark themes are Terminal, Starship, Satoshi, Neural, Frontier, Shonen, Celestial, Midnight and High contrast; the light ones are Sweet, Bloom, Lab Notebook and Daylight.
+
 The plain themes are Midnight, Daylight and High contrast. They are original designs and don't use any brand's characters or logos.
 
 Every option in Settings:
@@ -208,7 +210,7 @@ Settings are stored in `~/.cctokenviz.json`, which you never need to edit by han
 | `projectContext` | detect | Per-project window override in tokens, e.g. `{"my-app": 750000}` (Settings accepts 200k, 1M, 750k, any size). Without one, the size is learned from what sessions report (see [Context window size](#context-window-size)); usage beyond 200k bumps it to 1M |
 | `pollLimits` | false | Opt in to background limit refreshes, see [headless polling](#limits-option-b-headless-polling-opt-in) |
 | `pollMinutes` | 10 | Minutes between automatic polls (minimum 5; halved above 85% usage) |
-| `theme`, `accent`, `font`, `fontSize` | midnight, theme's, theme's, 13 | Appearance: a theme id: `linux`, `scifi`, `bitcoin`, `ai`, `cowboy`, `anime`, `sweet`, `bloom`, `celestial`, `lab`, `midnight`, `light` or `contrast`; `accent` is an optional `#rrggbb`; `font` empty or `theme` uses the theme's own |
+| `theme`, `accent`, `font`, `fontSize` | follows Windows (midnight or light), theme's, theme's, 13 | Appearance: a theme id: `linux`, `scifi`, `bitcoin`, `ai`, `cowboy`, `anime`, `sweet`, `bloom`, `celestial`, `lab`, `midnight`, `light` or `contrast`; `accent` is an optional `#rrggbb`; `font` empty or `theme` uses the theme's own |
 | `setupDone` | false | Set once the wizard has been completed |
 | `fixedSize` | false | By default the window fits its height to what it is showing; set true to keep your own size |
 

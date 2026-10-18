@@ -51,6 +51,8 @@ func main() {
 		Windows: &windows.Options{
 			WebviewIsTransparent: false,
 			WindowIsTranslucent:  false,
+			// The title bar follows Windows' light/dark setting until a theme is applied
+			Theme: windows.SystemDefault,
 		},
 		Linux: &linux.Options{
 			WindowIsTranslucent: false,
