@@ -8,13 +8,13 @@ export function DetectedContext():Promise<Record<string, number>>;
 
 export function DismissSession(arg1:string):Promise<void>;
 
+export function EnvCheck():Promise<Record<string, boolean>>;
+
 export function ExpandForPanel(arg1:number,arg2:number):Promise<main.WindowRect>;
 
 export function GetLimits():Promise<main.Limits>;
 
 export function GetSessions():Promise<Array<main.SessionInfo>>;
-
-export function EnvCheck():Promise<Record<string, boolean>>;
 
 export function GetSettings():Promise<main.Config>;
 

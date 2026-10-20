@@ -14,6 +14,10 @@ export function DismissSession(arg1) {
   return window['go']['main']['App']['DismissSession'](arg1);
 }
 
+export function EnvCheck() {
+  return window['go']['main']['App']['EnvCheck']();
+}
+
 export function ExpandForPanel(arg1, arg2) {
   return window['go']['main']['App']['ExpandForPanel'](arg1, arg2);
 }
@@ -24,10 +28,6 @@ export function GetLimits() {
 
 export function GetSessions() {
   return window['go']['main']['App']['GetSessions']();
-}
-
-export function EnvCheck() {
-  return window['go']['main']['App']['EnvCheck']();
 }
 
 export function GetSettings() {
