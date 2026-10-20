@@ -222,7 +222,7 @@ An optional extra, for awareness of what your usage would cost at real API and e
   <img src="docs/screenshot-api-cost.png" alt="The API cost section expanded: tokens, estimated cost and prompt-cache savings for today and the last 7 days (demo data)" width="224">
 </p>
 
-At the bottom of the window there is a **Check API cost** button. Nothing is read until you click it, and the result stays until you close it (✕) or check again (↻). **It is information only, not a charge, and it spends no tokens:** it just adds up the token usage already recorded in your Claude Code session logs on this computer (including sub-agents) for **today** and the **last 7 days**, so you can compare your usage with what the same work would cost on the pay-as-you-go or enterprise API. It shows:
+At the bottom of the window there is a **Check API cost** button. The result stays until you close it (✕) or check again (↻). **It is information only, not a charge, and it spends no tokens:** it just adds up the token usage already recorded in your Claude Code session logs on this computer (including sub-agents) for **today** and the **last 7 days**, so you can compare your usage with what the same work would cost on the pay-as-you-go or enterprise API. It shows:
 
 - total tokens, and the **estimated cost** at public API prices (input, output, cache reads and cache writes priced separately),
 - how much **prompt caching saved**: cache-read tokens priced at the normal input rate, minus what they actually cost.
