@@ -26,6 +26,10 @@ export function GetSessions() {
   return window['go']['main']['App']['GetSessions']();
 }
 
+export function EnvCheck() {
+  return window['go']['main']['App']['EnvCheck']();
+}
+
 export function GetSettings() {
   return window['go']['main']['App']['GetSettings']();
 }

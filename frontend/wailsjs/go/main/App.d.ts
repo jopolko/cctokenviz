@@ -14,6 +14,8 @@ export function GetLimits():Promise<main.Limits>;
 
 export function GetSessions():Promise<Array<main.SessionInfo>>;
 
+export function EnvCheck():Promise<Record<string, boolean>>;
+
 export function GetSettings():Promise<main.Config>;
 
 export function GetUsage():Promise<main.UsageReport>;

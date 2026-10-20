@@ -5,6 +5,7 @@ let cfg = {};
 let knownProjects = [];
 let detectedCtx = {};
 let hasCli = false;
+let env = { logs: true, cli: true, statusline: false };
 let wizardStep = 0;
 let wizardMode = false;
 let saveTimer = null;
@@ -56,6 +57,7 @@ async function loadState() {
     try { detectedCtx = (await window.go.main.App.DetectedContext()) || {}; } catch (e) { detectedCtx = {}; }
     cfg.projectFolders = cfg.projectFolders || [];
     try { hasCli = await window.go.main.App.HasClaudeCLI(); } catch (e) { hasCli = false; }
+    try { env = await window.go.main.App.EnvCheck(); } catch (e) { env = { logs: true, cli: hasCli, statusline: false }; }
 }
 
 // Pick up folders added or removed, and projects found in them
@@ -205,7 +207,7 @@ function limitsSection(brief) {
         <div class="section">
             <h2 class="section-title">Limits</h2>
             <label><input type="checkbox" id="poll" ${cfg.pollLimits ? 'checked' : ''} ${hasCli ? '' : 'disabled'}> Check my 5-hour and weekly limits automatically</label>
-            ${brief ? `<div class="hint">${hasCli ? '<span class="ok">Claude Code found.</span>' : '<span class="bad">Claude Code not found, so this is unavailable.</span>'} Each check uses about 1K tokens of your plan. Off by default.</div>` : `<div class="hint">${hasCli ? '<span class="ok">Claude Code found.</span>' : '<span class="bad">Claude Code (the claude command) was not found, so this is unavailable.</span>'}
+            ${brief ? `<div class="hint">${hasCli ? '<span class="ok">Claude Code found.</span>' : '<span class="bad">The claude command was not found, so automatic checking is unavailable. The context meters do not need it.</span>'} Each check uses about 1K tokens of your plan. Off by default.</div>` : `<div class="hint">${hasCli ? '<span class="ok">Claude Code found.</span>' : '<span class="bad">The claude command (the Claude Code command-line tool) was not found, so automatic checking is unavailable. The context meters do not need it.</span>'}
                 Each check runs one tiny request under your own Claude login: under 1,000 tokens, roughly $0.0002 at API prices. It slowly draws on your plan limits (or bills your API key, if the claude command uses one), and CCTokenViz never sees or stores your login.
                 It only checks while a session is active, and stops once a limit is used up.</div>`}
             <div class="row"><span>Frequency</span><select id="pollMin" ${cfg.pollLimits ? '' : 'disabled'}>${opts}</select></div>
@@ -250,11 +252,26 @@ function renderSettings() {
 
 /* ---------- Setup wizard ---------- */
 
+// What the setup could find on this machine, and what each CCTokenViz feature needs
+function foundStep() {
+    const row = (ok, name, good, bad) => `<p class="lead"><b>${name}:</b> ${ok ? '<span class="ok">Found.</span> ' + good : '<span class="bad">Not found.</span> ' + bad}</p>`;
+    return `
+        <h2>What we found</h2>
+        <p class="lead">CCTokenViz reads Claude Code's own files on this computer. Here is what it can use, and what each feature needs.</p>
+        ${row(env.logs, 'Claude Code sessions', 'The context meters will work. They read the session logs from the Claude Code terminal and the Claude desktop app alike.',
+              'The context meters have nothing to read yet. Open a project in Claude Code, in the terminal or the Claude desktop app, and it will appear here.')}
+        ${row(env.cli, 'The claude command', 'Automatic 5-hour and weekly limit checks are available (next steps).',
+              'Only automatic limit checks need it. The context meters work without it. If you only use the desktop app, installing the Claude Code command-line tool turns checks on.')}
+        ${row(env.statusline, 'Status line data', 'Terminal sessions are reporting your limits for free.',
+              'Optional. If you use the Claude Code terminal, the status line script in the README feeds your limits at no cost. The desktop app does not run a status line.')}`;
+}
+
 const WIZARD_STEPS = [
     () => `
         <h2>Welcome to CCTokenViz</h2>
         <p class="lead">CCTokenViz shows how much room you have left in Claude Code: the context window of each project you have open, and your 5-hour and weekly limits.</p>
         <p class="lead">This takes about a minute. Everything stays on your computer, and you can change any of it later from the gear at the top right.</p>`,
+    () => foundStep(),
     () => `<h2>Pick a look</h2><p class="lead">Open the list to browse the styles, or skip this and change it later from Settings. Until you pick one, it follows Windows: Midnight in dark mode, Daylight in light mode.</p>${lookSection()}`,
     () => `<h2>Which projects?</h2><p class="lead">CCTokenViz finds your sessions on its own. Limit it to the projects you care about, or show everything.</p>${projectsSection()}`,
     () => `<h2>Context size</h2><p class="lead">How big is your model's context window?</p>${contextSection()}`,

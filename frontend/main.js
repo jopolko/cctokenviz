@@ -217,7 +217,7 @@ function renderEmpty() {
     return `
         <div class="empty-state">
             <div class="icon">💤</div>
-            <p>No active Claude sessions<br>Open a project in Claude Code and it will appear here</p>
+            <p>No active Claude sessions<br>Open a project in Claude Code, in the terminal or the desktop app, and it will appear here</p>
         </div>
     `;
 }

@@ -31,7 +31,7 @@
     window.go = { main: { App: {
         GetSettings: ok(cfg), SaveSettings: ok(), GetSessions: ok(sessions), GetLimits: ok(limits), GetUsage: ok(usage),
         RefreshLimits: ok(limits), SetOrder: ok(), DismissSession: ok(), KnownProjects: ok([]), DetectedContext: ok({}),
-        HasClaudeCLI: ok(true), ExpandForPanel: ok({ w: 240, h: 600, x: 0, y: 0 }), SetSettingsOpen: ok(), AddProjectFolder: ok(''),
+        HasClaudeCLI: ok(true), EnvCheck: ok({ logs: true, cli: true, statusline: true }), ExpandForPanel: ok({ w: 240, h: 600, x: 0, y: 0 }), SetSettingsOpen: ok(), AddProjectFolder: ok(''),
     } } };
     // ?spend=1 clicks the on-demand "Check API cost" button, as a user would
     if (q.get('spend') === '1') document.addEventListener('DOMContentLoaded', () => setTimeout(() => window.checkUsage && window.checkUsage(), 400));

@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -208,6 +210,26 @@ func (a *App) SetOrder(ids []string) {
 // HasClaudeCLI reports whether the claude command is available for limit polling
 func (a *App) HasClaudeCLI() bool {
 	return findClaude() != ""
+}
+
+// EnvCheck reports what CCTokenViz can find on this machine, for the setup wizard: Claude Code session
+// logs (what the context meters read), the claude command (automatic limit checks) and status line data
+func (a *App) EnvCheck() map[string]bool {
+	logs := false
+	if dirs, err := os.ReadDir(a.monitor.claudeDir); err == nil {
+		for _, d := range dirs {
+			if d.IsDir() {
+				logs = true
+				break
+			}
+		}
+	}
+	status := false
+	if dir := statusDir(); dir != "" {
+		files, _ := filepath.Glob(filepath.Join(dir, "status-*.json"))
+		status = len(files) > 0
+	}
+	return map[string]bool{"logs": logs, "cli": findClaude() != "", "statusline": status}
 }
 
 // KnownProjects lists project names seen in recent sessions, for the project picker
