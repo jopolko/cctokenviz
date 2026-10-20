@@ -41,7 +41,7 @@ Without structure, AI-assisted development often becomes chaotic: context gets l
 - 💤 **Idle sessions** - A session with no real conversation for a while stays listed, dimmed, with its last reading
 - ✕ **Hide a session** - Hide one row until that session has new activity; or **hide a project for good** from Settings
 - 📈 **Limits** - 5-hour and weekly usage with reset countdowns, for Pro/Max plans, with a **Refresh** button. A window that just reset shows as "reset" until a fresh reading arrives (see [Limits](#limits-where-the-numbers-come-from))
-- 💲 **API cost** - A "Check API cost" button at the bottom, on demand: tokens, estimated cost at API prices and what prompt caching saved, for today and the last 7 days. Free (it reads your local logs) and information only (see [API cost](#api-cost-on-demand))
+- 💲 **API cost** - A "Check API cost" button at the bottom shows tokens, estimated cost at API prices and what prompt caching saved, for today and the last 7 days. Free (it reads your local logs) and information only (see [API cost](#api-cost))
 - 📐 **Context windows** - Detected per project (200k or 1M), or set your own size per project or as a default
 - ↕️ **Your order** - Drag the ⋮⋮ grip on a row to reorder; the order stays put
 - 🎨 **Themes** - Ten full styles (Linux terminal, sci-fi, Bitcoin, AI, cowboy, anime, kawaii, garden, celestial, lab notebook) each with its own meter, fonts, headings and wording, three plain themes, an accent color picker, and a font and size selector
@@ -214,7 +214,7 @@ Settings are stored in `~/.cctokenviz.json`, which you never need to edit by han
 | `setupDone` | false | Set once the wizard has been completed |
 | `fixedSize` | false | By default the window fits its height to what it is showing; set true to keep your own size |
 
-## API cost (on demand)
+## API cost
 
 An optional extra, for awareness of what your usage would cost at real API and enterprise pricing. You can ignore it.
 
@@ -222,7 +222,7 @@ An optional extra, for awareness of what your usage would cost at real API and e
   <img src="docs/screenshot-api-cost.png" alt="The API cost section expanded: tokens, estimated cost and prompt-cache savings for today and the last 7 days (demo data)" width="224">
 </p>
 
-At the bottom of the window there is a **Check API cost** button. The result stays until you close it (✕) or check again (↻). **It is information only, not a charge, and it spends no tokens:** it just adds up the token usage already recorded in your Claude Code session logs on this computer (including sub-agents) for **today** and the **last 7 days**, so you can compare your usage with what the same work would cost on the pay-as-you-go or enterprise API. It shows:
+At the bottom of the window there is a **Check API cost** button. It adds up the token usage already recorded in your Claude Code session logs on this computer (including sub-agents) for **today** and the **last 7 days**, and prices it at public API rates, so you can compare your usage with what the same work would cost on the pay-as-you-go or enterprise API. It costs nothing, is not connected to your account and is for awareness only. It shows:
 
 - total tokens, and the **estimated cost** at public API prices (input, output, cache reads and cache writes priced separately),
 - how much **prompt caching saved**: cache-read tokens priced at the normal input rate, minus what they actually cost.
