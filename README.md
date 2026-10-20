@@ -1,5 +1,19 @@
 # CCTokenViz
 
+```text
+  ████████    ████████  ██████████    ██████    ██      ██  ██████████  ██      ██
+██          ██              ██      ██      ██  ██    ██    ██          ████    ██
+██          ██              ██      ██      ██  ██████      ████████    ██  ██  ██
+██          ██              ██      ██      ██  ██    ██    ██          ██    ████
+  ████████    ████████      ██        ██████    ██      ██  ██████████  ██      ██
+
+██      ██  ██████████  ██████████
+██      ██      ██            ██
+██      ██      ██          ██
+  ██  ██        ██        ██
+    ██      ██████████  ██████████
+```
+
 A lightweight desktop app that shows how much room you have left in Claude Code: context window usage across all your active sessions, plus your 5-hour and weekly plan limits.
 
 **It replaces the status line for the desktop app.** In the Claude Code terminal, a `/statusline` can show context remaining, 5-hour usage and 7-day usage. The Claude desktop app has no status line; it shows context and plan usage only when you click its usage ring, one session at a time. CCTokenViz puts them in a small always-on-top window for every active project, for the desktop app and the terminal alike.
