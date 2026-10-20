@@ -8,9 +8,18 @@ A lightweight desktop app that shows how much room you have left in Claude Code:
 
 Forked from [gosparq/claudewatch](https://github.com/gosparq/claudewatch) (MIT). Not affiliated with Anthropic.
 
-<p align="center">
-  <img src="docs/screenshot-daylight.png" alt="CCTokenViz in the default light theme, Daylight: context per project, 5-hour and weekly limits" width="224">
-</p>
+<table align="center">
+  <tr>
+    <td align="center" valign="top">
+      <img src="docs/screenshot-daylight.png" alt="CCTokenViz in the default light theme, Daylight: context per project, 5-hour and weekly limits" width="224"><br>
+      <sub>Context per project, plus 5-hour and weekly limits</sub>
+    </td>
+    <td align="center" valign="top">
+      <img src="docs/screenshot-api-cost.png" alt="The API cost section expanded: tokens, estimated cost and prompt-cache savings for today and the last 7 days (demo data)" width="224"><br>
+      <sub><b>Optional:</b> what your usage would cost at API and enterprise pricing. Free, for awareness only</sub>
+    </td>
+  </tr>
+</table>
 
 ## Why?
 
@@ -215,12 +224,6 @@ Settings are stored in `~/.cctokenviz.json`, which you never need to edit by han
 | `fixedSize` | false | By default the window fits its height to what it is showing; set true to keep your own size |
 
 ## API cost
-
-An optional extra, for awareness of what your usage would cost at real API and enterprise pricing. You can ignore it.
-
-<p align="center">
-  <img src="docs/screenshot-api-cost.png" alt="The API cost section expanded: tokens, estimated cost and prompt-cache savings for today and the last 7 days (demo data)" width="224">
-</p>
 
 At the bottom of the window there is a **Check API cost** button. It adds up the token usage already recorded in your Claude Code session logs on this computer (including sub-agents) for **today** and the **last 7 days**, and prices it at public API rates, so you can compare your usage with what the same work would cost on the pay-as-you-go or enterprise API. It costs nothing, is not connected to your account and is for awareness only. It shows:
 
