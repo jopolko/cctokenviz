@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -79,7 +80,7 @@ func plural(n int, one, many string) string {
 	if n == 1 {
 		return "1 " + one
 	}
-	return itoa(n) + " " + many
+	return strconv.Itoa(n) + " " + many
 }
 
 // String says it in words, or "just answered" when no tools were used

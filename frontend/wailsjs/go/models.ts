@@ -2,7 +2,8 @@ export namespace main {
 	
 	export class BreakdownRow {
 	    label: string;
-	    prompt: string;
+	    actions: string;
+	    reply: string;
 	    tokens: number;
 	    at: number;
 	
@@ -13,7 +14,8 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.label = source["label"];
-	        this.prompt = source["prompt"];
+	        this.actions = source["actions"];
+	        this.reply = source["reply"];
 	        this.tokens = source["tokens"];
 	        this.at = source["at"];
 	    }
