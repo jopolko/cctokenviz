@@ -360,6 +360,12 @@ func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 				st.lastUsage = &Usage{InputTokens: compactBaseTokens + len(msg.Message.Content)/4}
 			}
 
+			// /clear empties the conversation, but no token count arrives until Claude's next reply,
+			// so drop to the baseline now instead of showing the old size
+			if msg.Type == "user" && bytes.Contains(msg.Message.Content, []byte("<command-name>/clear</command-name>")) {
+				st.lastUsage = &Usage{InputTokens: compactBaseTokens}
+			}
+
 			if msg.Type == "assistant" && msg.Message.Usage != nil {
 				st.lastUsage = msg.Message.Usage
 				if m := msg.Message.Model; m != "" && m != "<synthetic>" {
@@ -372,7 +378,12 @@ func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 	lastUsage, cwd, projectFolder, title, lastActivity, model := st.lastUsage, st.cwd, st.projectFolder, st.title, st.lastActivity, st.model
 
 	if lastUsage == nil {
-		return nil
+		// A session started fresh (or cleared into a new log) has no token count until Claude's
+		// first reply; show the baseline so the old, larger session doesn't linger in its place
+		if lastActivity.IsZero() {
+			return nil
+		}
+		lastUsage = &Usage{InputTokens: compactBaseTokens}
 	}
 
 	// Calculate context usage (matches official Claude Code status bar hook)

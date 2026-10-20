@@ -152,3 +152,17 @@ func TestCompactDropsContextBeforeNextReply(t *testing.T) {
 		t.Fatalf("after reply: %+v", info)
 	}
 }
+
+func TestClearResetsToBaseline(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "s.jsonl")
+	lines := `{"type":"assistant","timestamp":"2026-10-20T10:00:00Z","cwd":"C:/x","message":{"usage":{"input_tokens":150000}}}` + "\n" +
+		`{"type":"user","timestamp":"2026-10-20T10:01:00Z","cwd":"C:/x","message":{"content":"<command-name>/clear</command-name>"}}` + "\n"
+	if err := os.WriteFile(path, []byte(lines), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	info := (&Monitor{}).parseSession(path, "p")
+	if info == nil || info.UsedTokens != compactBaseTokens {
+		t.Fatalf("want baseline %d after /clear, got %+v", compactBaseTokens, info)
+	}
+}
