@@ -29,10 +29,10 @@
     ] };
     const bdNow = Math.floor(Date.now() / 1000);
     const breakdown = { startLabel: 'Carried over', startAt: bdNow - 7200, start: 62000, total: 214000, smallCount: 9, smallTokens: 12000, rows: [
-        { label: 'Renamed the helper and fixed the broken imports', prompt: 'Fix the import after the rename', tokens: 18000, at: bdNow - 6600 },
-        { label: 'All 48 tests pass after the retry change', prompt: 'y', tokens: 71000, at: bdNow - 5400 },
-        { label: 'Added retry with backoff to the uploader', prompt: 'Add retry to the uploader', tokens: 24000, at: bdNow - 3000 },
-        { label: 'The build is slow because the images are not cached', prompt: 'Why is the build slow?', tokens: 39000, at: bdNow - 1500 },
+        { label: 'Fix the import after the rename', actions: 'Claude read 3 files, edited 2 files', reply: 'Renamed the helper and fixed the broken imports', tokens: 18000, at: bdNow - 6600 },
+        { label: 'y → Want me to run the tests?', actions: 'Claude ran 4 commands, read 2 files', reply: 'All 48 tests pass after the retry change', tokens: 71000, at: bdNow - 5400 },
+        { label: 'Add retry to the uploader', actions: 'Claude read 5 files, edited 3 files, ran 2 commands', reply: 'Added retry with backoff to the uploader', tokens: 24000, at: bdNow - 3000 },
+        { label: 'Why is the build slow?', actions: 'Claude ran 6 commands', reply: 'The build is slow because the images are not cached', tokens: 39000, at: bdNow - 1500 },
     ] };
     const ok = (v) => () => Promise.resolve(v);
     window.go = { main: { App: {

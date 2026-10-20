@@ -14,12 +14,20 @@ func bdUser(ts, text string) string {
 	return `{"type":"user","timestamp":"` + ts + `","message":{"content":"` + text + `"}}` + "\n"
 }
 
-func TestBreakdownLabelsRowsByClaudesReply(t *testing.T) {
+func bdTool(ts, id, name, target string) string {
+	return `{"type":"assistant","timestamp":"` + ts + `","message":{"usage":{"input_tokens":1,"cache_read_input_tokens":25000,"output_tokens":5},"content":[{"type":"tool_use","id":"` + id +
+		`","name":"` + name + `","input":{"file_path":"` + target + `"}}]}}` + "\u000a"
+}
+
+func TestBreakdownNamesTheAskAndWhatClaudeDid(t *testing.T) {
 	log := bdUser("2026-10-19T10:00:00Z", "first prompt") +
 		bdAssistant("2026-10-19T10:00:05Z", 20000, "ok") +
 		bdUser("2026-10-19T10:10:00Z", "add the banner to the readme please") +
-		bdAssistant("2026-10-19T10:10:05Z", 30000, "working") +
-		`{"type":"user","timestamp":"2026-10-19T10:10:06Z","message":{"content":[{"type":"tool_result","content":"x"}]}}` + "\u000a" +
+		bdTool("2026-10-19T10:10:02Z", "t1", "Read", "a.go") +
+		bdTool("2026-10-19T10:10:02Z", "t1", "Read", "a.go") + // the same call logged twice
+		bdTool("2026-10-19T10:10:03Z", "t2", "Read", "b.go") +
+		bdTool("2026-10-19T10:10:04Z", "t3", "Bash", "") +
+		bdTool("2026-10-19T10:10:05Z", "t4", "Edit", "a.go") +
 		bdAssistant("2026-10-19T10:10:09Z", 35000, "The README now has the banner under the title. I also fixed a typo.") +
 		bdUser("2026-10-19T10:20:00Z", "y") +
 		bdAssistant("2026-10-19T10:20:05Z", 50000, "**Pushed** to [the fork](https://example.com/x) as a single commit.") +
@@ -32,11 +40,17 @@ func TestBreakdownLabelsRowsByClaudesReply(t *testing.T) {
 	if len(b.Rows) != 2 {
 		t.Fatalf("rows: %+v", b.Rows)
 	}
-	if b.Rows[0].Tokens != 15000 || b.Rows[0].Label != "The README now has the banner under the title" || b.Rows[0].Prompt != "add the banner to the readme please" {
-		t.Errorf("row 0: %+v", b.Rows[0])
+	r := b.Rows[0]
+	if r.Tokens != 15000 || r.Label != "add the banner to the readme please" || r.Actions != "Claude read 2 files, ran 1 command, edited 1 file" ||
+		r.Reply != "The README now has the banner under the title" {
+		t.Errorf("row 0: %+v", r)
 	}
-	if b.Rows[1].Tokens != 15000 || b.Rows[1].Label != "Pushed to the fork as a single commit" || b.Rows[1].Prompt != "y" {
-		t.Errorf("a bare \"y\" is named by what Claude did, with the markdown stripped: %+v", b.Rows[1])
+	r = b.Rows[1]
+	if r.Tokens != 15000 || r.Actions != "Claude just answered" || r.Reply != "Pushed to the fork as a single commit" {
+		t.Errorf("row 1: %+v", r)
+	}
+	if !strings.HasPrefix(r.Label, "y") {
+		t.Errorf("a short reply keeps what you typed: %+v", r)
 	}
 	if b.SmallCount != 1 || b.SmallTokens != 1000 {
 		t.Errorf("small prompts should be folded: %+v", b)

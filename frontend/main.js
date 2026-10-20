@@ -39,13 +39,13 @@ function breakdownRows(b) {
     if (!b || !b.total) return '<div class="bd-empty">Nothing to show yet</div>';
     const now = Math.floor(Date.now() / 1000);
     const age = (t) => t ? formatDuration(now - t) : '';
-    const row = (tokens, label, at, cls, tip) => `<div class="bd-row ${cls || ''}" title="${escapeHtml(tip || label)}"><span class="bd-tok">${formatBigTokens(tokens)}</span><span class="bd-label">${escapeHtml(label)}</span><span class="bd-age">${age(at)}</span></div>`;
+    const row = (tokens, label, at, cls, tip, sub) => `<div class="bd-row ${cls || ''}" title="${escapeHtml(tip || label)}"><span class="bd-tok">${formatBigTokens(tokens)}</span><span class="bd-label"><span class="bd-you">${escapeHtml(label)}</span>${sub ? `<span class="bd-act">${escapeHtml(sub)}</span>` : ''}</span><span class="bd-age">${age(at)}</span></div>`;
     const biggest = Math.max(0, ...(b.rows || []).map(r => r.tokens));
-    const small = b.smallCount ? `<div class="bd-row bd-small"><span class="bd-tok">${formatBigTokens(b.smallTokens)}</span><span class="bd-label">${b.smallCount} smaller prompt${b.smallCount > 1 ? 's' : ''}</span><span class="bd-age"></span></div>` : '';
+    const small = b.smallCount ? `<div class="bd-row bd-small"><span class="bd-tok">${formatBigTokens(b.smallTokens)}</span><span class="bd-label"><span class="bd-you">${b.smallCount} smaller prompt${b.smallCount > 1 ? 's' : ''}</span></span><span class="bd-age"></span></div>` : '';
     return row(b.start, b.startLabel, b.startAt, 'bd-start', b.startLabel === 'Carried over' ? 'Summary, system prompt and tools at the start of this stretch' : 'System prompt, tools and your first prompt')
-        + (b.rows || []).map(r => row(r.tokens, r.label, r.at, r.tokens === biggest && biggest > 0 ? 'bd-big' : '', 'You: ' + r.prompt)).join('')
+        + (b.rows || []).map(r => row(r.tokens, r.label, r.at, r.tokens === biggest && biggest > 0 ? 'bd-big' : '', r.reply ? "Claude's answer: " + r.reply : r.label, r.actions)).join('')
         + small
-        + `<div class="bd-foot">What each prompt added, as Claude summed it up. Hover for your words. Largest is highlighted.</div>`;
+        + `<div class="bd-foot">What each prompt added, in your words, with what Claude did to answer. Largest is highlighted.</div>`;
 }
 
 async function loadBreakdown(id) {

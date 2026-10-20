@@ -13,22 +13,136 @@ import (
 
 // BreakdownRow is one prompt and how much it added to the context
 type BreakdownRow struct {
-	Label  string `json:"label"`  // Claude's one-line answer to the prompt; the prompt's own words if it said nothing
-	Prompt string `json:"prompt"` // what you typed, for a tooltip
-	Tokens int    `json:"tokens"`
-	At     int64  `json:"at"` // unix seconds of the prompt
-	reply  string // Claude's last text reply in the turn
+	Label   string `json:"label"`   // what you asked; a short reply such as "y" is shown with the question it answered
+	Actions string `json:"actions"` // what Claude did to answer: "read 4 files, ran 3 commands, edited 2 files"
+	Reply   string `json:"reply"`   // Claude's one-line answer, for a tooltip
+	Tokens  int    `json:"tokens"`
+	At      int64  `json:"at"` // unix seconds of the prompt
+	reply   string // Claude's last text reply in the turn
+	acts    *actions
 }
 
 // Breakdown is what has filled a session's context: what it started with, then what each prompt added
 type Breakdown struct {
-	StartLabel string         `json:"startLabel"` // "Carried over" after a compact, else "Starting context"
-	StartAt    int64          `json:"startAt"`    // unix seconds the starting context began (compact or session start)
-	Start      int            `json:"start"`      // tokens in the context at the first reply, before any prompt shown
-	Rows       []BreakdownRow `json:"rows"`
-	SmallCount int            `json:"smallCount"`  // prompts under smallRowTokens, folded into one line
-	SmallTokens int           `json:"smallTokens"` // what those added together
-	Total      int            `json:"total"`
+	StartLabel  string         `json:"startLabel"` // "Carried over" after a compact, else "Starting context"
+	StartAt     int64          `json:"startAt"`    // unix seconds the starting context began (compact or session start)
+	Start       int            `json:"start"`      // tokens in the context at the first reply, before any prompt shown
+	Rows        []BreakdownRow `json:"rows"`
+	SmallCount  int            `json:"smallCount"`  // prompts under smallRowTokens, folded into one line
+	SmallTokens int            `json:"smallTokens"` // what those added together
+	Total       int            `json:"total"`
+}
+
+// actions counts what Claude did in one turn. Everything it reads or prints stays in the context,
+// so this is why a turn was big.
+type actions struct {
+	read, edited map[string]bool
+	seen         map[string]bool
+	commands     int
+	searches     int
+	web          int
+	agents       int
+	other        int
+}
+
+func newActions() *actions {
+	return &actions{read: map[string]bool{}, edited: map[string]bool{}, seen: map[string]bool{}}
+}
+
+func (a *actions) add(c toolCall) {
+	if c.id != "" { // a message can be logged more than once as it streams
+		if a.seen[c.id] {
+			return
+		}
+		a.seen[c.id] = true
+	}
+	name, target := c.name, c.target
+	switch name {
+	case "Read":
+		a.read[target] = true
+	case "Edit", "Write", "MultiEdit", "NotebookEdit":
+		a.edited[target] = true
+	case "Bash", "PowerShell":
+		a.commands++
+	case "Grep", "Glob":
+		a.searches++
+	case "WebFetch", "WebSearch":
+		a.web++
+	case "Agent", "Task":
+		a.agents++
+	default:
+		a.other++
+	}
+}
+
+func plural(n int, one, many string) string {
+	if n == 1 {
+		return "1 " + one
+	}
+	return itoa(n) + " " + many
+}
+
+// String says it in words, or "just answered" when no tools were used
+func (a *actions) String() string {
+	var parts []string
+	if n := len(a.read); n > 0 {
+		parts = append(parts, "read "+plural(n, "file", "files"))
+	}
+	if a.commands > 0 {
+		parts = append(parts, "ran "+plural(a.commands, "command", "commands"))
+	}
+	if n := len(a.edited); n > 0 {
+		parts = append(parts, "edited "+plural(n, "file", "files"))
+	}
+	if a.searches > 0 {
+		parts = append(parts, "searched "+plural(a.searches, "time", "times"))
+	}
+	if a.web > 0 {
+		parts = append(parts, "fetched "+plural(a.web, "web page", "web pages"))
+	}
+	if a.agents > 0 {
+		parts = append(parts, "started "+plural(a.agents, "helper", "helpers"))
+	}
+	if len(parts) == 0 {
+		if a.other > 0 { // housekeeping calls (task lists and the like) are not worth listing beside real work
+			return "Claude used other tools"
+		}
+		return "Claude just answered"
+	}
+	return "Claude " + strings.Join(parts, ", ")
+}
+
+type toolCall struct{ id, name, target string }
+
+// toolUses lists the tool calls in an assistant message, each with the file or command it targeted
+func toolUses(content json.RawMessage) (calls []toolCall) {
+	var blocks []struct {
+		Type  string `json:"type"`
+		ID    string `json:"id"`
+		Name  string `json:"name"`
+		Input struct {
+			FilePath string `json:"file_path"`
+			Path     string `json:"path"`
+			Notebook string `json:"notebook_path"`
+		} `json:"input"`
+	}
+	if json.Unmarshal(content, &blocks) != nil {
+		return nil
+	}
+	for _, b := range blocks {
+		if b.Type != "tool_use" {
+			continue
+		}
+		target := b.Input.FilePath
+		if target == "" {
+			target = b.Input.Notebook
+		}
+		if target == "" {
+			target = b.Input.Path
+		}
+		calls = append(calls, toolCall{id: b.ID, name: b.Name, target: target})
+	}
+	return calls
 }
 
 const (
@@ -117,7 +231,7 @@ func buildBreakdown(r io.Reader) Breakdown {
 				case l.Type == "user" && !l.IsMeta && !l.IsCompactSummary:
 					// Before the first reply, a prompt is part of the starting context
 					if text, ok := promptText(l.Message.Content); ok && started {
-						b.Rows = append(b.Rows, BreakdownRow{Label: promptLabel(text, pendingAsk), Prompt: cut(spaces.ReplaceAllString(text, " "), 200), At: at})
+						b.Rows = append(b.Rows, BreakdownRow{Label: promptLabel(text, pendingAsk), At: at, acts: newActions()})
 						curIdx, curBase = len(b.Rows)-1, ctx
 					}
 				case l.Type == "assistant" && l.Message.Usage != nil:
@@ -131,6 +245,11 @@ func buildBreakdown(r io.Reader) Breakdown {
 						}
 					} else if curIdx >= 0 {
 						b.Rows[curIdx].Tokens = ctx - curBase
+					}
+					if curIdx >= 0 {
+						for _, c := range toolUses(l.Message.Content) {
+							b.Rows[curIdx].acts.add(c)
+						}
 					}
 					if t := lastText(l.Message.Content); t != "" {
 						pendingAsk = t
@@ -154,9 +273,8 @@ func buildBreakdown(r io.Reader) Breakdown {
 	for _, row := range b.Rows {
 		switch {
 		case row.Tokens >= smallRowTokens:
-			if sentence := firstSentence(row.reply); sentence != "" {
-				row.Label = sentence
-			}
+			row.Reply = firstSentence(row.reply)
+			row.Actions = row.acts.String()
 			rows = append(rows, row)
 		case row.Tokens > 0:
 			b.SmallCount++
@@ -233,7 +351,7 @@ func lastText(content json.RawMessage) string {
 var spaces = regexp.MustCompile(`\s+`)
 var sentenceEnd = regexp.MustCompile(`[^.!?\n]*\?`)
 
-const labelWidth = 40
+const labelWidth = 110
 
 // promptLabel names a prompt by its first words. A short reply such as "y" says nothing on its
 // own, so it is shown with the question it answered: the last question in Claude's message.
