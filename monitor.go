@@ -55,6 +55,7 @@ type AssistantMessage struct {
 	Timestamp string `json:"timestamp"`
 	Cwd       string `json:"cwd"`
 	AiTitle string `json:"aiTitle"`
+	IsCompactSummary bool   `json:"isCompactSummary"`
 	Message struct {
 		Model   string          `json:"model"`
 		Usage   *Usage          `json:"usage"`
@@ -243,6 +244,9 @@ type sessionState struct {
 
 const signalWindow = 8
 
+// compactBaseTokens stands in for the system prompt, tools and memory that every request carries
+const compactBaseTokens = 15000
+
 // addSignal records that the session just pointed at a project (by moving into it or by
 // touching its files) and returns the project to show: the most common one among the last few
 // signals, the newest winning a tie. A session that works across two projects used to flip
@@ -347,6 +351,13 @@ func (m *Monitor) parseSession(filePath, projectDir string) *SessionInfo {
 			}
 			if msg.AiTitle != "" {
 				st.title = msg.AiTitle
+			}
+
+			// A compact leaves no token count until Claude's next reply, so estimate the new size
+			// from the summary that replaces the conversation (about 4 characters a token, plus
+			// the system prompt and tools); the next real reply corrects it.
+			if msg.Type == "user" && msg.IsCompactSummary {
+				st.lastUsage = &Usage{InputTokens: compactBaseTokens + len(msg.Message.Content)/4}
 			}
 
 			if msg.Type == "assistant" && msg.Message.Usage != nil {

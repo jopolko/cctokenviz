@@ -128,3 +128,27 @@ func TestAnySessionActiveIgnoresBookkeepingWrites(t *testing.T) {
 		t.Fatal("a recent real message should count as active")
 	}
 }
+
+func TestCompactDropsContextBeforeNextReply(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "abc.jsonl")
+	m := &Monitor{claudeDir: dir}
+
+	appendFile(t, path, assistantLine(`C:\\Users\\me\\projects\\my-app`, 2, 150000))
+	if info := m.parseSession(path, "proj"); info == nil || info.UsedTokens != 150002 {
+		t.Fatalf("before compact: %+v", info)
+	}
+
+	summary := strings.Repeat("x", 8000)
+	appendFile(t, path, `{"type":"user","isCompactSummary":true,"message":{"content":"`+summary+`"}}`+"\n")
+	info := m.parseSession(path, "proj")
+	if info == nil || info.UsedTokens != compactBaseTokens+2000 {
+		t.Fatalf("after compact: %+v", info)
+	}
+
+	// The next real reply replaces the estimate
+	appendFile(t, path, assistantLine(`C:\\Users\\me\\projects\\my-app`, 3, 30000))
+	if info = m.parseSession(path, "proj"); info.UsedTokens != 30003 {
+		t.Fatalf("after reply: %+v", info)
+	}
+}
