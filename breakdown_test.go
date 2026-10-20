@@ -14,27 +14,39 @@ func bdUser(ts, text string) string {
 	return `{"type":"user","timestamp":"` + ts + `","message":{"content":"` + text + `"}}` + "\n"
 }
 
-func TestBreakdownAttributesGrowthToPrompts(t *testing.T) {
+func TestBreakdownLabelsRowsByClaudesReply(t *testing.T) {
 	log := bdUser("2026-10-19T10:00:00Z", "first prompt") +
 		bdAssistant("2026-10-19T10:00:05Z", 20000, "ok") +
 		bdUser("2026-10-19T10:10:00Z", "add the banner to the readme please") +
-		bdAssistant("2026-10-19T10:10:05Z", 30000, "done") +
-		`{"type":"user","timestamp":"2026-10-19T10:10:06Z","message":{"content":[{"type":"tool_result","content":"x"}]}}` + "\n" +
-		bdAssistant("2026-10-19T10:10:09Z", 35000, "Do you want me to push it?") +
+		bdAssistant("2026-10-19T10:10:05Z", 30000, "working") +
+		`{"type":"user","timestamp":"2026-10-19T10:10:06Z","message":{"content":[{"type":"tool_result","content":"x"}]}}` + "\u000a" +
+		bdAssistant("2026-10-19T10:10:09Z", 35000, "The README now has the banner under the title. I also fixed a typo.") +
 		bdUser("2026-10-19T10:20:00Z", "y") +
-		bdAssistant("2026-10-19T10:20:05Z", 50000, "pushed")
+		bdAssistant("2026-10-19T10:20:05Z", 50000, "**Pushed** to [the fork](https://example.com/x) as a single commit.") +
+		bdUser("2026-10-19T10:30:00Z", "tiny") +
+		bdAssistant("2026-10-19T10:30:05Z", 51000, "ok")
 	b := buildBreakdown(strings.NewReader(log))
-	if b.Start != 20001 || b.StartLabel != "Starting context" || b.Total != 50001 {
+	if b.Start != 20001 || b.StartLabel != "Starting context" || b.Total != 51001 {
 		t.Fatalf("start/total: %+v", b)
 	}
 	if len(b.Rows) != 2 {
 		t.Fatalf("rows: %+v", b.Rows)
 	}
-	if b.Rows[0].Tokens != 15000 || !strings.HasPrefix(b.Rows[0].Label, "add the banner") {
+	if b.Rows[0].Tokens != 15000 || b.Rows[0].Label != "The README now has the banner under the title" || b.Rows[0].Prompt != "add the banner to the readme please" {
 		t.Errorf("row 0: %+v", b.Rows[0])
 	}
-	if b.Rows[1].Tokens != 15000 || b.Rows[1].Label != "y → Do you want me to push it?" {
-		t.Errorf("a short reply should carry the question it answered: %+v", b.Rows[1])
+	if b.Rows[1].Tokens != 15000 || b.Rows[1].Label != "Pushed to the fork as a single commit" || b.Rows[1].Prompt != "y" {
+		t.Errorf("a bare \"y\" is named by what Claude did, with the markdown stripped: %+v", b.Rows[1])
+	}
+	if b.SmallCount != 1 || b.SmallTokens != 1000 {
+		t.Errorf("small prompts should be folded: %+v", b)
+	}
+}
+
+func TestPromptLabelFallbackForShortReply(t *testing.T) {
+	got := promptLabel("y", "Done. Do you want me to push it?")
+	if got != "y → Do you want me to push it?" {
+		t.Errorf("got %q", got)
 	}
 }
 

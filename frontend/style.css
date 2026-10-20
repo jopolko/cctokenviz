@@ -777,9 +777,9 @@ a:hover, a:focus-visible { color: var(--strong); }
 .session-footer.clickable:hover { color: var(--text, inherit); }
 .breakdown { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border, rgba(128,128,128,.3)); font-size: 0.82em; }
 .breakdown[hidden] { display: none; }
-.bd-row { display: grid; grid-template-columns: 3.2em 1fr auto; gap: 6px; align-items: baseline; padding: 1px 0; }
+.bd-row { display: grid; grid-template-columns: 3.2em 1fr auto; gap: 6px; align-items: baseline; padding: 2px 0; }
 .bd-tok { text-align: right; font-variant-numeric: tabular-nums; }
-.bd-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dim); }
+.bd-label { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--dim); line-height: 1.25; }
 .bd-age { color: var(--dim); font-size: 0.9em; }
 .bd-start .bd-label { color: inherit; }
 .bd-big .bd-tok, .bd-big .bd-label { color: var(--accent); font-weight: 600; }

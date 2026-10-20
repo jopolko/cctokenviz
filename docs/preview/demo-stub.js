@@ -28,11 +28,11 @@
         { label: '7 days', inputTokens: 9800, outputTokens: 402000, cacheRead: 52000000, cacheWrite: 2100000, totalTokens: 54511800, cost: 28.6, cacheSaved: 140.4, cacheSavedTok: 52000000 },
     ] };
     const bdNow = Math.floor(Date.now() / 1000);
-    const breakdown = { startLabel: 'Carried over', startAt: bdNow - 7200, start: 62000, total: 214000, rows: [
-        { label: 'Fix the import after the rename', tokens: 18000, at: bdNow - 6600 },
-        { label: 'y → Want me to run the tests?', tokens: 71000, at: bdNow - 5400 },
-        { label: 'Add retry to the uploader', tokens: 24000, at: bdNow - 3000 },
-        { label: 'Why is the build slow?', tokens: 39000, at: bdNow - 1500 },
+    const breakdown = { startLabel: 'Carried over', startAt: bdNow - 7200, start: 62000, total: 214000, smallCount: 9, smallTokens: 12000, rows: [
+        { label: 'Renamed the helper and fixed the broken imports', prompt: 'Fix the import after the rename', tokens: 18000, at: bdNow - 6600 },
+        { label: 'All 48 tests pass after the retry change', prompt: 'y', tokens: 71000, at: bdNow - 5400 },
+        { label: 'Added retry with backoff to the uploader', prompt: 'Add retry to the uploader', tokens: 24000, at: bdNow - 3000 },
+        { label: 'The build is slow because the images are not cached', prompt: 'Why is the build slow?', tokens: 39000, at: bdNow - 1500 },
     ] };
     const ok = (v) => () => Promise.resolve(v);
     window.go = { main: { App: {

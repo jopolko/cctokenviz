@@ -13,9 +13,11 @@ import (
 
 // BreakdownRow is one prompt and how much it added to the context
 type BreakdownRow struct {
-	Label  string `json:"label"`
+	Label  string `json:"label"`  // Claude's one-line answer to the prompt; the prompt's own words if it said nothing
+	Prompt string `json:"prompt"` // what you typed, for a tooltip
 	Tokens int    `json:"tokens"`
 	At     int64  `json:"at"` // unix seconds of the prompt
+	reply  string // Claude's last text reply in the turn
 }
 
 // Breakdown is what has filled a session's context: what it started with, then what each prompt added
@@ -24,10 +26,15 @@ type Breakdown struct {
 	StartAt    int64          `json:"startAt"`    // unix seconds the starting context began (compact or session start)
 	Start      int            `json:"start"`      // tokens in the context at the first reply, before any prompt shown
 	Rows       []BreakdownRow `json:"rows"`
+	SmallCount int            `json:"smallCount"`  // prompts under smallRowTokens, folded into one line
+	SmallTokens int           `json:"smallTokens"` // what those added together
 	Total      int            `json:"total"`
 }
 
-const maxBreakdownRows = 40
+const (
+	maxBreakdownRows = 40
+	smallRowTokens   = 3000 // prompts that added less than this are folded into one line
+)
 
 type breakdownLine struct {
 	Type             string `json:"type"`
@@ -110,7 +117,7 @@ func buildBreakdown(r io.Reader) Breakdown {
 				case l.Type == "user" && !l.IsMeta && !l.IsCompactSummary:
 					// Before the first reply, a prompt is part of the starting context
 					if text, ok := promptText(l.Message.Content); ok && started {
-						b.Rows = append(b.Rows, BreakdownRow{Label: promptLabel(text, pendingAsk), At: at})
+						b.Rows = append(b.Rows, BreakdownRow{Label: promptLabel(text, pendingAsk), Prompt: cut(spaces.ReplaceAllString(text, " "), 200), At: at})
 						curIdx, curBase = len(b.Rows)-1, ctx
 					}
 				case l.Type == "assistant" && l.Message.Usage != nil:
@@ -127,6 +134,9 @@ func buildBreakdown(r io.Reader) Breakdown {
 					}
 					if t := lastText(l.Message.Content); t != "" {
 						pendingAsk = t
+						if curIdx >= 0 {
+							b.Rows[curIdx].reply = t
+						}
 					}
 				}
 			}
@@ -142,8 +152,15 @@ func buildBreakdown(r io.Reader) Breakdown {
 	}
 	rows := b.Rows[:0]
 	for _, row := range b.Rows {
-		if row.Tokens > 0 {
+		switch {
+		case row.Tokens >= smallRowTokens:
+			if sentence := firstSentence(row.reply); sentence != "" {
+				row.Label = sentence
+			}
 			rows = append(rows, row)
+		case row.Tokens > 0:
+			b.SmallCount++
+			b.SmallTokens += row.Tokens
 		}
 	}
 	if len(rows) > maxBreakdownRows {
@@ -252,4 +269,25 @@ func cut(s string, n int) string {
 		return s
 	}
 	return strings.TrimSpace(string(r[:n-1])) + "…"
+}
+
+var (
+	mdLink      = regexp.MustCompile(`\[([^\]]*)\]\([^)]*\)`)
+	firstClause = regexp.MustCompile(`^(.{20,110}?[.!?:])\s`)
+)
+
+// firstSentence is how Claude opened its last reply in a turn, which is usually what it did:
+// markdown stripped, the first sentence if there is one, otherwise the first hundred characters
+func firstSentence(reply string) string {
+	s := codeBlock.ReplaceAllString(reply, " ")
+	s = mdLink.ReplaceAllString(s, "$1")
+	s = strings.NewReplacer("*", "", "`", "", "#", "", "_", " ").Replace(s)
+	s = strings.TrimSpace(spaces.ReplaceAllString(s, " "))
+	if s == "" {
+		return ""
+	}
+	if m := firstClause.FindStringSubmatch(s + " "); m != nil {
+		s = m[1]
+	}
+	return cut(strings.TrimRight(s, ".:"), 110)
 }

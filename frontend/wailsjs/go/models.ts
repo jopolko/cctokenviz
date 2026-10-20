@@ -2,6 +2,7 @@ export namespace main {
 	
 	export class BreakdownRow {
 	    label: string;
+	    prompt: string;
 	    tokens: number;
 	    at: number;
 	
@@ -12,6 +13,7 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.label = source["label"];
+	        this.prompt = source["prompt"];
 	        this.tokens = source["tokens"];
 	        this.at = source["at"];
 	    }
@@ -21,6 +23,8 @@ export namespace main {
 	    startAt: number;
 	    start: number;
 	    rows: BreakdownRow[];
+	    smallCount: number;
+	    smallTokens: number;
 	    total: number;
 	
 	    static createFrom(source: any = {}) {
@@ -33,6 +37,8 @@ export namespace main {
 	        this.startAt = source["startAt"];
 	        this.start = source["start"];
 	        this.rows = this.convertValues(source["rows"], BreakdownRow);
+	        this.smallCount = source["smallCount"];
+	        this.smallTokens = source["smallTokens"];
 	        this.total = source["total"];
 	    }
 	
