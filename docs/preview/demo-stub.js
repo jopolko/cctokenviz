@@ -27,9 +27,16 @@
         { label: 'Today', inputTokens: 1200, outputTokens: 61000, cacheRead: 7400000, cacheWrite: 310000, totalTokens: 7772200, cost: 4.12, cacheSaved: 19.98, cacheSavedTok: 7400000 },
         { label: '7 days', inputTokens: 9800, outputTokens: 402000, cacheRead: 52000000, cacheWrite: 2100000, totalTokens: 54511800, cost: 28.6, cacheSaved: 140.4, cacheSavedTok: 52000000 },
     ] };
+    const bdNow = Math.floor(Date.now() / 1000);
+    const breakdown = { startLabel: 'Carried over', startAt: bdNow - 7200, start: 62000, total: 214000, rows: [
+        { label: 'Fix the import after the rename', tokens: 18000, at: bdNow - 6600 },
+        { label: 'y → Want me to run the tests?', tokens: 71000, at: bdNow - 5400 },
+        { label: 'Add retry to the uploader', tokens: 24000, at: bdNow - 3000 },
+        { label: 'Why is the build slow?', tokens: 39000, at: bdNow - 1500 },
+    ] };
     const ok = (v) => () => Promise.resolve(v);
     window.go = { main: { App: {
-        GetSettings: ok(cfg), SaveSettings: ok(), GetSessions: ok(sessions), GetLimits: ok(limits), GetUsage: ok(usage),
+        GetSettings: ok(cfg), SaveSettings: ok(), GetSessions: ok(sessions), GetLimits: ok(limits), GetUsage: ok(usage), GetBreakdown: ok(breakdown),
         RefreshLimits: ok(limits), SetOrder: ok(), DismissSession: ok(), KnownProjects: ok([]), DetectedContext: ok({}),
         HasClaudeCLI: ok(true), EnvCheck: ok({ logs: true, cli: true, statusline: true }), ExpandForPanel: ok({ w: 240, h: 600, x: 0, y: 0 }), SetSettingsOpen: ok(), AddProjectFolder: ok(''),
     } } };
@@ -37,6 +44,8 @@
     if (q.get('spend') === '1') document.addEventListener('DOMContentLoaded', () => setTimeout(() => window.checkUsage && window.checkUsage(), 400));
     // ?only=usage shows just the API cost section (for the README), hiding the rest of the window
     if (q.get('only') === 'usage') document.addEventListener('DOMContentLoaded', () => { const st = document.createElement('style'); st.textContent = '#main > header, .context, #limits { display: none !important; }'; document.head.appendChild(st); });
+    // ?breakdown=1 opens the first row's context breakdown
+    if (q.get('breakdown') === '1') document.addEventListener('DOMContentLoaded', () => setTimeout(() => { const f = document.querySelector('.session-footer'); if (f) f.click(); }, 700));
     // ?settings=1 opens Settings (?themes=1 with the theme list expanded)
     if (q.get('settings') === '1') document.addEventListener('DOMContentLoaded', () => setTimeout(() => {
         window.openSettings().then(() => { if (q.get('themes') === '1') document.querySelector('[data-action=themes-toggle]').click(); });

@@ -12,6 +12,8 @@ export function EnvCheck():Promise<Record<string, boolean>>;
 
 export function ExpandForPanel(arg1:number,arg2:number):Promise<main.WindowRect>;
 
+export function GetBreakdown(arg1:string):Promise<main.Breakdown>;
+
 export function GetLimits():Promise<main.Limits>;
 
 export function GetSessions():Promise<Array<main.SessionInfo>>;

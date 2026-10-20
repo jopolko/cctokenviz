@@ -1,5 +1,60 @@
 export namespace main {
 	
+	export class BreakdownRow {
+	    label: string;
+	    tokens: number;
+	    at: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new BreakdownRow(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.label = source["label"];
+	        this.tokens = source["tokens"];
+	        this.at = source["at"];
+	    }
+	}
+	export class Breakdown {
+	    startLabel: string;
+	    startAt: number;
+	    start: number;
+	    rows: BreakdownRow[];
+	    total: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Breakdown(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.startLabel = source["startLabel"];
+	        this.startAt = source["startAt"];
+	        this.start = source["start"];
+	        this.rows = this.convertValues(source["rows"], BreakdownRow);
+	        this.total = source["total"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
 	export class Config {
 	    projects: string[];
 	    activeMinutes: number;

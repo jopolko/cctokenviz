@@ -1,0 +1,255 @@
+package main
+
+import (
+	"bufio"
+	"encoding/json"
+	"io"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
+	"time"
+)
+
+// BreakdownRow is one prompt and how much it added to the context
+type BreakdownRow struct {
+	Label  string `json:"label"`
+	Tokens int    `json:"tokens"`
+	At     int64  `json:"at"` // unix seconds of the prompt
+}
+
+// Breakdown is what has filled a session's context: what it started with, then what each prompt added
+type Breakdown struct {
+	StartLabel string         `json:"startLabel"` // "Carried over" after a compact, else "Starting context"
+	StartAt    int64          `json:"startAt"`    // unix seconds the starting context began (compact or session start)
+	Start      int            `json:"start"`      // tokens in the context at the first reply, before any prompt shown
+	Rows       []BreakdownRow `json:"rows"`
+	Total      int            `json:"total"`
+}
+
+const maxBreakdownRows = 40
+
+type breakdownLine struct {
+	Type             string `json:"type"`
+	Subtype          string `json:"subtype"`
+	Timestamp        string `json:"timestamp"`
+	IsMeta           bool   `json:"isMeta"`
+	IsSidechain      bool   `json:"isSidechain"`
+	IsCompactSummary bool   `json:"isCompactSummary"`
+	Message          struct {
+		Usage   *Usage          `json:"usage"`
+		Content json.RawMessage `json:"content"`
+	} `json:"message"`
+}
+
+// GetBreakdown reads one session's log and attributes growth in the context to the prompts
+// that caused it: each reply records the whole context size, so a prompt's share is the
+// difference between the size before and after its replies. The numbers are exact; only the
+// labels are condensed. It starts over at the latest compact, since the summary replaced
+// everything before it.
+func (m *Monitor) GetBreakdown(id string) Breakdown {
+	path := m.findSessionFile(id)
+	if path == "" {
+		return Breakdown{}
+	}
+	file, err := os.Open(path)
+	if err != nil {
+		return Breakdown{}
+	}
+	defer file.Close()
+	return buildBreakdown(file)
+}
+
+// findSessionFile finds the log for a session id (its file name) under any project folder
+func (m *Monitor) findSessionFile(id string) string {
+	if id == "" || id != filepath.Base(id) || !strings.HasSuffix(id, ".jsonl") {
+		return ""
+	}
+	dirs, err := os.ReadDir(m.claudeDir)
+	if err != nil {
+		return ""
+	}
+	for _, d := range dirs {
+		if !d.IsDir() {
+			continue
+		}
+		p := filepath.Join(m.claudeDir, d.Name(), id)
+		if _, err := os.Stat(p); err == nil {
+			return p
+		}
+	}
+	return ""
+}
+
+func buildBreakdown(r io.Reader) Breakdown {
+	var (
+		b          Breakdown
+		ctx        int
+		started    bool // the first reply of this stretch has been seen
+		curBase    int  // the context size when the current prompt was sent
+		curIdx     = -1 // the current prompt's row, once the stretch has started
+		pendingAsk string
+		sawCompact bool
+	)
+	reset := func() {
+		b = Breakdown{}
+		ctx, started, curIdx, pendingAsk = 0, false, -1, ""
+	}
+	reader := bufio.NewReaderSize(r, 1024*1024)
+	for {
+		line, err := reader.ReadBytes(0x0a)
+		if len(line) > 0 {
+			var l breakdownLine
+			if json.Unmarshal(line, &l) == nil && !l.IsSidechain {
+				at := parseUnix(l.Timestamp)
+				switch {
+				case l.Type == "system" && l.Subtype == "compact_boundary":
+					reset()
+					sawCompact = true
+					b.StartAt = at
+				case l.Type == "user" && !l.IsMeta && !l.IsCompactSummary:
+					// Before the first reply, a prompt is part of the starting context
+					if text, ok := promptText(l.Message.Content); ok && started {
+						b.Rows = append(b.Rows, BreakdownRow{Label: promptLabel(text, pendingAsk), At: at})
+						curIdx, curBase = len(b.Rows)-1, ctx
+					}
+				case l.Type == "assistant" && l.Message.Usage != nil:
+					u := l.Message.Usage
+					ctx = u.InputTokens + u.CacheReadInputTokens + u.CacheCreationInputTokens
+					if !started {
+						started = true
+						b.Start = ctx
+						if b.StartAt == 0 {
+							b.StartAt = at
+						}
+					} else if curIdx >= 0 {
+						b.Rows[curIdx].Tokens = ctx - curBase
+					}
+					if t := lastText(l.Message.Content); t != "" {
+						pendingAsk = t
+					}
+				}
+			}
+		}
+		if err != nil {
+			break
+		}
+	}
+	b.Total = ctx
+	b.StartLabel = "Starting context"
+	if sawCompact {
+		b.StartLabel = "Carried over"
+	}
+	rows := b.Rows[:0]
+	for _, row := range b.Rows {
+		if row.Tokens > 0 {
+			rows = append(rows, row)
+		}
+	}
+	if len(rows) > maxBreakdownRows {
+		rows = rows[len(rows)-maxBreakdownRows:]
+	}
+	b.Rows = rows
+	return b
+}
+
+func parseUnix(ts string) int64 {
+	t, err := time.Parse(time.RFC3339Nano, ts)
+	if err != nil {
+		return 0
+	}
+	return t.Unix()
+}
+
+// promptText returns what the user typed, or false for tool results, hooks, command output
+// and other entries that are not a prompt
+func promptText(content json.RawMessage) (string, bool) {
+	var s string
+	if json.Unmarshal(content, &s) == nil {
+		return cleanPrompt(s)
+	}
+	var blocks []struct {
+		Type string `json:"type"`
+		Text string `json:"text"`
+	}
+	if json.Unmarshal(content, &blocks) != nil {
+		return "", false
+	}
+	var text []string
+	for _, b := range blocks {
+		if b.Type == "tool_result" {
+			return "", false
+		}
+		if b.Type == "text" {
+			text = append(text, b.Text)
+		}
+	}
+	return cleanPrompt(strings.Join(text, " "))
+}
+
+func cleanPrompt(s string) (string, bool) {
+	s = strings.TrimSpace(s)
+	if s == "" || strings.HasPrefix(s, "<") || strings.HasPrefix(s, "[Request interrupted") {
+		return "", false
+	}
+	return s, true
+}
+
+// lastText is the text of an assistant message, ignoring tool calls
+func lastText(content json.RawMessage) string {
+	var blocks []struct {
+		Type string `json:"type"`
+		Text string `json:"text"`
+	}
+	if json.Unmarshal(content, &blocks) != nil {
+		return ""
+	}
+	out := ""
+	for _, b := range blocks {
+		if b.Type == "text" && strings.TrimSpace(b.Text) != "" {
+			out = b.Text
+		}
+	}
+	return out
+}
+
+var spaces = regexp.MustCompile(`\s+`)
+var sentenceEnd = regexp.MustCompile(`[^.!?\n]*\?`)
+
+const labelWidth = 40
+
+// promptLabel names a prompt by its first words. A short reply such as "y" says nothing on its
+// own, so it is shown with the question it answered: the last question in Claude's message.
+func promptLabel(prompt, ask string) string {
+	p := spaces.ReplaceAllString(prompt, " ")
+	if len([]rune(p)) <= 16 && strings.Count(p, " ") < 3 && ask != "" {
+		q := lastQuestion(ask)
+		if q == "" { // no question: fall back to what Claude opened with
+			first := strings.SplitN(strings.TrimSpace(ask), "\n", 2)[0]
+			q = strings.TrimSpace(spaces.ReplaceAllString(strings.NewReplacer("*", "", "`", "", "#", "").Replace(first), " "))
+		}
+		if q != "" {
+			return cut(p, 10) + " → " + cut(q, labelWidth-3)
+		}
+	}
+	return cut(p, labelWidth)
+}
+
+var codeBlock = regexp.MustCompile("(?s)```.*?```")
+
+func lastQuestion(s string) string {
+	s = codeBlock.ReplaceAllString(s, " ")
+	m := sentenceEnd.FindAllString(s, -1)
+	if len(m) == 0 {
+		return ""
+	}
+	return strings.TrimSpace(spaces.ReplaceAllString(strings.NewReplacer("*", "", "`", "").Replace(m[len(m)-1]), " "))
+}
+
+func cut(s string, n int) string {
+	r := []rune(s)
+	if len(r) <= n {
+		return s
+	}
+	return strings.TrimSpace(string(r[:n-1])) + "…"
+}

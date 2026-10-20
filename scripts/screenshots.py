@@ -16,6 +16,7 @@ BROWSERS = [
 SHOTS = [
     ("screenshot-daylight.png", "light", False, 700, False),
     ("screenshot-api-cost.png", "light", True, 190, True),
+    ("screenshot-breakdown.png", "light", False, 560, False),
 ]
 
 def main():
@@ -31,7 +32,7 @@ def main():
     open(index, "w", encoding="utf-8").write(html)
     for name, theme, spend, height, only in SHOTS:
         # Headless browsers won't go narrower than ~500px, so the app sits in a 240px frame (its real width)
-        inner = "file:///" + index.replace("\\", "/") + f"?theme={theme}&spend={1 if spend else 0}" + ("&only=usage" if only else "")
+        inner = "file:///" + index.replace("\\", "/") + f"?theme={theme}&spend={1 if spend else 0}" + ("&only=usage" if only else "") + ("&breakdown=1" if name == "screenshot-breakdown.png" else "")
         wrapper = os.path.join(tmp, f"shot-{name}.html")
         open(wrapper, "w", encoding="utf-8").write(
             f'<body style="margin:0;background:#000"><iframe src="{inner}" style="border:0;width:240px;height:{height}px;display:block"></iframe>')

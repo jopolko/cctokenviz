@@ -51,6 +51,7 @@ Without structure, AI-assisted development often becomes chaotic: context gets l
 - ✕ **Hide a session** - Hide one row until that session has new activity; or **hide a project for good** from Settings
 - 📈 **Limits** - 5-hour and weekly usage with reset countdowns, for Pro/Max plans, with a **Refresh** button. A window that just reset shows as "reset" until a fresh reading arrives (see [Limits](#limits-where-the-numbers-come-from))
 - 💲 **API cost** - A "Check API cost" button at the bottom shows tokens, estimated cost at API prices and what prompt caching saved, for today and the last 7 days. Free (it reads your local logs) and information only (see [API cost](#api-cost))
+- 🔎 **What is using the context** - Click a row's Used / Free line to see what has filled it: the size it started with (or carried over from a compact), then how much each prompt added, oldest first with its age, and the largest marked. Exact figures from the session log; a short reply like "y" is shown with the question it answered
 - 📐 **Context windows** - Detected per project (200k or 1M), or set your own size per project or as a default
 - ↕️ **Your order** - Drag the ⋮⋮ grip on a row to reorder; the order stays put
 - 🎨 **Themes** - Ten full styles (Linux terminal, sci-fi, Bitcoin, AI, cowboy, anime, kawaii, garden, celestial, lab notebook) each with its own meter, fonts, headings and wording, three plain themes, an accent color picker, and a font and size selector

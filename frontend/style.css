@@ -772,3 +772,15 @@ a:hover, a:focus-visible { color: var(--strong); }
 .usage-toggle:hover .chev { color: var(--strong); }
 .usage-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 0.95em; }
 .usage-sub { font-size: 0.8em; color: var(--dim); margin-bottom: 4px; }
+
+.session-footer.clickable { cursor: pointer; }
+.session-footer.clickable:hover { color: var(--text, inherit); }
+.breakdown { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border, rgba(128,128,128,.3)); font-size: 0.82em; }
+.breakdown[hidden] { display: none; }
+.bd-row { display: grid; grid-template-columns: 3.2em 1fr auto; gap: 6px; align-items: baseline; padding: 1px 0; }
+.bd-tok { text-align: right; font-variant-numeric: tabular-nums; }
+.bd-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dim); }
+.bd-age { color: var(--dim); font-size: 0.9em; }
+.bd-start .bd-label { color: inherit; }
+.bd-big .bd-tok, .bd-big .bd-label { color: var(--accent); font-weight: 600; }
+.bd-foot, .bd-empty { color: var(--dim); font-size: 0.9em; margin-top: 4px; }

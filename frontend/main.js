@@ -29,6 +29,49 @@ function othersTag(session) {
     return `<span class="others" title="${escapeHtml(tip)}">+${others.length}</span>`;
 }
 
+// What is using a session's context: its starting size, then what each prompt added. Opened by
+// clicking a row's Used / Free line; numbers come straight from the session log.
+const openBreakdowns = new Set();
+const breakdownHtml = {};
+const breakdownAt = {}; // used tokens when a breakdown was last fetched
+
+function breakdownRows(b) {
+    if (!b || !b.total) return '<div class="bd-empty">Nothing to show yet</div>';
+    const now = Math.floor(Date.now() / 1000);
+    const age = (t) => t ? formatDuration(now - t) : '';
+    const row = (tokens, label, at, cls) => `<div class="bd-row ${cls || ''}"><span class="bd-tok">${formatBigTokens(tokens)}</span><span class="bd-label" title="${escapeHtml(label)}">${escapeHtml(label)}</span><span class="bd-age">${age(at)}</span></div>`;
+    const biggest = Math.max(0, ...(b.rows || []).map(r => r.tokens));
+    return row(b.start, b.startLabel, b.startAt, 'bd-start')
+        + (b.rows || []).map(r => row(r.tokens, r.label, r.at, r.tokens === biggest && biggest > 0 ? 'bd-big' : '')).join('')
+        + `<div class="bd-foot">What each prompt added. Largest is highlighted.</div>`;
+}
+
+async function loadBreakdown(id) {
+    try {
+        const b = await window.go.main.App.GetBreakdown(id);
+        breakdownHtml[id] = breakdownRows(b);
+        breakdownAt[id] = b ? b.total : 0;
+    } catch (error) {
+        console.error('Error fetching breakdown:', error);
+        breakdownHtml[id] = '<div class="bd-empty">Could not read this session</div>';
+    }
+    const box = document.querySelector(`.breakdown[data-for="${CSS.escape(id)}"]`);
+    if (box) { box.innerHTML = breakdownHtml[id]; scheduleFit(); }
+}
+
+async function toggleBreakdown(id) {
+    const box = document.querySelector(`.breakdown[data-for="${CSS.escape(id)}"]`);
+    if (openBreakdowns.has(id)) {
+        openBreakdowns.delete(id);
+        if (box) box.hidden = true;
+        scheduleFit();
+        return;
+    }
+    openBreakdowns.add(id);
+    if (box) box.hidden = false;
+    await loadBreakdown(id);
+}
+
 // Render a single session
 function renderSession(session) {
     const stateClass = getStateClass(session.percentage);
@@ -46,10 +89,11 @@ function renderSession(session) {
                 <button class="dismiss" title="Hide until it has new activity" onclick="dismissSession('${id}')">✕</button>
             </div>
             ${meterHtml(session.percentage)}
-            <div class="session-footer">
+            <div class="session-footer clickable" title="What is using this context" onclick="toggleBreakdown('${id}')">
                 <span>${LABELS.used}: ${formatTokens(session.usedTokens)}</span>
                 <span>${LABELS.free}: ${formatTokens(session.freeTokens)}</span>
             </div>
+            <div class="breakdown" data-for="${id}"${openBreakdowns.has(session.id) ? '' : ' hidden'}>${breakdownHtml[session.id] || ''}</div>
         </div>
     `;
 }
@@ -296,6 +340,7 @@ function updateRow(row, session) {
     const spans = row.querySelectorAll('.session-footer span');
     spans[0].textContent = `${LABELS.used}: ${formatTokens(session.usedTokens)}`;
     spans[1].textContent = `${LABELS.free}: ${formatTokens(session.freeTokens)}`;
+    if (openBreakdowns.has(session.id) && breakdownAt[session.id] !== session.usedTokens) loadBreakdown(session.id);
 }
 
 // A session title too long for its row slowly scrolls to the left and back, so it can be read in full

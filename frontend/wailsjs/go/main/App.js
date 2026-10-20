@@ -22,6 +22,10 @@ export function ExpandForPanel(arg1, arg2) {
   return window['go']['main']['App']['ExpandForPanel'](arg1, arg2);
 }
 
+export function GetBreakdown(arg1) {
+  return window['go']['main']['App']['GetBreakdown'](arg1);
+}
+
 export function GetLimits() {
   return window['go']['main']['App']['GetLimits']();
 }

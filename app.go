@@ -281,3 +281,8 @@ func (a *App) limitsPoller() {
 		}
 	}
 }
+
+// GetBreakdown returns what has filled one session's context: its starting size, then what each prompt added
+func (a *App) GetBreakdown(id string) Breakdown {
+	return a.monitor.GetBreakdown(id)
+}
