@@ -781,7 +781,10 @@ a:hover, a:focus-visible { color: var(--strong); }
 .bd-tok { text-align: right; font-variant-numeric: tabular-nums; }
 .bd-label { min-width: 0; color: var(--dim); line-height: 1.25; }
 .bd-you { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.bd-act { display: block; font-size: 0.9em; opacity: 0.75; }
+.bd-act { display: block; font-size: 1em; color: var(--text); opacity: 0.95; margin-top: 1px; }
+.bd-big .bd-act { color: var(--text); font-weight: normal; }
+.bd-sort { color: var(--accent); cursor: pointer; text-decoration: none; }
+.bd-sort:hover { text-decoration: underline; }
 .bd-age { color: var(--dim); font-size: 0.9em; }
 .bd-start .bd-label { color: inherit; }
 .bd-big .bd-tok, .bd-big .bd-label { color: var(--accent); font-weight: 600; }

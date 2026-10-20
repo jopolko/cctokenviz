@@ -33,6 +33,11 @@ function othersTag(session) {
 // clicking a row's Used / Free line; numbers come straight from the session log.
 const openBreakdowns = new Set();
 const breakdownHtml = {};
+const breakdownData = {};
+
+// Largest first by default, since the big blocks are what matter; "oldest first" is one click away
+let breakdownSort = 'size';
+try { if (localStorage.getItem('breakdownSort') === 'time') breakdownSort = 'time'; } catch (e) { /* storage may be unavailable */ }
 const breakdownAt = {}; // used tokens when a breakdown was last fetched
 
 function breakdownRows(b) {
@@ -42,15 +47,19 @@ function breakdownRows(b) {
     const row = (tokens, label, at, cls, tip, sub) => `<div class="bd-row ${cls || ''}" title="${escapeHtml(tip || label)}"><span class="bd-tok">${formatBigTokens(tokens)}</span><span class="bd-label"><span class="bd-you">${escapeHtml(label)}</span>${sub ? `<span class="bd-act">${escapeHtml(sub)}</span>` : ''}</span><span class="bd-age">${age(at)}</span></div>`;
     const biggest = Math.max(0, ...(b.rows || []).map(r => r.tokens));
     const small = b.smallCount ? `<div class="bd-row bd-small"><span class="bd-tok">${formatBigTokens(b.smallTokens)}</span><span class="bd-label"><span class="bd-you">${b.smallCount} smaller prompt${b.smallCount > 1 ? 's' : ''}</span></span><span class="bd-age"></span></div>` : '';
+    const rows = [...(b.rows || [])];
+    if (breakdownSort === 'size') rows.sort((x, y) => y.tokens - x.tokens);
+    const sortLink = `<a href="#" class="bd-sort" onclick="setBreakdownSort('${breakdownSort === 'size' ? 'time' : 'size'}'); return false;">${breakdownSort === 'size' ? 'Show oldest first' : 'Show largest first'}</a>`;
     return row(b.start, b.startLabel, b.startAt, 'bd-start', b.startLabel === 'Carried over' ? 'Summary, system prompt and tools at the start of this stretch' : 'System prompt, tools and your first prompt')
-        + (b.rows || []).map(r => row(r.tokens, r.label, r.at, r.tokens === biggest && biggest > 0 ? 'bd-big' : '', r.reply ? "Claude's answer: " + r.reply : r.label, r.actions)).join('')
+        + rows.map(r => row(r.tokens, r.label, r.at, r.tokens === biggest && biggest > 0 ? 'bd-big' : '', r.reply ? "Claude's answer: " + r.reply : r.label, r.actions)).join('')
         + small
-        + `<div class="bd-foot">What each prompt added, in your words, with what Claude did to answer. Largest is highlighted.</div>`;
+        + `<div class="bd-foot">${breakdownSort === 'size' ? 'Largest first.' : 'Oldest first.'} ${sortLink}</div>`;
 }
 
 async function loadBreakdown(id) {
     try {
         const b = await window.go.main.App.GetBreakdown(id);
+        breakdownData[id] = b;
         breakdownHtml[id] = breakdownRows(b);
         breakdownAt[id] = b ? b.total : 0;
     } catch (error) {
@@ -59,6 +68,18 @@ async function loadBreakdown(id) {
     }
     const box = document.querySelector(`.breakdown[data-for="${CSS.escape(id)}"]`);
     if (box) { box.innerHTML = breakdownHtml[id]; scheduleFit(); }
+}
+
+function setBreakdownSort(mode) {
+    breakdownSort = mode;
+    try { localStorage.setItem('breakdownSort', mode); } catch (e) { /* not essential */ }
+    for (const id of openBreakdowns) {
+        if (!breakdownData[id]) continue;
+        breakdownHtml[id] = breakdownRows(breakdownData[id]);
+        const box = document.querySelector(`.breakdown[data-for="${CSS.escape(id)}"]`);
+        if (box) box.innerHTML = breakdownHtml[id];
+    }
+    scheduleFit();
 }
 
 async function toggleBreakdown(id) {
