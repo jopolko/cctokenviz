@@ -35,6 +35,8 @@
     } } };
     // ?spend=1 clicks the on-demand "Check API cost" button, as a user would
     if (q.get('spend') === '1') document.addEventListener('DOMContentLoaded', () => setTimeout(() => window.checkUsage && window.checkUsage(), 400));
+    // ?only=usage shows just the API cost section (for the README), hiding the rest of the window
+    if (q.get('only') === 'usage') document.addEventListener('DOMContentLoaded', () => { const st = document.createElement('style'); st.textContent = '#main > header, .context, #limits { display: none !important; }'; document.head.appendChild(st); });
     // ?settings=1 opens Settings (?themes=1 with the theme list expanded)
     if (q.get('settings') === '1') document.addEventListener('DOMContentLoaded', () => setTimeout(() => {
         window.openSettings().then(() => { if (q.get('themes') === '1') document.querySelector('[data-action=themes-toggle]').click(); });

@@ -216,6 +216,12 @@ Settings are stored in `~/.cctokenviz.json`, which you never need to edit by han
 
 ## API cost (on demand)
 
+An optional extra, for awareness of what your usage would cost at real API and enterprise pricing. You can ignore it; nothing runs until you click.
+
+<p align="center">
+  <img src="docs/screenshot-api-cost.png" alt="The API cost section expanded: tokens, estimated cost and prompt-cache savings for today and the last 7 days (demo data)" width="224">
+</p>
+
 At the bottom of the window there is a **Check API cost** button. Nothing is read until you click it, and the result stays until you close it (✕) or check again (↻). **It is information only, not a charge, and it spends no tokens:** it just adds up the token usage already recorded in your Claude Code session logs on this computer (including sub-agents) for **today** and the **last 7 days**, so you can compare your usage with what the same work would cost on the pay-as-you-go or enterprise API. It shows:
 
 - total tokens, and the **estimated cost** at public API prices (input, output, cache reads and cache writes priced separately),
@@ -223,7 +229,7 @@ At the bottom of the window there is a **Check API cost** button. Nothing is rea
 
 It only reads files already on your computer. On a Pro or Max plan the dollar figure is what the same usage would cost on the API, not what you pay; it is an estimate, and a model it doesn't recognise is priced as a mid-tier model (marked with ~).
 
-To regenerate the screenshots above from the real frontend with demo data, run `python scripts/screenshots.py` (needs Edge or Chrome).
+To regenerate the screenshots from the real frontend with demo data, run `python scripts/screenshots.py` (needs Edge or Chrome).
 
 ## Limits: where the numbers come from
 

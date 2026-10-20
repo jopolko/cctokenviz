@@ -12,9 +12,10 @@ BROWSERS = [
     r"C:\Program Files\Google\Chrome\Application\chrome.exe",
     "/usr/bin/google-chrome", "/usr/bin/chromium",
 ]
-# (file, theme, spend panel open, window height)
+# (file, theme, spend panel open, window height, show only the API cost section)
 SHOTS = [
-    ("screenshot-daylight.png", "light", False, 700),
+    ("screenshot-daylight.png", "light", False, 700, False),
+    ("screenshot-api-cost.png", "light", True, 190, True),
 ]
 
 def main():
@@ -28,9 +29,9 @@ def main():
     html = open(index, encoding="utf-8").read()
     html = html.replace('<script src="themes.js">', '<script src="demo-stub.js"></script>\n    <script src="themes.js">')
     open(index, "w", encoding="utf-8").write(html)
-    for name, theme, spend, height in SHOTS:
+    for name, theme, spend, height, only in SHOTS:
         # Headless browsers won't go narrower than ~500px, so the app sits in a 240px frame (its real width)
-        inner = "file:///" + index.replace("\\", "/") + f"?theme={theme}&spend={1 if spend else 0}"
+        inner = "file:///" + index.replace("\\", "/") + f"?theme={theme}&spend={1 if spend else 0}" + ("&only=usage" if only else "")
         wrapper = os.path.join(tmp, f"shot-{name}.html")
         open(wrapper, "w", encoding="utf-8").write(
             f'<body style="margin:0;background:#000"><iframe src="{inner}" style="border:0;width:240px;height:{height}px;display:block"></iframe>')
