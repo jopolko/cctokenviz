@@ -216,7 +216,7 @@ Settings are stored in `~/.cctokenviz.json`, which you never need to edit by han
 
 ## API cost (on demand)
 
-An optional extra, for awareness of what your usage would cost at real API and enterprise pricing. You can ignore it; nothing runs until you click.
+An optional extra, for awareness of what your usage would cost at real API and enterprise pricing. You can ignore it.
 
 <p align="center">
   <img src="docs/screenshot-api-cost.png" alt="The API cost section expanded: tokens, estimated cost and prompt-cache savings for today and the last 7 days (demo data)" width="224">
