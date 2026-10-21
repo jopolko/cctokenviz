@@ -28,11 +28,11 @@
         { label: '7 days', inputTokens: 9800, outputTokens: 402000, cacheRead: 52000000, cacheWrite: 2100000, totalTokens: 54511800, cost: 28.6, cacheSaved: 140.4, cacheSavedTok: 52000000 },
     ] };
     const bdNow = Math.floor(Date.now() / 1000);
-    const breakdown = { startLabel: 'Carried over', startAt: bdNow - 7200, start: 62000, total: 214000, smallCount: 9, smallTokens: 12000, rows: [
-        { label: 'Fix the import after the rename', actions: 'Claude read 3 files, edited 2 files', reply: 'Renamed the helper and fixed the broken imports', tokens: 18000, at: bdNow - 6600 },
-        { label: 'y → Want me to run the tests?', actions: 'Claude ran 4 commands, read 2 files', reply: 'All 48 tests pass after the retry change', tokens: 71000, at: bdNow - 5400 },
-        { label: 'Add retry to the uploader', actions: 'Claude read 5 files, edited 3 files, ran 2 commands', reply: 'Added retry with backoff to the uploader', tokens: 24000, at: bdNow - 3000 },
-        { label: 'Why is the build slow?', actions: 'Claude ran 6 commands', reply: 'The build is slow because the images are not cached', tokens: 39000, at: bdNow - 1500 },
+    const breakdown = { startLabel: 'Carried over', startAt: bdNow - 7200, start: 38000, total: 144000, smallCount: 9, smallTokens: 11000, rows: [
+        { label: 'Fix the broken imports in the uploader module after we renamed the shared helper functions', actions: 'Claude read 3 files, edited 2 files', reply: 'Renamed the helper and fixed the broken imports', tokens: 14000, at: bdNow - 6600 },
+        { label: 'Yes, go ahead and run the whole test suite again now that the retry change is finished', actions: 'Claude ran 4 commands, read 2 files', reply: 'All 48 tests pass after the retry change', tokens: 41000, at: bdNow - 5400 },
+        { label: 'Add retry with exponential backoff to the uploader so that a flaky network does not lose files', actions: 'Claude read 5 files, edited 3 files, ran 2 commands', reply: 'Added retry with backoff to the uploader', tokens: 21000, at: bdNow - 3000 },
+        { label: 'Why is the production build so slow lately, and what can we cache to make it faster?', actions: 'Claude ran 6 commands', reply: 'The build is slow because the images are not cached', tokens: 19000, at: bdNow - 1500 },
     ] };
     const ok = (v) => () => Promise.resolve(v);
     window.go = { main: { App: {
@@ -44,7 +44,11 @@
     if (q.get('spend') === '1') document.addEventListener('DOMContentLoaded', () => setTimeout(() => window.checkUsage && window.checkUsage(), 400));
     // ?only=usage shows just the API cost section (for the README), hiding the rest of the window
     if (q.get('only') === 'usage') document.addEventListener('DOMContentLoaded', () => { const st = document.createElement('style'); st.textContent = '#main > header, .context, #limits { display: none !important; }'; document.head.appendChild(st); });
-    // ?breakdown=1 opens the first row's context breakdown
+    // ?breakdown=1 opens the first row's context breakdown, on a row sized to match it, alone in the window
+    if (q.get('breakdown') === '1') {
+        sessions[0].percentage = 72; sessions[0].usedTokens = 144000; sessions[0].freeTokens = 56000;
+        document.addEventListener('DOMContentLoaded', () => { const st = document.createElement('style'); st.textContent = '#main > header, #limits, .session ~ .session, #usage { display: none !important; }'; document.head.appendChild(st); });
+    }
     if (q.get('breakdown') === '1') document.addEventListener('DOMContentLoaded', () => setTimeout(() => { const f = document.querySelector('.session-footer'); if (f) f.click(); }, 700));
     // ?settings=1 opens Settings (?themes=1 with the theme list expanded)
     if (q.get('settings') === '1') document.addEventListener('DOMContentLoaded', () => setTimeout(() => {

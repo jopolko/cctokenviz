@@ -51,7 +51,7 @@ Without structure, AI-assisted development often becomes chaotic: context gets l
 - ✕ **Hide a session** - Hide one row until that session has new activity; or **hide a project for good** from Settings
 - 📈 **Limits** - 5-hour and weekly usage with reset countdowns, for Pro/Max plans, with a **Refresh** button. A window that just reset shows as "reset" until a fresh reading arrives (see [Limits](#limits-where-the-numbers-come-from))
 - 💲 **API cost** - A "Check API cost" button at the bottom shows tokens, estimated cost at API prices and what prompt caching saved, for today and the last 7 days. Free (it reads your local logs) and information only (see [API cost](#api-cost))
-- 🔎 **What is using the context** - Click a row's Used / Free line to see what has filled it: the size it started with (or carried over from a compact), then how much each prompt added, oldest first with its age and the largest highlighted. Each line shows what you asked and, underneath, what Claude did to answer (files read, commands run, files edited); hover for Claude's own one-line answer. Small prompts are folded into one line. Figures come straight from the session log
+- 🔎 **What is using the context** - Click a row's Used / Free line to see what has filled it, prompt by prompt, largest first (see [What is using the context](#what-is-using-the-context))
 - 📐 **Context windows** - Detected per project (200k or 1M), or set your own size per project or as a default
 - ↕️ **Your order** - Drag the ⋮⋮ grip on a row to reorder; the order stays put
 - 🎨 **Themes** - Ten full styles (Linux terminal, sci-fi, Bitcoin, AI, cowboy, anime, kawaii, garden, celestial, lab notebook) each with its own meter, fonts, headings and wording, three plain themes, an accent color picker, and a font and size selector
@@ -59,6 +59,28 @@ Without structure, AI-assisted development often becomes chaotic: context gets l
 - 🔁 **Upgrades from HeadRoom** - This app was called HeadRoom; your settings and state move over automatically (see [Upgrading from HeadRoom](#upgrading-from-headroom))
 
 Works with the Claude Code terminal and the Claude desktop app (Code tab); both write the same session logs.
+
+## What is using the context
+
+<p align="center">
+  <img src="docs/screenshot-breakdown.png" alt="A session row expanded to show its context history: the 38k it carried over from a compact, then each prompt with the tokens it added, what Claude did to answer it, and its age (demo data, shown wider than the real window)" width="460"><br>
+  <sub>A row expanded, largest first (demo data; the real window is narrower, so long prompts are cut to two lines)</sub>
+</p>
+
+A context meter tells you the window is 72% full, but not *why*. Click a row's **Used / Free** line and it opens a history of what filled it:
+
+- **The starting size.** The first line is what the stretch began with: the system prompt and tools plus your first prompt, or, after a compact, **Carried over** (the summary that replaced the old conversation).
+- **One line per prompt.** Each shows the tokens that prompt added, the prompt itself (the first two lines of it), and its age. Underneath, in a darker color, is what Claude did to answer it: how many files it read, commands it ran and files it edited. Hover for Claude's own one-line answer.
+- **The biggest one is highlighted** in the accent color. Prompts that added very little are folded into one "N smaller prompts" line, so the list stays short.
+- **Largest first by default.** **Show oldest first** switches to a timeline; the choice is remembered.
+
+**How it works.** Claude Code logs the exact token count with every reply. CCTokenViz subtracts one reply's count from the one before it, so each prompt is charged for the context that prompt and Claude's work on it added. Nothing is estimated except the moment right after a compact or `/clear`, before the next reply reports a real number. It reads only your local logs and sends nothing anywhere. The list refreshes when the row's size changes.
+
+**What it is good for:**
+
+- Finding the one request that ate the window: a large file read, a long command output or a big paste shows up as a tall line, with the files and commands behind it right beneath.
+- Deciding whether to compact or clear: if most of the size is "Carried over" or a few huge lines, a compact helps; if it is many small prompts, a fresh session may be cleaner.
+- Learning which habits are expensive, such as reading whole files you only needed a few lines of, so you can ask for them differently next time.
 
 ## Requirements
 
