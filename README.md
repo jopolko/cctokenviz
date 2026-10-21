@@ -2,7 +2,7 @@
 
 A lightweight desktop app that shows how much room you have left in Claude Code: context window usage across all your active sessions, plus your 5-hour and weekly plan limits.
 
-**It replaces the status line for the desktop app.** In the Claude Code terminal, a `/statusline` can show context remaining, 5-hour usage and 7-day usage. The Claude desktop app has no status line; it shows context and plan usage only when you click its usage ring, one session at a time. CCTokenViz puts them in a small always-on-top window for every active project, for the desktop app and the terminal alike.
+**An at-a-glance display for Claude Code.** The Claude desktop app already shows context, with a detailed breakdown, and plan limits (behind its usage ring), and the terminal can show them in a `/statusline`. CCTokenViz does not fill a gap there; it makes the same numbers easier to see. They sit in a small always-on-top window with a colored meter for every active project, so you can read them at a glance without opening anything, for the desktop app and the terminal alike.
 
 **[Download for Windows](https://github.com/jopolko/cctokenviz/releases/latest)** (a single portable `.exe`, no installer needed)
 
@@ -23,7 +23,7 @@ Forked from [gosparq/claudewatch](https://github.com/gosparq/claudewatch) (MIT).
 
 ## Why?
 
-Claude Code in the desktop app has no status line. Its context and plan usage sit behind a click on the usage ring next to the model picker, one session at a time. CCTokenViz keeps them in view: context use for every active project, plus your 5-hour and weekly limits, in one small always-on-top window, for the desktop app and the terminal alike.
+Claude Code already reports these numbers: the desktop app shows context and a breakdown of it, and plan limits behind the usage ring next to the model picker, and the terminal has a status line. They are one click away, one session at a time. CCTokenViz is for keeping them *in view*: context use for every active project, plus your 5-hour and weekly limits, in one small always-on-top window with colored meters, so a glance tells you which session is filling up and how close you are to a limit.
 
 ### The RPI Framework
 
@@ -67,7 +67,7 @@ Works with the Claude Code terminal and the Claude desktop app (Code tab); both 
   <sub>A row expanded, largest first (demo data; the real window is narrower, so long prompts are cut to two lines)</sub>
 </p>
 
-A context meter tells you the window is 72% full, but not *why*. Click a row's **Used / Free** line and it opens a history of what filled it:
+A context meter tells you the window is 72% full, but not *why*. The Claude desktop app has its own detailed context view; this one sits in the always-on-top window, so it is a click away from the meter you are already watching. Click a row's **Used / Free** line and it opens a history of what filled it:
 
 - **The starting size.** The first line is what the stretch began with: the system prompt and tools plus your first prompt, or, after a compact, **Carried over** (the summary that replaced the old conversation).
 - **One line per prompt.** Each shows the tokens that prompt added, the prompt itself (the first two lines of it), and its age. Underneath, in a darker color, is what Claude did to answer it: how many files it read, commands it ran and files it edited. Hover for Claude's own one-line answer.
